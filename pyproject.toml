@@ -1,0 +1,25 @@
+[project]
+name = "switch-fiji-server"
+version = "0.1.0"
+description = "The backend microservice server for switch fiji IoT project"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = []
+
+[dependency-groups]
+dev = [
+    "ruff>=0.15.5",
+]
+
+[tool.ruff]
+line-length = 120
+target-version = "py313"
+exclude = [".git", "__pycache__", ".venv", ".env"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+
+[tool.ruff.lint]
+select = ["E", "F", "I"]
