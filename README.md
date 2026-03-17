@@ -82,8 +82,6 @@ Device → Ingestion API → DynamoDB → Telemetry Service → API → Dashboar
 ## 📁 Project Structure
 
 ```
-backend/
-│
 ├── app/
 │   │
 │   ├── main.py
