@@ -99,7 +99,7 @@ Device → Ingestion API → DynamoDB → Telemetry Service → API → Dashboar
 │   │     └── migrations/       # Alembic migrations
 │   │
 │   ├── modules/                # Domain-driven modules
-│   │     ├── identity/
+│   │     ├── users/
 │   │     ├── clients/
 │   │     ├── sites/
 │   │     ├── devices/
