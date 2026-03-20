@@ -13,6 +13,10 @@ class Settings(BaseSettings):
     STAGING_API_DOMAIN: str
     FRONTEND_URL: str
 
+    # auth
+    JWT_SECRET: str
+    JWT_ALGORITHM: str
+
     # database
     DB_HOST: str
     DB_PORT: int = 5432

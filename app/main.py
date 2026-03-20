@@ -3,11 +3,15 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 
+from app.api.v1.admin.routes import admin_router
+from app.api.v1.auth.routes import auth_router
+from app.api.v1.client.routes import client_router
+from app.api.v1.engineer.routes import engineer_router
 from app.core.exceptions import register_exceptions
 from app.core.logger import setup_logger
 from app.core.middlewares import register_middlewares
 from app.core.template_registry import TemplateRegistry
-from app.database.main import init_db
+from app.database.postgres import init_db
 from app.database.redis import init_redis
 
 app_logger = setup_logger("app.lifecycle")
@@ -37,9 +41,7 @@ def main(*, use_lifespan: bool = True, enable_middlewares: bool = True):
     app = FastAPI(
         swagger="2.0",
         title="switch Fiji IoT",
-        description="""
-            Switch Fiji IoT Backend server
-        """,
+        description="Switch Fiji IoT Backend server",
         version=version,
         license_info={"name": "MIT", "url": "https://opensource.org/licenses/mit"},
         docs_url=f"{api_version}/docs",
@@ -57,6 +59,11 @@ def main(*, use_lifespan: bool = True, enable_middlewares: bool = True):
     @app.get("/")
     async def root():
         return {"message": "Switch Fiji server is running 🚀"}
+
+    app.include_router(auth_router, prefix=f"{api_version}")
+    app.include_router(admin_router, prefix=f"{api_version}")
+    app.include_router(engineer_router, prefix=f"{api_version}")
+    app.include_router(client_router, prefix=f"{api_version}")
 
     return app
 

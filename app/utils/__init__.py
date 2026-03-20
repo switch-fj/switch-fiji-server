@@ -1,4 +1,9 @@
+from email.utils import parseaddr
+from uuid import UUID
+
+from email_validator import EmailNotValidError, EmailSyntaxError
 from fastapi import Request
+from pydantic import validate_email
 from starlette_context import context
 
 
@@ -18,3 +23,21 @@ def set_origin_from_request(request: Request) -> str:
 
 def get_request_origin() -> str:
     return context.get("origin")
+
+
+def email_validator(value: str):
+    try:
+        validate_email(value)
+        return value.lower()
+    except EmailNotValidError:
+        raise EmailSyntaxError("Invalid Email format")
+
+
+def is_email(value):
+    return "@" in parseaddr(value)[1]
+
+
+def uuid_serializer(
+    value: UUID,
+):
+    return str(value)
