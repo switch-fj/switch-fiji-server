@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Email Previewer</title>
+    <link rel="icon" href="{{url_for('static', path='/images/favicon.ico')}}" type="image/x-icon">
+    <link rel="stylesheet" href="{{url_for('static', path='/css/app.css')}}">
+  </head>
+  <body class="w-full">
+    <section class="w-full flex justify-start relative">
+      <aside id="sidebarEl" class="w-64 lg:w-[20%] hidden lg:flex z-20 top-0 absolute h-screen border-r border-neutral-200 lg:sticky left-0 flex-col transition-all delay-200 duration-500 ease-in-out">
+        {% include 'email_sidebar.html' %}
+      </aside>
+      <div id="sidebarOverlayEl" class="bg-black/50 backdrop-blur-sm hidden lg:w-0 absolute h-screen left-0 top-0 z-10 transition-all duration-200 ease-in-out"></div>
+
+      <main id="mainEl" class="w-full lg:w-[85%] transition-all duration-500 ease-in-out">
+        {% include 'email_header.html' %}
+        {% include 'email_preview.html' %}
+      </main>
+    </section>
+
+    <script src="{{ url_for('static', path='/js/app.js') }}"></script>
+    <script>
+      const _ = [
+        'translate-y-[7px]',
+        'translate-y-[-7px]',
+        'translate-x-[-30px]',
+        'rotate-45',
+        'rotate-[-45deg]',
+        'opacity-0',
+        'lg:w-full',
+        'lg:hidden'
+      ];
+    </script>
+    
+  </body>
+</html>

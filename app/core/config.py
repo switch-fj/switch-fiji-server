@@ -41,6 +41,8 @@ class Settings(BaseSettings):
     MAIL_SSL_TLS: bool = True
     EMAIL_SALT: str
 
+    PUBLIC_BASE_URL: str = "http://127.0.0.1:8000"
+
     @property
     def DATABASE_URL(self) -> str:
         password = quote_plus(self.DB_PASSWORD)

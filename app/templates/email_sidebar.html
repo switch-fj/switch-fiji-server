@@ -1,0 +1,58 @@
+<section
+    class="w-full h-full border-r border-neutral-200 flex-col bg-white text-black px-4 py-6 space-y-4"
+>
+    <h2 class="text-xl font-bold">
+        Email Templates
+        <br />
+        <span role="countEl" class="text-sm font-normal text-black/70">
+            Count: {{ all_email_templates | length }}
+        </span>
+    </h2>
+
+    <div class="w-full">
+        <label html-for="search-input" class="text-sm font-bold">
+            Search template
+        </label>
+        <input
+            id="search-input"
+            type="text"
+            placeholder="Search template"
+            class="p-2 border border-gray-300 w-full rounded-md bg-transparent"
+        />
+    </div>
+
+    <ul class="h-5/6 overflow-scroll">
+        {% for name, template in all_email_templates.items() %}
+            <li
+                class="mb-2 p-2 relative"
+            >
+                <a
+                    href="/dashboard?t={{ template.slug }}"
+                    data-slug="{{ template.slug }}"
+                    class="
+                        before:absolute before:top-0 before:left-0 before:w-1
+                        before:bg-green-700 before:rounded-r-md
+                        hover:before:bottom-0
+                        before:transition before:duration-1000
+                        {% if (slug and slug == template.slug) %}
+                            before:bottom-0
+                        {% endif %}
+                    "
+                >
+                    <div>
+                        <h3 data-testid="{{template.slug}}" class="font-bold">
+                            {{ name }}
+                        </h3>
+                        <p data-testid="{{template.slug}}" class="text-sm">
+                            {{ template.subject }}
+                        </p>
+                    </div>
+                </a>
+            </li>
+        {% endfor %}
+    </ul>
+
+    <footer class="text-gray-400 text-xs">
+        {{ year }} switch network. All rights reserved.
+    </footer>
+</section>

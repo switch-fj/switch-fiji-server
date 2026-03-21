@@ -13,3 +13,6 @@ alembic-gen:
 
 alembic-up:
 	uv run alembic upgrade head
+
+mail-preview:
+	uv run fastapi dev app/templates/email_app.py

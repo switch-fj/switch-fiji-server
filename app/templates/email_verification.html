@@ -1,0 +1,38 @@
+{% from "atoms/button.html" import button with context %}
+{% extends 'layout.html' %}
+
+{% block title %}Verify Your Email.{% endblock %}
+
+{% block content %}
+<table style="width: 100%; border-radius: 8px; margin-bottom: 20px;">
+    <tr>
+        <td style="width: 100%;">
+            <h1 style="color: {{ text_primary }}; font-size: {{ heading_size }}">Hello {{ first_name }},</h1>
+            <p style="color: #333;">
+                You’ve taken the first step toward something meaningful. Just one more step. <br/>
+                verify your email to unlock your account.
+                Once you’re in, you’ll be ready to start making an impact. 
+                If you ever need help, our inbox is always open. 💌
+            </p>
+        </td>
+    </tr>       
+
+    <tr>
+        <td style="width: 100%;">
+            <p>
+                Thank you, <br/>
+                Team switch network
+            </p>
+        </td>
+    </tr>
+
+    <tr align="center" style="width:100%;">
+        <td style="width: 100%; padding: 20px 0px;">
+            {{ button(verification_url, "Verify Account") }}
+        </td>
+    </tr>
+
+    {% include 'sensitive_note.html' %}
+
+</table>
+{% endblock %}

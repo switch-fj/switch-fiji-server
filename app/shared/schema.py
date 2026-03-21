@@ -3,6 +3,7 @@ from enum import IntEnum, StrEnum
 from typing import Generic, Optional, TypeVar
 from uuid import UUID
 
+from fastapi import UploadFile
 from pydantic import BaseModel, ConfigDict, Field, field_serializer, field_validator
 
 from app.utils import email_validator, uuid_serializer
@@ -106,3 +107,22 @@ class ResetPwdModel(BaseModel):
 
 class IdentityLoginModel(EmailModel):
     password: Optional[str] = Field(default=None)
+
+
+class HTMLContent:
+    def __init__(self, _subject: str, _template: str):
+        self.subject = _subject
+        self.template = _template
+
+
+class EmailTypes:
+    EMAIL_VERIFICATION = HTMLContent("Verify your account", "email_verification.html")
+    PWD_RESET = HTMLContent("Password reset", "pwd_reset.html")
+
+
+class EmailModel(BaseModel):
+    subject: str
+    reciepients: list[str]
+    payload: dict
+    template: str
+    attachments: list[UploadFile] = ([],)

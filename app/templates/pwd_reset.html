@@ -1,0 +1,26 @@
+{% from "atoms/button.html" import button with context %}
+{% extends 'layout.html' %}
+
+{% block title %}Reset Your Password{% endblock %}
+
+{% block content %}
+<table style="width: 100%; border-radius: 8px; margin-bottom: 20px;">
+    <tr>
+        <td style="width: 100%;">
+            <h1 style="color: {{ text_primary }}; font-size: {{ heading_size }}">Hello {{ first_name }},</h1>
+            <p style="color: #333;">
+                We received a request to reset your password. Click the button below to choose a new password:
+            </p>
+            <p style="color: #333;">
+                If you did not request a password reset, no further action is required.
+            </p>
+        </td>
+    </tr>  
+
+    <tr align="center" style="width:100%;">
+        <td style="width: 100%; padding: 20px 0px;">
+            {{ button(reset_url, "Reset Password") }}
+        </td>
+    </tr> 
+</table>
+{% endblock %}
