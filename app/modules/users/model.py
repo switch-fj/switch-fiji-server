@@ -1,11 +1,15 @@
-from typing import Optional
+from typing import TYPE_CHECKING, Optional
+from uuid import UUID
 
 from pydantic import EmailStr
 from sqlalchemy import Boolean, Column, Identity, Integer, String
-from sqlmodel import Field
+from sqlmodel import Field, Relationship
 
 from app.shared.model import MyAbstractSQLModel
 from app.shared.schema import IdentityTypeEnum, UserRoleEnum
+
+if TYPE_CHECKING:
+    from app.modules.clients.model import Client
 
 
 class User(MyAbstractSQLModel, table=True):
@@ -36,7 +40,16 @@ class User(MyAbstractSQLModel, table=True):
             default=UserRoleEnum.ENGINEER.value,
         ),
     )
+    registrar_uid: Optional[UUID] = Field(foreign_key="users.uid", nullable=True, default=None)
 
     @property
     def identity(self) -> int:
         return IdentityTypeEnum.USER.value
+
+    clients: list["Client"] = Relationship(back_populates="user")
+    registrar: Optional["User"] = Relationship(
+        sa_relationship_kwargs={
+            "foreign_keys": "[User.registrar_uid]",
+            "remote_side": "[User.uid]",
+        }
+    )

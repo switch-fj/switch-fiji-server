@@ -243,7 +243,7 @@ celery -A app.jobs flower
 
 ### 🔹 Clients
 
-Organizations that own one or more sites.
+Users that own one or more sites.
 
 ### 🔹 Sites
 

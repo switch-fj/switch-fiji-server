@@ -1,10 +1,13 @@
+from typing import Optional
 from uuid import UUID
 
+from fastapi import Depends
 from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.core.auth import Authentication
 from app.core.exceptions import BadRequest, NotFound
+from app.database.postgres import get_session
 from app.modules.users.model import User
 from app.modules.users.schema import CreateUserModel
 from app.shared.schema import UpdateIdentityPwdModel
@@ -28,8 +31,9 @@ class UserRepository:
 
         return user
 
-    async def create_user(self, data: CreateUserModel):
+    async def create_user(self, data: CreateUserModel, user_uid: Optional[UUID] = None):
         data_dict = data.model_dump()
+        data_dict["registrar_uid"] = user_uid
         new_user = User(**data_dict)
 
         try:
@@ -42,7 +46,7 @@ class UserRepository:
             await self.session.rollback()
             raise BadRequest(f"Error creating user {e}")
 
-    async def update_pwd(self, user_uid: str, data: UpdateIdentityPwdModel):
+    async def update_pwd(self, user_uid: UUID, data: UpdateIdentityPwdModel):
         user = await self.get_user_by_uid(user_uid=user_uid)
 
         if not user:
@@ -55,3 +59,7 @@ class UserRepository:
         await self.session.refresh(user)
 
         return user
+
+
+def get_user_repo(session: AsyncSession = Depends(get_session)):
+    return UserRepository(session=session)

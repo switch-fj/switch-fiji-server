@@ -1,10 +1,13 @@
+from typing import Optional
 from uuid import UUID
 
+from fastapi import Depends
 from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.core.auth import Authentication
 from app.core.exceptions import BadRequest, NotFound
+from app.database.postgres import get_session
 from app.modules.clients.model import Client
 from app.modules.clients.schema import CreateClientModel
 from app.shared.schema import UpdateIdentityPwdModel
@@ -28,8 +31,13 @@ class ClientRepository:
 
         return client
 
-    async def create_client(self, data: CreateClientModel):
+    async def create_client(
+        self,
+        data: CreateClientModel,
+        user_uid: Optional[UUID] = None,
+    ):
         data_dict = data.model_dump()
+        data_dict["user_uid"] = user_uid
         new_client = Client(**data_dict)
 
         try:
@@ -57,5 +65,5 @@ class ClientRepository:
         return client
 
 
-def get_client_repo(session: AsyncSession):
+def get_client_repo(session: AsyncSession = Depends(get_session)):
     return ClientRepository(session=session)

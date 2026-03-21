@@ -1,4 +1,5 @@
 from typing import TYPE_CHECKING, Optional
+from uuid import UUID
 
 from pydantic import EmailStr
 from sqlalchemy import Boolean, Column, Identity, Integer, String
@@ -9,6 +10,7 @@ from app.shared.schema import IdentityTypeEnum
 
 if TYPE_CHECKING:
     from app.modules.sites.model import Site
+    from app.modules.users.model import User
 
 
 class Client(MyAbstractSQLModel, table=True):
@@ -46,9 +48,14 @@ class Client(MyAbstractSQLModel, table=True):
             nullable=False,
         ),
     )
+    user_uid: Optional[UUID] = Field(foreign_key="users.uid", default=None, nullable=True)
 
     @property
     def identity(self) -> int:
         return IdentityTypeEnum.CLIENT.value
 
     sites: list["Site"] = Relationship(back_populates="client")
+    user: Optional["User"] = Relationship(
+        back_populates="clients",
+        sa_relationship_kwargs={"foreign_keys": "[Client.user_uid]"},
+    )

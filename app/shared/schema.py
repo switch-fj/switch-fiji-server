@@ -1,11 +1,13 @@
 from datetime import datetime
 from enum import IntEnum, StrEnum
-from typing import Optional
+from typing import Generic, Optional, TypeVar
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field, field_serializer, field_validator
 
 from app.utils import email_validator, uuid_serializer
+
+T = TypeVar("T")
 
 
 class UserRoleEnum(IntEnum):
@@ -62,6 +64,13 @@ class TokenIdentityModel(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
+class ServerRespModel(BaseModel, Generic[T]):
+    data: T
+    message: str
+
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+
+
 class EmailModel(BaseModel):
     email: str = Field(...)
 
@@ -95,5 +104,5 @@ class ResetPwdModel(BaseModel):
     new_password: str
 
 
-class UserLoginModel(EmailModel):
-    password: str = Field(...)
+class IdentityLoginModel(EmailModel):
+    password: Optional[str] = Field(default=None)
