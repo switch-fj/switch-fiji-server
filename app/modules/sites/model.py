@@ -4,7 +4,7 @@ from uuid import UUID
 from sqlalchemy import Column, Identity, Integer, String
 from sqlmodel import Field, Relationship, UniqueConstraint
 
-from app.database.base_model import MyAbstractSQLModel
+from app.shared.model import MyAbstractSQLModel
 
 if TYPE_CHECKING:
     from app.modules.clients.model import Client

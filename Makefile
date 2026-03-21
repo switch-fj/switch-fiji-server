@@ -8,8 +8,6 @@ lint:
 	uv run ruff check . --fix
 	uv run ruff format .
 
-m ?= "auto migration"
-
 alembic-gen:
 	uv run alembic revision --autogenerate -m "$(m)"
 

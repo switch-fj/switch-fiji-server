@@ -1,10 +1,15 @@
 from email.utils import parseaddr
+from typing import TYPE_CHECKING, Union
 from uuid import UUID
 
 from email_validator import EmailNotValidError, EmailSyntaxError
 from fastapi import Request
 from pydantic import validate_email
 from starlette_context import context
+
+if TYPE_CHECKING:
+    from app.modules.clients.model import Client
+    from app.modules.users.model import User
 
 
 def build_link_from_base_url(path: str) -> str:
@@ -41,3 +46,20 @@ def uuid_serializer(
     value: UUID,
 ):
     return str(value)
+
+
+def generate_token_identity_model(user: Union["User", "Client"]):
+    from app.shared.schema import TokenIdentityModel
+
+    token_identity_data = TokenIdentityModel.model_validate(
+        {
+            "id": user.id,
+            "uid": UUID(str(user.uid)),
+            "email": getattr(user, "email", None) or getattr(user, "client_email", None),
+            "identity": user.identity,
+            "role": user.role or None,
+            "is_email_verified": user.is_email_verified,
+        }
+    )
+
+    return token_identity_data

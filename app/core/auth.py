@@ -10,7 +10,7 @@ from jwt import ExpiredSignatureError, PyJWTError
 from passlib.context import CryptContext
 
 from app.database.redis import redis_client
-from app.modules.auth.schema import TokenUserModel
+from app.shared.schema import TokenIdentityModel
 
 from .config import Config
 from .exceptions import (
@@ -44,7 +44,7 @@ class Authentication:
 
     @staticmethod
     async def create_token(
-        user_data: TokenUserModel,
+        user_data: TokenIdentityModel,
         response: Optional[Response] = None,
         expiry: timedelta = None,
         refresh: bool = False,

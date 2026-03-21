@@ -2,11 +2,12 @@ import logging
 from typing import Any, Dict, Optional, Union
 
 from fastapi import Request
-from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from fastapi.security import HTTPBearer
 
 from app.core.auth import Authentication
 from app.core.exceptions import (
     AccessTokenRequired,
+    InsufficientPermissions,
     InvalidToken,
     RefreshTokenExpired,
     TokenExpired,
@@ -37,9 +38,9 @@ class TokenBearer(HTTPBearer):
             raise
         except Exception as e:
             logging.warning(f"Other exception in is_token_valid: {type(e).__name__}: {e}")
-            return False
+            raise InvalidToken()
 
-    async def __call__(self, request: Request) -> Optional[HTTPAuthorizationCredentials]:
+    async def __call__(self, request: Request):
         auth_header = request.headers.get("Authorization")
 
         if self.is_not_protected and not auth_header:
@@ -60,6 +61,44 @@ class TokenBearer(HTTPBearer):
 
 
 class AccessTokenBearer(TokenBearer):
-    async def verify_token_data(self, token_payload):
-        if token_payload and token_payload["refresh"]:
+    def __init__(
+        self,
+        required_identity: Optional[Union[int, list[int]]] = None,
+        required_role: Optional[Union[int, list[int]]] = None,
+        auto_error: bool = True,
+        is_not_protected: bool = False,
+    ):
+        super().__init__(auto_error=auto_error, is_not_protected=is_not_protected)
+        if isinstance(required_identity, int):
+            self.required_identity = [required_identity]
+        else:
+            self.required_identity = required_identity or []
+
+        if isinstance(required_role, int):
+            self.required_role = [required_role]
+        else:
+            self.required_role = required_role or []
+
+    async def verify_token_data(self, token_payload: dict):
+        if token_payload.get("refresh"):
             raise AccessTokenRequired()
+
+        token_user = token_payload.get("user")
+        if not token_user:
+            raise InvalidToken()
+
+        identity = token_user.get("identity")
+        if identity is None:
+            raise InvalidToken()
+
+        if self.required_identity:
+            if identity not in self.required_identity:
+                raise InsufficientPermissions()
+
+        if self.required_role:
+            role = token_user.get("role")
+            if role is None:
+                raise InvalidToken()
+
+            if role not in self.required_role:
+                raise InsufficientPermissions()
