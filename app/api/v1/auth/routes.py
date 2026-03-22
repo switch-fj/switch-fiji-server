@@ -6,11 +6,13 @@ from app.core.security import AccessTokenBearer
 from app.modules.users.schema import CreateUserModel
 from app.services.user import UserService, get_user_service
 from app.shared.schema import (
+    EmailModel,
     IdentityLoginModel,
     IdentityTypeEnum,
     ServerRespModel,
     TokenModel,
     UserRoleEnum,
+    VerifyLoginModel,
 )
 
 auth_router = APIRouter(prefix="/auth", tags=["auth"])
@@ -63,3 +65,46 @@ async def register(
             message="User registered!.",
         ).model_dump(),
     )
+
+
+@auth_router.post(
+    "/login/request",
+    status_code=status.HTTP_200_OK,
+    response_model=ServerRespModel[bool],
+)
+async def request_login(
+    data: EmailModel = Body(...),
+    user_service: UserService = Depends(get_user_service),
+):
+    await user_service.request_login(data=data)
+    return JSONResponse(
+        status_code=status.HTTP_200_OK,
+        content=ServerRespModel[bool](
+            data=True,
+            message="Login code sent to your email!.",
+        ).model_dump(),
+    )
+
+
+@auth_router.post(
+    "/login/verify",
+    status_code=status.HTTP_200_OK,
+    response_model=ServerRespModel[TokenModel],
+)
+async def verify_login_code(
+    data: VerifyLoginModel = Body(...),
+    user_service: UserService = Depends(get_user_service),
+):
+    token_identity_model, token_model = await user_service.verify_login_code(data=data)
+    response = JSONResponse(
+        status_code=status.HTTP_200_OK,
+        content=ServerRespModel[TokenModel](
+            data=token_model,
+            message="User token generated.",
+        ).model_dump(),
+    )
+
+    if token_identity_model:
+        await Authentication.create_token(user_data=token_identity_model, refresh=True, response=response)
+
+    return response

@@ -28,8 +28,12 @@ class IdentityTypeEnum(IntEnum):
     CLIENT = 1
 
 
+class PasscodeEnum(StrEnum):
+    LOGIN = "login"
+
+
 class AuthType(StrEnum):
-    TOKEN = "token"
+    OTP = "otp"
     PWD = "pwd"
 
 
@@ -109,19 +113,23 @@ class IdentityLoginModel(EmailModel):
     password: Optional[str] = Field(default=None)
 
 
+class VerifyLoginModel(EmailModel):
+    otp: str = Field(...)
+
+
 class HTMLContent:
     def __init__(self, _subject: str, _template: str):
         self.subject = _subject
         self.template = _template
 
 
-class EmailTypes:
+class MailTypes:
     EMAIL_VERIFICATION = HTMLContent("Verify your account", "email_verification.html")
     PWD_RESET = HTMLContent("Password reset", "pwd_reset.html")
     VERIFY_LOGIN = HTMLContent("Verify Login Request", "verify_login.html")
 
 
-class EmailModel(BaseModel):
+class MailModel(BaseModel):
     subject: str
     reciepients: list[str]
     payload: dict

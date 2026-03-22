@@ -1,4 +1,7 @@
+import hashlib
 import logging
+import secrets
+import string
 from datetime import datetime, timedelta
 from typing import Optional
 from uuid import uuid4
@@ -10,15 +13,18 @@ from jwt import ExpiredSignatureError, PyJWTError
 from passlib.context import CryptContext
 
 from app.database.redis import redis_client
-from app.shared.schema import TokenIdentityModel
+from app.shared.schema import PasscodeEnum, TokenIdentityModel
 
 from .config import Config
 from .exceptions import (
+    BadRequest,
     ExpiredLink,
     InvalidLink,
     InvalidToken,
     RefreshTokenExpired,
     TokenExpired,
+    TooManyAttempts,
+    TooManyRequest,
 )
 from .logger import setup_logger
 
@@ -30,9 +36,18 @@ class Authentication:
     ACCESS_TOKEN_EXPIRY_IN_SECONDS = 900  # 15 mins
     REFRESH_TOKEN_EXPIRY_IN_SECONDS = 604800  # 7 days
 
+    VERIFY_LOGIN_PASSCODE_EXPIRY_IN_SECONDS = 300  # 5 mins
+    RESEND_COOLDOWN = 60  # seconds
+    MAX_ATTEMPTS = 5
+
     ACCOUNT_VERIFY_TOKEN_EXPIRY_IN_SECONDS = 86400  # 24 hours
     PWD_RESET_TOKEN_EXPIRY_IN_SECONDS = 3600  # 1 hour
     serializer: URLSafeTimedSerializer = URLSafeTimedSerializer(secret_key=Config.JWT_SECRET, salt=Config.EMAIL_SALT)
+
+    @staticmethod
+    def generate_otp(length: int = 6) -> str:
+        alphabet = string.ascii_uppercase + string.digits
+        return "".join(secrets.choice(alphabet) for _ in range(length))
 
     @staticmethod
     def generate_password_hash(password: str) -> str:
@@ -175,6 +190,7 @@ class Authentication:
             return token
         except Exception as e:
             logging.error(f"Failed to set Redis key {redis_name}: {e}")
+            raise BadRequest()
 
     @staticmethod
     async def decode_url_safe_token(token: str, url_type: str = "verify", expiry: Optional[int] = None) -> dict:
@@ -203,3 +219,75 @@ class Authentication:
         except Exception as e:
             logging.error(f"Unexpected error: {e}")
             raise InvalidLink()
+
+    @staticmethod
+    async def generate_passcode(
+        email: str,
+        exp: Optional[int] = None,
+        type: PasscodeEnum = PasscodeEnum.LOGIN.value,
+    ):
+        otp = Authentication.generate_otp()
+        redis_name = f"{type}:{email}"
+        cooldown_key = f"{redis_name}:cooldown"
+
+        if await redis_client.client.exists(cooldown_key):
+            raise TooManyRequest("Please wait before requesting another code")
+
+        ex = exp if exp else Authentication.VERIFY_LOGIN_PASSCODE_EXPIRY_IN_SECONDS
+        hashed_otp = hashlib.sha256(otp.encode()).hexdigest()
+
+        try:
+            resp = await redis_client.client.set(
+                name=redis_name,
+                value=hashed_otp,
+                ex=ex,
+            )
+
+            if not resp:
+                raise ValueError("Failed to store token in Redis")
+
+            await redis_client.client.set(
+                name=cooldown_key,
+                value="1",
+                ex=Authentication.RESEND_COOLDOWN,
+            )
+
+            attempts_key = f"{redis_name}:attempts"
+            await redis_client.client.delete(attempts_key)
+
+            return otp
+        except Exception as e:
+            logging.error(f"Failed to set Redis key {e}")
+            raise BadRequest()
+
+    @staticmethod
+    async def decode_passcode(
+        otp: str,
+        email: str,
+        type: PasscodeEnum = PasscodeEnum.LOGIN.value,
+    ):
+        redis_name = f"{type}:{email}"
+        attempts_key = f"{redis_name}:attempts"
+
+        stored_otp = await redis_client.client.get(redis_name)
+
+        if not stored_otp:
+            raise InvalidLink()
+
+        attempts = await redis_client.client.incr(attempts_key)
+        await redis_client.client.expire(attempts_key, 300)
+
+        if attempts > Authentication.MAX_ATTEMPTS:
+            await redis_client.client.delete(redis_name)
+            raise TooManyAttempts("Too many incorrect attempts")
+
+        stored_otp = stored_otp.decode()
+        hashed_input = hashlib.sha256(otp.encode()).hexdigest()
+
+        if stored_otp != hashed_input:
+            raise InvalidLink()
+
+        await redis_client.client.delete(redis_name)
+        await redis_client.client.delete(attempts_key)
+
+        return True

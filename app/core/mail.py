@@ -6,7 +6,7 @@ from fastapi_mail import ConnectionConfig, FastMail, MessageSchema, MessageType
 from pydantic import EmailStr
 
 from app.core.config import Config
-from app.shared.schema import EmailTypes
+from app.shared.schema import MailTypes
 
 ROOT_DIR = Path(__file__).resolve().parent.parent
 
@@ -49,24 +49,33 @@ class Mailer:
         return message
 
     @staticmethod
-    async def send_email_verification(email: str, first_name: str, verification_url: str):
+    async def send_email_verification(email: str, verification_url: str):
         message = Mailer._create_message(
             recipients=[email],
-            subject=EmailTypes.EMAIL_VERIFICATION.subject,
+            subject=MailTypes.EMAIL_VERIFICATION.subject,
             template_body={
-                "first_name": first_name,
                 "verification_url": verification_url,
             },
         )
 
-        await Mailer.mail.send_message(message=message, template_name=EmailTypes.EMAIL_VERIFICATION.template)
+        await Mailer.mail.send_message(message=message, template_name=MailTypes.EMAIL_VERIFICATION.template)
 
     @staticmethod
-    async def send_password_reset(email: str, first_name: str, reset_url: str):
+    async def send_password_reset(email: str, reset_url: str):
         message = Mailer._create_message(
             recipients=[email],
-            subject=EmailTypes.PWD_RESET.subject,
-            template_body={"first_name": first_name, "reset_url": reset_url},
+            subject=MailTypes.PWD_RESET.subject,
+            template_body={"reset_url": reset_url},
         )
 
-        await Mailer.mail.send_message(message=message, template_name=EmailTypes.PWD_RESET.template)
+        await Mailer.mail.send_message(message=message, template_name=MailTypes.PWD_RESET.template)
+
+    @staticmethod
+    async def send_verify_login(email: str, text: str):
+        message = Mailer._create_message(
+            recipients=[email],
+            subject=MailTypes.VERIFY_LOGIN.subject,
+            template_body={"email": email, "text": text},
+        )
+
+        await Mailer.mail.send_message(message=message, template_name=MailTypes.VERIFY_LOGIN.template)

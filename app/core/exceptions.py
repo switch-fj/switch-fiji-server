@@ -113,6 +113,22 @@ class BadRequest(Exception):
         super().__init__(self.message)
 
 
+class TooManyRequest(Exception):
+    """Raised when a too many requests are made to the api."""
+
+    def __init__(self, message: Optional[str] = None):
+        self.message = message or "Too many request"
+        super().__init__(self.message)
+
+
+class TooManyAttempts(Exception):
+    """Raised when a too many attempts are made to the api."""
+
+    def __init__(self, message: Optional[str] = None):
+        self.message = message or "Too many attempts"
+        super().__init__(self.message)
+
+
 class UserNotVerified(Exception):
     """Raised when an unverified user calls an endpoint."""
 
@@ -161,6 +177,8 @@ def register_exceptions(app: FastAPI):
         create_exception_handler(status.HTTP_405_METHOD_NOT_ALLOWED),
     )
     app.add_exception_handler(BadRequest, create_exception_handler(status.HTTP_400_BAD_REQUEST))
+    app.add_exception_handler(TooManyRequest, create_exception_handler(status.HTTP_400_BAD_REQUEST))
+    app.add_exception_handler(TooManyAttempts, create_exception_handler(status.HTTP_400_BAD_REQUEST))
     app.add_exception_handler(UserNotVerified, create_exception_handler(status.HTTP_403_FORBIDDEN))
     app.add_exception_handler(SameNewOldPassword, create_exception_handler(status.HTTP_403_FORBIDDEN))
 
