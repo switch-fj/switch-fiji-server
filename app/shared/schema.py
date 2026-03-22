@@ -118,6 +118,7 @@ class HTMLContent:
 class EmailTypes:
     EMAIL_VERIFICATION = HTMLContent("Verify your account", "email_verification.html")
     PWD_RESET = HTMLContent("Password reset", "pwd_reset.html")
+    VERIFY_LOGIN = HTMLContent("Verify Login Request", "verify_login.html")
 
 
 class EmailModel(BaseModel):

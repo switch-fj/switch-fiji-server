@@ -13,20 +13,28 @@ class EmailTemplates:
         slug="email_verification",
         subject="Confirm your email.",
         template="email_verification.html",
-        body={"first_name": "John", "verification_url": "https://sample.com"},
+        body={"verification_url": "https://sample.com"},
     )
     PWD_RESET = EmailType(
         name="Password reset",
         slug="password_reset",
         subject="Password reset",
         template="pwd_reset.html",
-        body={"first_name": "John", "reset_url": "https://sample.com"},
+        body={"reset_url": "https://sample.com"},
+    )
+    VERIFY_LOGIN = EmailType(
+        name="Verify login",
+        slug="verify_login",
+        subject="Verify your login",
+        template="verify_login.html",
+        body={"email": "johndoe@gmail.com", "text": "123456"},
     )
 
     def all_templates(self):
         return {
             self.EMAIL_VERIFICATION.name: self.EMAIL_VERIFICATION,
             self.PWD_RESET.name: self.PWD_RESET,
+            self.VERIFY_LOGIN.name: self.VERIFY_LOGIN,
         }
 
     def get_template_by_slug(self, slug: str):
