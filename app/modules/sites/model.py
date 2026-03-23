@@ -31,6 +31,12 @@ class Site(MyAbstractSQLModel, table=True):
             nullable=False,
         ),
     )
+    site_name: str = Field(
+        sa_column=Column(
+            String(255),
+            nullable=False,
+        )
+    )
     gateway_id: str = Field(
         sa_column=Column(
             String(255),

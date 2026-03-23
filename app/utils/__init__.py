@@ -1,3 +1,4 @@
+from datetime import datetime
 from email.utils import parseaddr
 from typing import TYPE_CHECKING, Union
 from uuid import UUID
@@ -63,3 +64,10 @@ def generate_token_identity_model(user: Union["User", "Client"]):
     )
 
     return token_identity_data
+
+
+def build_ref_no(name: str, id: int):
+    prefix = name.upper().ljust(3, "X")[:3]
+    current_year = str(datetime.now().year)
+
+    return f"{prefix}-{current_year}-{str(id).zfill(4)}"
