@@ -7,8 +7,12 @@ RUN apt-get update && apt-get install -y \
     libffi-dev \
     libpq-dev \
     curl \
-    make \                
+    make \
     && rm -rf /var/lib/apt/lists/*
+
+# Install uv
+RUN curl -LsSf https://astral.sh/uv/install.sh | sh
+ENV PATH="/root/.local/bin:$PATH"
 
 # Create non-root user
 RUN groupadd -g 1000 celerygroup \
@@ -31,5 +35,4 @@ RUN chown -R celeryuser:celerygroup /app
 # Switch to non-root user
 USER celeryuser
 
-# Default command
 CMD ["make", "prod"]
