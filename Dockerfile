@@ -15,7 +15,7 @@ RUN curl -LsSf https://astral.sh/uv/install.sh | UV_INSTALL_DIR=/usr/local/bin s
 
 # Create non-root user
 RUN groupadd -g 1000 celerygroup \
-    && useradd -u 1000 -g celerygroup celeryuser \
+    && useradd -u 1000 -g celerygroup -m celeryuser \
     && mkdir /app \
     && chown -R celeryuser:celerygroup /app
 

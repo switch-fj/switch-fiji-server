@@ -2,9 +2,12 @@ from sqlalchemy import select
 
 from app.core.auth import Authentication
 from app.core.config import Config
+from app.core.logger import setup_logger
 from app.database.postgres import AsyncSessionMaker
 from app.modules.users.model import User
 from app.shared.schema import UserRoleEnum
+
+seed_admin_logger = setup_logger("app.lifecycle")
 
 
 async def seed_admin():
@@ -24,6 +27,6 @@ async def seed_admin():
             )
             session.add(new_admin)
             await session.commit()
-            print("[seed] Default admin created.")
+            seed_admin_logger.info("[seed] Default admin created.")
         else:
-            print("[seed] Admin already exists.")
+            seed_admin_logger.info("[seed] Admin already exists.")
