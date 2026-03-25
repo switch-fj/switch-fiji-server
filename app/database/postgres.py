@@ -6,6 +6,9 @@ from sqlmodel import SQLModel
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.core.config import Config
+from app.core.logger import setup_logger
+
+logger = setup_logger(__name__)
 
 async_engine: AsyncEngine = create_async_engine(url=Config.DATABASE_URL)
 AsyncSessionMaker = sessionmaker(bind=async_engine, class_=AsyncSession, expire_on_commit=False)
@@ -13,7 +16,16 @@ AsyncSessionMaker = sessionmaker(bind=async_engine, class_=AsyncSession, expire_
 
 async def init_db():
     async with async_engine.begin() as conn:
-        await conn.run_sync(SQLModel.metadata.create_all)
+        try:
+            logger.info("🔄 Connecting to Postgres...")
+            await conn.run_sync(SQLModel.metadata.create_all)
+            logger.info("successfully connected to Postgres.")
+        except ConnectionError as e:
+            logger.error(f"Failed to connect to Postgres: {e}")
+            raise
+        except Exception as e:
+            logger.error(f"Unexpected error connecting to Postgres: {e}")
+            raise
 
 
 async def get_session() -> AsyncGenerator[AsyncSession, None]:

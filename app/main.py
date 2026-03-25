@@ -16,7 +16,7 @@ from app.database.postgres import init_db
 from app.database.redis import init_redis
 from app.scripts.seed import seed_admin
 
-app_logger = setup_logger("app.lifecycle")
+app_logger = setup_logger(__name__)
 
 
 def main(*, use_lifespan: bool = True, enable_middlewares: bool = True):
@@ -58,6 +58,10 @@ def main(*, use_lifespan: bool = True, enable_middlewares: bool = True):
 
     template_registry = TemplateRegistry()
     template_registry.mount_static(app=app)
+
+    @app.get("/")
+    async def root():
+        return {"message": "Switch IoT Network backend is running 🚀"}
 
     app.include_router(auth_router, prefix=f"{api_version}")
     app.include_router(admin_router, prefix=f"{api_version}")

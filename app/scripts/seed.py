@@ -7,7 +7,7 @@ from app.database.postgres import AsyncSessionMaker
 from app.modules.users.model import User
 from app.shared.schema import UserRoleEnum
 
-seed_admin_logger = setup_logger("app.lifecycle")
+logger = setup_logger(__name__)
 
 
 async def seed_admin():
@@ -27,6 +27,6 @@ async def seed_admin():
             )
             session.add(new_admin)
             await session.commit()
-            seed_admin_logger.info("[seed] Default admin created.")
+            logger.info("[seed] Default admin created.")
         else:
-            seed_admin_logger.info("[seed] Admin already exists.")
+            logger.info("[seed] Admin already exists.")
