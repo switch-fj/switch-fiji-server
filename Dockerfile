@@ -1,4 +1,4 @@
-FROM python:3.13-slim
+FROM python:3.11-slim
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
@@ -7,6 +7,7 @@ RUN apt-get update && apt-get install -y \
     libffi-dev \
     libpq-dev \
     curl \
+    make \                
     && rm -rf /var/lib/apt/lists/*
 
 # Create non-root user
@@ -17,12 +18,11 @@ RUN groupadd -g 1000 celerygroup \
 
 WORKDIR /app
 
-# Copy dependencies
-COPY requirements.txt /app/
+# Copy dependency files
+COPY pyproject.toml uv.lock /app/
 
-# Upgrade pip and install Python packages
-RUN pip install --upgrade pip
-RUN pip install --no-cache-dir -r requirements.txt
+# Install dependencies using uv
+RUN uv sync --frozen --no-dev
 
 # Copy source code
 COPY . /app
@@ -32,4 +32,4 @@ RUN chown -R celeryuser:celerygroup /app
 USER celeryuser
 
 # Default command
-CMD ["sh", "-c", "uvicorn src:app --host 0.0.0.0 --port ${PORT:-8000} --proxy-headers"]
+CMD ["make", "prod"]
