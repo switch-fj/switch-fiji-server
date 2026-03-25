@@ -60,6 +60,19 @@ class UserRepository:
 
         return user
 
+    async def verify_email(self, email: str):
+        user = await self.get_user_by_mail(email=email)
+
+        if not user:
+            raise NotFound("user not found")
+        user.is_email_verified = True
+
+        self.session.add(user)
+        await self.session.commit()
+        await self.session.refresh(user)
+
+        return user
+
 
 def get_user_repo(session: AsyncSession = Depends(get_session)):
     return UserRepository(session=session)

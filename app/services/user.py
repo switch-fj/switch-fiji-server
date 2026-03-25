@@ -1,8 +1,15 @@
 from fastapi import Depends
 
 from app.core.auth import Authentication
-from app.core.exceptions import NotFound, UserEmailExists, WrongCredentials
-from app.jobs.auth import send_verify_login_task
+from app.core.exceptions import (
+    InvalidToken,
+    NotFound,
+    UserEmailExists,
+    WrongCredentials,
+)
+from app.core.logger import setup_logger
+from app.database.redis import redis_client
+from app.jobs.auth import send_email_verification_task, send_verify_login_task
 from app.modules.users.repository import UserRepository, get_user_repo
 from app.modules.users.schema import CreateUserModel
 from app.shared.schema import (
@@ -10,9 +17,12 @@ from app.shared.schema import (
     EmailModel,
     IdentityLoginModel,
     TokenModel,
+    UserResponseModel,
     VerifyLoginModel,
 )
-from app.utils import generate_token_identity_model
+from app.utils import generate_token_identity_model, get_request_origin
+
+logger = setup_logger(__name__)
 
 
 class UserService:
@@ -26,6 +36,27 @@ class UserService:
             email=email,
             text=text,
         )
+
+    async def _initiate_acct_verification_task(self, email: str):
+        token_payload = {"email": email}
+        email_token = await Authentication.create_url_safe_token(data=token_payload)
+        verification_url = f"{get_request_origin()}/auth/verify?token={email_token}"
+
+        send_email_verification_task.delay(
+            email=email,
+            verification_url=verification_url,
+        )
+
+    async def get_current_client(self, token_payload: dict):
+        user_email = token_payload["user"]["email"]
+        client = await self.user_repo.get_user_by_mail(
+            email=user_email,
+        )
+
+        if not client:
+            raise NotFound("Client doesn't exist.")
+
+        return UserResponseModel.model_validate(client).model_dump()
 
     async def login(self, data: IdentityLoginModel):
         user = await self.user_repo.get_user_by_mail(email=data.email)
@@ -128,6 +159,47 @@ class UserService:
                 auth_type=AuthType.OTP.value,
             ),
         )
+
+    async def verify_account(self, token: str):
+        try:
+            payload = await Authentication.decode_url_safe_token(token=token)
+            user_email = payload.get("email")
+
+            if not user_email:
+                raise InvalidToken("Invalid token.")
+
+            user = await self.user_repo.get_user_by_mail(user_email)
+
+            if not user:
+                raise NotFound("User doesn't exist.")
+
+            if user.is_email_verified:
+                return "Account already verified."
+
+            await self.user_repo.verify_email(email=user.email)
+            await redis_client.add_to_blocklist(token)
+
+            return "Account verified successfully."
+
+        except Exception as e:
+            logger.error(f"Error verifying account: {e}")
+            raise
+
+    async def send_verification_email(self, data: EmailModel):
+        user = await self.user_repo.get_user_by_mail(email=data.email)
+
+        if not user:
+            raise NotFound("user doesn't exist.")
+
+        if user.is_email_verified:
+            return "Account already verified."
+
+        if await redis_client.client.exists(f"verify:{user.email}") > 0:
+            return "A verification email was recently sent. Check your inbox."
+
+        await self._initiate_acct_verification_task(email=user.email)
+
+        return "Verification email sent. Check your inbox"
 
 
 def get_user_service(user_repo: UserRepository = Depends(get_user_repo)):

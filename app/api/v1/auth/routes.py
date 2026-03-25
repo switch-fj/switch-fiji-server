@@ -108,3 +108,68 @@ async def verify_login_code(
         await Authentication.create_token(user_data=token_identity_model, refresh=True, response=response)
 
     return response
+
+
+@auth_router.post(
+    "/verify/send",
+    status_code=status.HTTP_200_OK,
+    response_model=ServerRespModel[bool],
+)
+async def send_verify_acct(
+    email: EmailModel,
+    user_service: UserService = Depends(get_user_service),
+):
+    resp = await user_service.send_verification_email(email=email)
+
+    return JSONResponse(
+        status_code=status.HTTP_200_OK,
+        content=ServerRespModel[TokenModel](
+            data=True,
+            message=resp,
+        ).model_dump(),
+    )
+
+
+@auth_router.get(
+    "/auth/profile",
+    status_code=status.HTTP_200_OK,
+    response_model=ServerRespModel[bool],
+)
+async def profile(
+    token_payload: TokenModel = Depends(
+        AccessTokenBearer(
+            required_identity=[IdentityTypeEnum.CLIENT.value],
+            required_role=[UserRoleEnum.ADMIN.value],
+        )
+    ),
+    user_service: UserService = Depends(get_user_service),
+):
+    user_resp = await user_service.get_current_client(token_payload=token_payload)
+
+    return JSONResponse(
+        status_code=status.HTTP_200_OK,
+        content=ServerRespModel[TokenModel](
+            data=user_resp,
+            message="Profile retrieved",
+        ).model_dump(),
+    )
+
+
+@auth_router.get(
+    "/verify/acct/{token}",
+    status_code=status.HTTP_200_OK,
+    response_model=ServerRespModel[bool],
+)
+async def verify_acct(
+    token: str,
+    user_service: UserService = Depends(get_user_service),
+):
+    resp = await user_service.verify_account(token=token)
+
+    return JSONResponse(
+        status_code=status.HTTP_200_OK,
+        content=ServerRespModel[TokenModel](
+            data=True,
+            message=resp,
+        ).model_dump(),
+    )

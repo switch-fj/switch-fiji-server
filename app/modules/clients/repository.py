@@ -64,6 +64,19 @@ class ClientRepository:
 
         return client
 
+    async def verify_email(self, email: str):
+        client = await self.get_client_by_mail(email=email)
+
+        if not client:
+            raise NotFound("client not found")
+        client.is_email_verified = True
+
+        self.session.add(client)
+        await self.session.commit()
+        await self.session.refresh(client)
+
+        return client
+
 
 def get_client_repo(session: AsyncSession = Depends(get_session)):
     return ClientRepository(session=session)

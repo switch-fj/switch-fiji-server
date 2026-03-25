@@ -133,6 +133,13 @@ class MailModel(BaseModel):
     attachments: list[UploadFile] = ([],)
 
 
+class UserResponseModel(DBModel):
+    uid: int
+    email: str
+    is_email_verified: bool
+    role: int
+
+
 class CurrencyEnum(StrEnum):
     AED = "AED"
     AFN = "AFN"
