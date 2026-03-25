@@ -131,7 +131,7 @@ async def send_verify_acct(
 
 
 @auth_router.get(
-    "/auth/profile",
+    "/profile",
     status_code=status.HTTP_200_OK,
     response_model=ServerRespModel[bool],
 )
