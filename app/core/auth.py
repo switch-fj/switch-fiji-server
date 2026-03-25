@@ -6,11 +6,11 @@ from datetime import datetime, timedelta
 from typing import Optional
 from uuid import uuid4
 
+import bcrypt
 import jwt
 from fastapi import Response
 from itsdangerous import BadSignature, SignatureExpired, URLSafeTimedSerializer
 from jwt import ExpiredSignatureError, PyJWTError
-from passlib.context import CryptContext
 
 from app.database.redis import redis_client
 from app.shared.schema import PasscodeEnum, TokenIdentityModel
@@ -32,7 +32,6 @@ logger = setup_logger(__name__)
 
 
 class Authentication:
-    password_context = CryptContext(schemes=["bcrypt"])
     ACCESS_TOKEN_EXPIRY_IN_SECONDS = 900  # 15 mins
     REFRESH_TOKEN_EXPIRY_IN_SECONDS = 604800  # 7 days
 
@@ -51,11 +50,11 @@ class Authentication:
 
     @staticmethod
     def generate_password_hash(password: str) -> str:
-        return Authentication.password_context.hash(password)
+        return bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
 
     @staticmethod
     def verify_password(password: str, hash: str) -> bool:
-        return Authentication.password_context.verify(password, hash)
+        return bcrypt.checkpw(password.encode("utf-8"), hash.encode("utf-8"))
 
     @staticmethod
     async def create_token(
