@@ -1,10 +1,17 @@
 from datetime import datetime, timezone
+from decimal import Decimal
 from enum import IntEnum, StrEnum
 from typing import Optional
 from uuid import UUID
 
 from dateutil.relativedelta import relativedelta
-from pydantic import BaseModel, Field, field_validator, model_validator
+from pydantic import (
+    BaseModel,
+    Field,
+    PrivateAttr,
+    field_validator,
+    model_validator,
+)
 
 from app.shared.schema import CurrencyEnum
 
@@ -34,7 +41,7 @@ class ContractBillingFrequencyEnum(IntEnum):
     ANNUALLY = "annually"
 
 
-class TariffTypeEnum(StrEnum):
+class TariffSlotTypeEnum(StrEnum):
     FIXED = "Fixed"
     VARIABLE = "Variable"
 
@@ -44,23 +51,27 @@ class TariffSlotEnum(StrEnum):
     B = "B"
 
 
-class Tariff(BaseModel):
+class TariffSlotModel(BaseModel):
+    _start_time: str = PrivateAttr("")
+    _end_time: str = PrivateAttr("")
+
     period_number: int = Field(ge=1, le=4)
     slot: TariffSlotEnum = Field(...)
-    tariff_type: TariffTypeEnum = Field(...)
-    start_time: str = Field(...)
-    end_time: str = Field(...)
+    slot_type: TariffSlotTypeEnum = Field(...)
+    rate: int = Field(...)
 
-    @field_validator("start_time", "end_time", mode="before")
-    @classmethod
-    def validate_time_format(cls, value) -> Optional[str]:
-        if value is None:
-            return None
-        try:
-            datetime.strptime(value, "%H:%M")
-        except ValueError:
-            raise ValueError(f"Time must be in HH:MM format, got '{value}'")
-        return value
+    @model_validator(mode="after")
+    def validate(self):
+        match self.slot:
+            case TariffSlotEnum.A:
+                self._start_time = "07:30"
+                self._end_time = "16:30"
+            case TariffSlotEnum.B:
+                self._start_time = "16:30"
+                self._end_time = "07:30"
+            case _:
+                pass
+        return self
 
 
 class CreateContractModel(BaseModel):
@@ -70,30 +81,41 @@ class CreateContractModel(BaseModel):
     system_mode: ContractSystemModeEnum = Field(...)
     currency: CurrencyEnum = Field(...)
 
+    @model_validator(mode="after")
+    def validate_contract(self):
+        contract_type = self.contract_type
+        system_mode = self.system_mode
+
+        if contract_type == ContractTypeEnum.LEASE.value and system_mode == ContractSystemModeEnum.OFF_GRID:
+            raise ValueError(f"Contract type of {contract_type} can't have system mode of {system_mode}")
+
 
 class CreateContractDetailsModel(BaseModel):
-    status: ContractDetailsStatus = Field(default=ContractDetailsStatus.DRAFT.value)
-    term_years: Optional[int] = Field(default=None)
-    billing_frequency: Optional[ContractBillingFrequencyEnum] = Field(default=None)
-    implementation_period: Optional[int] = Field(default=None)
-    signed_at: Optional[datetime] = Field(default=None)
-    commissioned_at: Optional[datetime] = Field(default=None)
-    end_at: Optional[datetime] = Field(default=None)
-    monthly_baseline_consumption_kwh: Optional[float] = Field(default=None)
-    minimum_consumption_monthly_kwh: Optional[float] = Field(default=None)
-    minimum_spend: Optional[float] = Field(default=None)
+    term_years: int = Field(default=None)
+    billing_frequency: ContractBillingFrequencyEnum = Field(default=None)
+    implementation_period: int = Field(default=None)
+    signed_at: datetime = Field(default=None)
+    commissioned_at: datetime = Field(default=None)
+    end_at: datetime = Field(default=None)
     efl_rate: Optional[float] = Field(default=None)
-    tariff_period: Optional[int] = Field(default=None, max=4, min=2)
-    tariffs: Optional[list[Tariff]] = Field(...)
 
-    # PPA / On-grid specific
+    # system mode (On-grid) specific
     system_size_kwp: Optional[float] = Field(default=None)
     guaranteed_production_kwh_per_kwp: Optional[float] = Field(default=None)
     grid_meter_reading_at_commissioning: Optional[float] = Field(default=None)
 
     # On Grid Lease specific
-    equipment_lease_amount: Optional[float] = Field(default=None)
-    maintenance_amount: Optional[float] = Field(default=None)
+    equipment_lease_amount: Optional[Decimal] = Field(default=None)
+    maintenance_amount: Optional[Decimal] = Field(default=None)
+    total: Optional[Decimal] = Field(default=None)
+
+    # PPA specific
+    monthly_baseline_consumption_kwh: Optional[float] = Field(default=None)
+    minimum_consumption_monthly_kwh: Optional[float] = Field(default=None)
+    minimum_spend: Optional[float] = Field(default=None)
+    tariff_periods: Optional[int] = Field(default=None, max=4, min=2)
+    tariffs: Optional[list[TariffSlotModel]] = Field(default=None)
+    estimated_utility: Optional[int] = Field(default=None)
 
     @field_validator("signed_at", "commissioned_at", "end_at", mode="before")
     @classmethod
@@ -151,13 +173,13 @@ class CreateContractDetailsModel(BaseModel):
         - Each period number must be represented (1 through tariff_period)
         - Each period must have both slot A and slot B
         """
-        if not self.tariff_period or not self.tariffs:
+        if not self.tariff_periods or not self.tariffs:
             return
 
-        expected_count = self.tariff_period * 2  # A + B per period
+        expected_count = self.tariff_periods * 2  # A + B per period
         if len(self.tariffs) != expected_count:
             raise ValueError(
-                f"Expected {expected_count} tariffs for {self.tariff_period} "
+                f"Expected {expected_count} tariffs for {self.tariff_periods} "
                 f"period(s) (A + B per period), got {len(self.tariffs)}"
             )
 
@@ -169,7 +191,7 @@ class CreateContractDetailsModel(BaseModel):
         for tariff in self.tariffs:
             period_slots[tariff.period_number].add(tariff.slot.value)
 
-        for period_num in range(1, self.tariff_period + 1):
+        for period_num in range(1, self.tariff_periods + 1):
             slots = period_slots.get(period_num, set())
             if slots != {"A", "B"}:
                 raise ValueError(

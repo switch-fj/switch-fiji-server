@@ -1,4 +1,5 @@
 from datetime import datetime
+from decimal import Decimal
 from typing import TYPE_CHECKING, Optional
 from uuid import UUID
 
@@ -9,8 +10,6 @@ from app.modules.contracts.schema import (
     ContractDetailsStatus,
     ContractSystemModeEnum,
     ContractTypeEnum,
-    TariffSlotEnum,
-    TariffTypeEnum,
 )
 from app.shared.model import MyAbstractSQLModel
 from app.shared.schema import CurrencyEnum
@@ -42,17 +41,15 @@ class ContractDetails(MyAbstractSQLModel, table=True):
     contract_uid: UUID = Field(foreign_key="contracts.uid", index=True, nullable=False)
     status: ContractDetailsStatus = Field(default=ContractDetailsStatus.DRAFT.value, sa_type=ContractDetailsStatus)
     # applies to all contract types
-    term_years: Optional[int] = Field(nullable=True)
-    billing_frequency: Optional[ContractBillingFrequencyEnum] = Field(
-        nullable=True, sa_type=ContractBillingFrequencyEnum
-    )
-    implementation_period: Optional[int] = Field(nullable=True)
-    signed_at: Optional[datetime] = Field(
+    term_years: int = Field()
+    billing_frequency: ContractBillingFrequencyEnum = Field(sa_type=ContractBillingFrequencyEnum)
+    implementation_period: int = Field()
+    signed_at: datetime = Field(
         default=None,
         sa_type=DateTime(timezone=True),
-        sa_column_kwargs={"nullable": True},
+        sa_column_kwargs={"nullable": False},
     )
-    commissioned_at: Optional[datetime] = Field(
+    commissioned_at: datetime = Field(
         default=None,
         description="""
         Date the system was commissioned.
@@ -60,62 +57,45 @@ class ContractDetails(MyAbstractSQLModel, table=True):
         All tariff periods run sequentially from this date.
         """,
         sa_type=DateTime(timezone=True),
-        sa_column_kwargs={"nullable": True},
+        sa_column_kwargs={"nullable": False},
     )
-    end_at: Optional[datetime] = Field(
+    end_at: datetime = Field(
         default=None,
         sa_type=DateTime(timezone=True),
-        sa_column_kwargs={"nullable": True},
+        sa_column_kwargs={"nullable": False},
     )
-    monthly_baseline_consumption_kwh: Optional[float] = Field(nullable=True)
-    minimum_consumption_monthly_kwh: Optional[float] = Field(nullable=True)
-    minimum_spend: Optional[float] = Field(nullable=True)
+
     # EFL rate (global, entered once — variable tariffs are pegged to this)
     efl_rate: Optional[float] = Field(nullable=True)
 
-    # PPA / On-grid specific
+    # ppa specific
+    tariff_periods: Optional[int] = Field(nullable=True)  # 1, 2, 3, 4
+    tariff_slots: Optional[str] = Field(nullable=True)
+    monthly_baseline_consumption_kwh: Optional[float] = Field(nullable=True)
+    minimum_consumption_monthly_kwh: Optional[float] = Field(nullable=True)
+    minimum_spend: Optional[float] = Field(nullable=True)
+
+    # ppa (on-grid) specific
+    estimated_utility: Optional[int] = Field(nullable=True)
+
+    # system mode (On-grid) specific
     system_size_kwp: Optional[float] = Field(nullable=True)
     guaranteed_production_kwh_per_kwp: Optional[float] = Field(nullable=True)
     grid_meter_reading_at_commissioning: Optional[float] = Field(nullable=True)
 
-    # On Grid Lease specific
-    equipment_lease_amount: Optional[float] = Field(nullable=True)
-    maintenance_amount: Optional[float] = Field(nullable=True)
+    # Lease (off-grid) specific
+    equipment_lease_amount: Optional[Decimal] = Field(nullable=True)
+    maintenance_amount: Optional[Decimal] = Field(nullable=True)
+    total: Optional[Decimal] = Field(nullable=True)
 
-    contract: Optional["Contract"] = Relationship(back_populates="details")
-    tariff_periods: list["TariffPeriod"] = Relationship(back_populates="contract_details")
+    contract: "Contract" = Relationship(
+        back_populates="details",
+        sa_relationship_kwargs={"foreign_keys": "[ContractDetails.contract_uid]"},
+    )
 
+    @property
+    def tariff_duration(self):
+        if not self.tariff_periods:
+            return None
 
-class TariffPeriod(MyAbstractSQLModel, table=True):
-    """
-    One row per tariff period (max 4 per contract).
-    Period number is 1-indexed: 1, 2, 3, 4.
-    Duration is in years, always sequential from commissioning date.
-    """
-
-    __tablename__ = "tariff_periods"
-
-    contract_details_uid: UUID = Field(foreign_key="contract_details.uid", index=True, nullable=False)
-    period_number: int = Field(nullable=False)  # 1, 2, 3, 4
-    duration_years: int = Field(nullable=False)  # e.g. 5
-
-    contract_details: Optional["ContractDetails"] = Relationship(back_populates="tariff_periods")
-    tariffs: list["Tariff"] = Relationship(back_populates="tariff_period")
-
-
-class Tariff(MyAbstractSQLModel, table=True):
-    """
-    One row per tariff slot within a period.
-    Each period has two slots: A and B (e.g. Tariff 1/A and Tariff 1/B).
-    """
-
-    __tablename__ = "tariffs"
-
-    tariff_period_uid: UUID = Field(foreign_key="tariff_periods.uid", index=True, nullable=False)
-    slot: TariffSlotEnum = Field(nullable=False)  # A | B
-    tariff_type: TariffTypeEnum = Field(nullable=False)  # Fixed | Variable
-    rate: float = Field(...)
-    start_time: str = Field(nullable=True)  # "07:30"
-    end_time: str = Field(nullable=True)  # "16:30"
-
-    tariff_period: Optional["TariffPeriod"] = Relationship(back_populates="tariffs")
+        return round(self.term_years / self.tariff_periods, 3)
