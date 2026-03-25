@@ -22,14 +22,14 @@ async def root():
 async def register(
     data: CreateClientModel = Body(...),
     client_service: ClientService = Depends(get_client_service),
-    token_data: dict = Depends(
+    token_payload: dict = Depends(
         AccessTokenBearer(
             required_identity=[IdentityTypeEnum.USER.value],
             required_role=[UserRoleEnum.ENGINEER.value],
         )
     ),
 ):
-    await client_service.register(token_data=token_data, data=data)
+    await client_service.register(token_payload=token_payload, data=data)
 
     return JSONResponse(
         status_code=status.HTTP_200_OK,

@@ -1,19 +1,22 @@
 from datetime import datetime, timezone
 from decimal import Decimal
-from enum import IntEnum, StrEnum
+from enum import StrEnum
 from typing import Optional
 from uuid import UUID
 
 from dateutil.relativedelta import relativedelta
 from pydantic import (
     BaseModel,
+    ConfigDict,
     Field,
     PrivateAttr,
+    field_serializer,
     field_validator,
     model_validator,
 )
 
-from app.shared.schema import CurrencyEnum
+from app.shared.schema import CurrencyEnum, DBModel
+from app.utils import uuid_serializer
 
 
 class ContractTypeEnum(StrEnum):
@@ -32,7 +35,7 @@ class ContractDetailsStatus(StrEnum):
     EXPIRED = "expired"
 
 
-class ContractBillingFrequencyEnum(IntEnum):
+class ContractBillingFrequencyEnum(StrEnum):
     WEEKLY = "weekly"
     BI_WEEKLY = "bi-weekly"
     MONTHLY = "monthly"
@@ -197,3 +200,59 @@ class CreateContractDetailsModel(BaseModel):
                 raise ValueError(
                     f"Tariff period {period_num} must have both slot A and slot B, got: {slots or 'nothing'}"
                 )
+
+
+class ContractResponse(DBModel):
+    user_uid: UUID
+    client_uid: UUID
+    site_uid: UUID
+    contract_ref: str
+    contract_type: ContractTypeEnum
+    system_mode: ContractSystemModeEnum
+    currency: CurrencyEnum
+
+    @field_serializer("user_uid", "client_uid", "site_uid")
+    def serialize_contracts_uuid(self, value: UUID):
+        return uuid_serializer(value)
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class ContractDetailsResponse(DBModel):
+    contract_uid: UUID
+    term_years: Optional[int] = None
+    billing_frequency: Optional[ContractBillingFrequencyEnum] = None
+    implementation_period: Optional[int] = None
+    signed_at: Optional[datetime] = None
+    commissioned_at: Optional[datetime] = None
+    end_at: Optional[datetime] = None
+    efl_rate: Optional[float] = None
+
+    # On-grid specific
+    system_size_kwp: Optional[float] = None
+    guaranteed_production_kwh_per_kwp: Optional[float] = None
+    grid_meter_reading_at_commissioning: Optional[float] = None
+
+    # On Grid Lease specific
+    equipment_lease_amount: Optional[Decimal] = None
+    maintenance_amount: Optional[Decimal] = None
+    total: Optional[Decimal] = None
+
+    # PPA specific
+    monthly_baseline_consumption_kwh: Optional[float] = None
+    minimum_consumption_monthly_kwh: Optional[float] = None
+    minimum_spend: Optional[float] = None
+    tariff_periods: Optional[int] = None
+    tariffs: Optional[list[TariffSlotModel]] = None
+    estimated_utility: Optional[int] = None
+
+    @field_serializer("signed_at", "commissioned_at", "end_at")
+    def serialize_contract_dt(self, value: datetime):
+        if value:
+            return value.isoformat()
+
+    @field_serializer("contract_uid")
+    def serialize_other_uuid(self, value: UUID):
+        return uuid_serializer(value)
+
+    model_config = ConfigDict(from_attributes=True)

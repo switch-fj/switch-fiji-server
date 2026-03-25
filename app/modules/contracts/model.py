@@ -3,7 +3,7 @@ from decimal import Decimal
 from typing import TYPE_CHECKING, Optional
 from uuid import UUID
 
-from sqlmodel import DateTime, Field, Relationship
+from sqlmodel import DateTime, Enum, Field, Relationship
 
 from app.modules.contracts.schema import (
     ContractBillingFrequencyEnum,
@@ -26,9 +26,12 @@ class Contract(MyAbstractSQLModel, table=True):
     client_uid: UUID = Field(foreign_key="clients.uid", index=True, nullable=False)
     site_uid: UUID = Field(foreign_key="sites.uid", index=True, nullable=False)
     contract_ref: str = Field(nullable=False)
-    contract_type: ContractTypeEnum = Field(nullable=False)
-    system_mode: ContractSystemModeEnum = Field(nullable=False)
-    currency: CurrencyEnum = Field(nullable=False)
+    contract_type: ContractTypeEnum = Field(sa_type=Enum(ContractTypeEnum), nullable=False)
+    system_mode: ContractSystemModeEnum = Field(
+        sa_type=Enum(ContractSystemModeEnum),
+        nullable=False,
+    )
+    currency: CurrencyEnum = Field(sa_type=Enum(CurrencyEnum), nullable=False)
 
     client: "Client" = Relationship(sa_relationship_kwargs={"foreign_keys": "[Contract.client_uid]"})
     site: "Site" = Relationship(sa_relationship_kwargs={"foreign_keys": "[Contract.site_uid]"})
@@ -39,10 +42,12 @@ class ContractDetails(MyAbstractSQLModel, table=True):
     __tablename__ = "contract_details"
 
     contract_uid: UUID = Field(foreign_key="contracts.uid", index=True, nullable=False)
-    status: ContractDetailsStatus = Field(default=ContractDetailsStatus.DRAFT.value, sa_type=ContractDetailsStatus)
+    status: ContractDetailsStatus = Field(
+        default=ContractDetailsStatus.DRAFT.value, sa_type=Enum(ContractDetailsStatus)
+    )
     # applies to all contract types
     term_years: int = Field()
-    billing_frequency: ContractBillingFrequencyEnum = Field(sa_type=ContractBillingFrequencyEnum)
+    billing_frequency: ContractBillingFrequencyEnum = Field(sa_type=Enum(ContractBillingFrequencyEnum))
     implementation_period: int = Field()
     signed_at: datetime = Field(
         default=None,

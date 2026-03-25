@@ -70,8 +70,8 @@ class UserService:
             ),
         )
 
-    async def register(self, token_data: dict, data: CreateUserModel):
-        token_user = token_data.get("user")
+    async def register(self, token_payload: dict, data: CreateUserModel):
+        token_user = token_payload.get("user")
         token_user_uid = token_user.get("uid")
         user = await self.user_repo.get_user_by_mail(email=data.email)
 

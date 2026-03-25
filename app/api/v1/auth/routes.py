@@ -50,14 +50,14 @@ async def login(
 async def register(
     data: CreateUserModel = Body(...),
     user_service: UserService = Depends(get_user_service),
-    token_data: dict = Depends(
+    token_payload: dict = Depends(
         AccessTokenBearer(
             required_identity=[IdentityTypeEnum.USER.value],
             required_role=[UserRoleEnum.ADMIN.value],
         )
     ),
 ):
-    await user_service.register(token_data=token_data, data=data)
+    await user_service.register(token_payload=token_payload, data=data)
     return JSONResponse(
         status_code=status.HTTP_200_OK,
         content=ServerRespModel[bool](

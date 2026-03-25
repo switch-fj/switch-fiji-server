@@ -10,7 +10,6 @@ class MyAbstractSQLModel(SQLModel):
     __abstract__ = True
 
     uid: UUID = Field(
-        description="internal FK",
         primary_key=True,
         default_factory=uuid4,
         index=True,

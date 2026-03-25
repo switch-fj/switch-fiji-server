@@ -70,8 +70,8 @@ class ClientService:
             ),
         )
 
-    async def register(self, token_data: dict, data: CreateClientModel):
-        token_user = token_data.get("user")
+    async def register(self, token_payload: dict, data: CreateClientModel):
+        token_user = token_payload.get("user")
         token_user_uid = token_user.get("uid")
         client = await self.client_repo.get_client_by_mail(email=data.client_email)
 

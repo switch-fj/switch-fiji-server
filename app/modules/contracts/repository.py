@@ -117,6 +117,8 @@ class ContractRepository:
             contract_details = ContractDetails(**data_dict)
             await self.session.add(contract_details)
             await self.session.commit()
+
+            return contract_details
         except Exception:
             await self.session.rollback()
 
