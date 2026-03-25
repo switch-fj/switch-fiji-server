@@ -16,6 +16,8 @@ class Settings(BaseSettings):
     # auth
     JWT_SECRET: str
     JWT_ALGORITHM: str
+    DEFAULT_ADMIN_EMAIL: str
+    DEFAULT_ADMIN_PASS: str
 
     # database
     DB_HOST: str
@@ -40,6 +42,12 @@ class Settings(BaseSettings):
     MAIL_STARTTLS: bool = False
     MAIL_SSL_TLS: bool = True
     EMAIL_SALT: str
+
+    # app
+    DEFAULT_PAGE_MIN_LIMIT: int = 1
+    DEFAULT_PAGE_MAX_LIMIT: int = 100
+    DEFAULT_PAGE_LIMIT: int = 30
+    DEFAULT_PAGE_OFFSET: int = 0
 
     PUBLIC_BASE_URL: str = "http://127.0.0.1:8000"
 
