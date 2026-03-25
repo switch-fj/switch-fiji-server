@@ -56,15 +56,11 @@ class DBModel(BaseModel):
 
 class TokenIdentityModel(BaseModel):
     id: int
-    uid: UUID
+    uid: str
     email: str
     identity: int
-    user_type: Optional[int]
+    role: Optional[int]
     is_email_verified: bool
-
-    @field_serializer("uid")
-    def serialize_uuid(self, value: UUID):
-        return uuid_serializer(value)
 
     model_config = ConfigDict(from_attributes=True)
 

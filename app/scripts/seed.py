@@ -21,7 +21,7 @@ async def seed_admin():
         if not admin:
             new_admin = User(
                 email=admin_email,
-                password=Authentication.generate_password_hash(default_pass),
+                password_hash=Authentication.generate_password_hash(default_pass),
                 is_email_verified=True,
                 role=UserRoleEnum.ADMIN.value,
             )

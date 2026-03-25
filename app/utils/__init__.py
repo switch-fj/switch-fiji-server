@@ -55,7 +55,7 @@ def generate_token_identity_model(user: Union["User", "Client"]):
     token_identity_data = TokenIdentityModel.model_validate(
         {
             "id": user.id,
-            "uid": UUID(str(user.uid)),
+            "uid": str(user.uid),
             "email": getattr(user, "email", None) or getattr(user, "client_email", None),
             "identity": user.identity,
             "role": user.role or None,
