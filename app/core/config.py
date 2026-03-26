@@ -43,6 +43,10 @@ class Settings(BaseSettings):
     MAIL_SSL_TLS: bool = True
     EMAIL_SALT: str
 
+    # resend
+    USE_RESEND: bool
+    RESEND_API_KEY: str
+
     # app
     DEFAULT_PAGE_MIN_LIMIT: int = 1
     DEFAULT_PAGE_MAX_LIMIT: int = 100
