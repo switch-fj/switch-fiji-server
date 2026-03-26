@@ -20,6 +20,7 @@ from .exceptions import (
     BadRequest,
     ExpiredLink,
     InvalidLink,
+    InvalidOTP,
     InvalidToken,
     RefreshTokenExpired,
     TokenExpired,
@@ -271,7 +272,7 @@ class Authentication:
         stored_otp = await redis_client.client.get(redis_name)
 
         if not stored_otp:
-            raise InvalidLink()
+            raise InvalidOTP()
 
         attempts = await redis_client.client.incr(attempts_key)
         await redis_client.client.expire(attempts_key, 300)
@@ -283,7 +284,7 @@ class Authentication:
         hashed_input = hashlib.sha256(otp.encode()).hexdigest()
 
         if stored_otp != hashed_input:
-            raise InvalidLink()
+            raise InvalidOTP()
 
         await redis_client.client.delete(redis_name)
         await redis_client.client.delete(attempts_key)

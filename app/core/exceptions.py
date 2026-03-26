@@ -97,6 +97,13 @@ class InvalidLink(AppException):
         super().__init__(message or "Link is invalid. get a new one.")
 
 
+class InvalidOTP(AppException):
+    """This handles invalid otp"""
+
+    def __init__(self, message: Optional[str] = None):
+        super().__init__(message or "OTP is invalid. get a new one.")
+
+
 class InsufficientPermissions(Exception):
     """Raised when user doesn't have required role/permissions"""
 
@@ -172,6 +179,7 @@ def register_exceptions(app: FastAPI):
     app.add_exception_handler(TokenExpired, create_exception_handler(status.HTTP_401_UNAUTHORIZED))
     app.add_exception_handler(ExpiredLink, create_exception_handler(status.HTTP_410_GONE))
     app.add_exception_handler(InvalidLink, create_exception_handler(status.HTTP_410_GONE))
+    app.add_exception_handler(InvalidOTP, create_exception_handler(status.HTTP_410_GONE))
     app.add_exception_handler(
         InsufficientPermissions,
         create_exception_handler(status.HTTP_405_METHOD_NOT_ALLOWED),

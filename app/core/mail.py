@@ -7,6 +7,7 @@ from pydantic import EmailStr
 
 from app.core.config import Config
 from app.shared.schema import MailTypes
+from app.templates.libs.context import get_template_context
 
 ROOT_DIR = Path(__file__).resolve().parent.parent
 
@@ -53,9 +54,7 @@ class Mailer:
         message = Mailer._create_message(
             recipients=[email],
             subject=MailTypes.EMAIL_VERIFICATION.subject,
-            template_body={
-                "verification_url": verification_url,
-            },
+            template_body=get_template_context(verification_url=verification_url),
         )
 
         await Mailer.mail.send_message(message=message, template_name=MailTypes.EMAIL_VERIFICATION.template)
@@ -65,7 +64,7 @@ class Mailer:
         message = Mailer._create_message(
             recipients=[email],
             subject=MailTypes.PWD_RESET.subject,
-            template_body={"reset_url": reset_url},
+            template_body=get_template_context(reset_url=reset_url),
         )
 
         await Mailer.mail.send_message(message=message, template_name=MailTypes.PWD_RESET.template)
@@ -75,7 +74,7 @@ class Mailer:
         message = Mailer._create_message(
             recipients=[email],
             subject=MailTypes.VERIFY_LOGIN.subject,
-            template_body={"email": email, "text": text},
+            template_body=get_template_context(email=email, text=text),
         )
 
         await Mailer.mail.send_message(message=message, template_name=MailTypes.VERIFY_LOGIN.template)
