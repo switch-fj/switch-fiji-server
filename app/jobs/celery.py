@@ -14,4 +14,6 @@ celery_app = Celery(
 )
 
 
-celery_app.autodiscover_tasks(["jobs"])
+celery_app.autodiscover_tasks(["app.jobs"])
+
+from app.jobs import auth  # noqa
