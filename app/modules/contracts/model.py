@@ -99,8 +99,13 @@ class ContractDetails(MyAbstractSQLModel, table=True):
     )
 
     @property
-    def tariff_duration(self):
+    def term_months(self):
+        if not self.term_years:
+            return None
+        return self.term_years * 12
+
+    @property
+    def months_per_period(self) -> Optional[int]:
         if not self.tariff_periods:
             return None
-
-        return round(self.term_years / self.tariff_periods, 3)
+        return self.term_months // self.tariff_periods
