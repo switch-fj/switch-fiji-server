@@ -14,8 +14,8 @@ T = TypeVar("T")
 class UserRoleEnum(IntEnum):
     """Internal staff roles — controls what they can do on the platform."""
 
-    ADMIN = 0
-    ENGINEER = 1
+    ADMIN = 1
+    ENGINEER = 2
 
 
 class IdentityTypeEnum(IntEnum):
@@ -24,8 +24,8 @@ class IdentityTypeEnum(IntEnum):
     Not stored in any table — only lives in the token payload.
     """
 
-    USER = 0
-    CLIENT = 1
+    USER = 1
+    CLIENT = 2
 
 
 class PasscodeEnum(StrEnum):
@@ -134,10 +134,11 @@ class MailModel(BaseModel):
 
 
 class UserResponseModel(DBModel):
-    uid: int
     email: str
-    is_email_verified: bool
     role: int
+    is_email_verified: bool
+
+    model_config = ConfigDict(from_attributes=True)
 
 
 class CurrencyEnum(StrEnum):

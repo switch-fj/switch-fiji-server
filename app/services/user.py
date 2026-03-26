@@ -47,16 +47,16 @@ class UserService:
             verification_url=verification_url,
         )
 
-    async def get_current_client(self, token_payload: dict):
+    async def get_current_user(self, token_payload: dict):
         user_email = token_payload["user"]["email"]
-        client = await self.user_repo.get_user_by_mail(
+        user = await self.user_repo.get_user_by_mail(
             email=user_email,
         )
 
-        if not client:
+        if not user:
             raise NotFound("Client doesn't exist.")
 
-        return UserResponseModel.model_validate(client).model_dump()
+        return UserResponseModel.model_validate(user)
 
     async def login(self, data: IdentityLoginModel):
         user = await self.user_repo.get_user_by_mail(email=data.email)
@@ -77,6 +77,7 @@ class UserService:
             )
 
         if not data.password:
+            await self._initiate_verify_login_task(email=user.email)
             return (
                 None,
                 TokenModel(
@@ -110,6 +111,8 @@ class UserService:
             raise UserEmailExists()
 
         new_user = await self.user_repo.create_user(user_uid=token_user_uid, data=data)
+        await self._initiate_acct_verification_task(email=new_user.email)
+
         return new_user
 
     async def request_login(self, data: EmailModel):

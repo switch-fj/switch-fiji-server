@@ -280,7 +280,6 @@ class Authentication:
             await redis_client.client.delete(redis_name)
             raise TooManyAttempts("Too many incorrect attempts")
 
-        stored_otp = stored_otp.decode()
         hashed_input = hashlib.sha256(otp.encode()).hexdigest()
 
         if stored_otp != hashed_input:

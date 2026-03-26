@@ -6,11 +6,13 @@ from app.core.security import AccessTokenBearer
 from app.modules.users.schema import CreateUserModel
 from app.services.user import UserService, get_user_service
 from app.shared.schema import (
+    AuthType,
     EmailModel,
     IdentityLoginModel,
     IdentityTypeEnum,
     ServerRespModel,
     TokenModel,
+    UserResponseModel,
     UserRoleEnum,
     VerifyLoginModel,
 )
@@ -28,12 +30,22 @@ async def login(
     user_service: UserService = Depends(get_user_service),
 ):
     token_identity_model, token_model = await user_service.login(data=data)
+    access_token = token_model.access_token
+    auth_type = token_model.auth_type
+
+    message = ""
+
+    if access_token:
+        message = "user logged in successfully!"
+    else:
+        if auth_type == AuthType.PWD.value:
+            message = "Provide user password."
+        elif auth_type == AuthType.OTP.value:
+            message = "user login otp sent to inbox."
+
     response = JSONResponse(
         status_code=status.HTTP_200_OK,
-        content=ServerRespModel[TokenModel](
-            data=token_model,
-            message="User token generated.",
-        ).model_dump(),
+        content=ServerRespModel[TokenModel](data=token_model, message=message).model_dump(),
     )
 
     if token_identity_model:
@@ -68,25 +80,6 @@ async def register(
 
 
 @auth_router.post(
-    "/login/request",
-    status_code=status.HTTP_200_OK,
-    response_model=ServerRespModel[bool],
-)
-async def request_login(
-    data: EmailModel = Body(...),
-    user_service: UserService = Depends(get_user_service),
-):
-    await user_service.request_login(data=data)
-    return JSONResponse(
-        status_code=status.HTTP_200_OK,
-        content=ServerRespModel[bool](
-            data=True,
-            message="Login code sent to your email!.",
-        ).model_dump(),
-    )
-
-
-@auth_router.post(
     "/login/verify",
     status_code=status.HTTP_200_OK,
     response_model=ServerRespModel[TokenModel],
@@ -100,7 +93,7 @@ async def verify_login_code(
         status_code=status.HTTP_200_OK,
         content=ServerRespModel[TokenModel](
             data=token_model,
-            message="User token generated.",
+            message="User verified!",
         ).model_dump(),
     )
 
@@ -133,22 +126,17 @@ async def send_verify_acct(
 @auth_router.get(
     "/profile",
     status_code=status.HTTP_200_OK,
-    response_model=ServerRespModel[bool],
+    response_model=ServerRespModel[UserResponseModel],
 )
 async def profile(
-    token_payload: TokenModel = Depends(
-        AccessTokenBearer(
-            required_identity=[IdentityTypeEnum.CLIENT.value],
-            required_role=[UserRoleEnum.ADMIN.value],
-        )
-    ),
+    token_payload: TokenModel = Depends(AccessTokenBearer(required_identity=[IdentityTypeEnum.USER.value])),
     user_service: UserService = Depends(get_user_service),
 ):
-    user_resp = await user_service.get_current_client(token_payload=token_payload)
+    user_resp = await user_service.get_current_user(token_payload=token_payload)
 
     return JSONResponse(
         status_code=status.HTTP_200_OK,
-        content=ServerRespModel[TokenModel](
+        content=ServerRespModel[UserResponseModel](
             data=user_resp,
             message="Profile retrieved",
         ).model_dump(),
@@ -168,7 +156,7 @@ async def verify_acct(
 
     return JSONResponse(
         status_code=status.HTTP_200_OK,
-        content=ServerRespModel[TokenModel](
+        content=ServerRespModel[bool](
             data=True,
             message=resp,
         ).model_dump(),
