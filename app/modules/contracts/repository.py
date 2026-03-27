@@ -27,7 +27,7 @@ class ContractRepository:
         prefix = f"{name.upper()[0]}C"
         current_year = str(datetime.now().year)
 
-        return f"{prefix}-{current_year}-{Authentication.generate_otp(4)}"
+        return f"{prefix}-{current_year}-{Authentication.generate_otp()}"
 
     def _sanitize_contract_details(self, contract: Contract, data: CreateContractDetailsModel):
         # checks for on-grid system mode
