@@ -62,7 +62,15 @@ class ContractRepository:
                 raise BadRequest("minimum consumption monthly (kwh) is required for all PPA contracts.")
 
     async def get_contract_by_uid(self, contract_uid: UUID):
-        statement = select(Contract).where(Contract.uid == contract_uid)
+        statement = (
+            select(Contract)
+            .options(
+                selectinload(Contract.client),
+                selectinload(Contract.site),
+                selectinload(Contract.details),
+            )
+            .where(Contract.uid == contract_uid)
+        )
         result = await self.session.exec(statement=statement)
         contract = result.first()
 

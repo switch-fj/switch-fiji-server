@@ -29,7 +29,6 @@ class Invoice(MyAbstractSQLModel, table=True):
     # financials
     subtotal: Decimal = Field(nullable=False)
     vat_rate: Decimal = Field(nullable=False)
-    total: Decimal = Field(nullable=False)
 
     # energy mix snapshot (computed once at generation time)
     energy_mix: Optional[str] = Field(nullable=True)  # Json Data will be stored here.
@@ -41,8 +40,12 @@ class Invoice(MyAbstractSQLModel, table=True):
     history: list["InvoiceHistory"] = Relationship(back_populates="invoice")
 
     @property
-    def vat_amount(self):
-        return self.subtotal * round(self.vat_rate / 100, 2)
+    def vat_amount(self) -> Decimal:
+        return self.subtotal * (self.vat_rate / Decimal(100))
+
+    @property
+    def total(self) -> Decimal:
+        return self.subtotal + self.vat_amount
 
 
 class InvoiceLineItem(MyAbstractSQLModel, table=True):
@@ -70,7 +73,7 @@ class InvoiceMeterData(MyAbstractSQLModel, table=True):
     __tablename__ = "invoice_meter_data"
 
     invoice_uid: UUID = Field(foreign_key="invoices.uid", index=True, nullable=False)
-    device_uid: Optional[UUID] = Field(foreign_key="devices.uid", index=True, nullable=True)
+    device_uid: Optional[UUID] = Field(foreign_key="devices.uid", index=True, nullable=True, default=None)
 
     # e.g "Solar Generation", "Self Consumption",
     # "Fed to Grid", "Grid Energy", "Site Meter 1 - Day"

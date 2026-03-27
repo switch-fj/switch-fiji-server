@@ -9,8 +9,8 @@ from pydantic import BaseModel, Field
 class CreateInvoiceModel(BaseModel):
     period_start_at: datetime = Field(...)
     period_end_at: datetime = Field(...)
-    subtotal: Decimal = Field(...)
-    vat_rate: Decimal = Field(...)
+    subtotal: Decimal = Field(default=Decimal("0.00"))
+    vat_rate: Decimal = Field(default=Decimal("0.00"))
     energy_mix: Optional[str] = Field(default=None)
 
 
@@ -21,7 +21,6 @@ class CreateInvoiceLineItemModel(BaseModel):
     tariff_rate: Optional[Decimal] = Field(default=None)
     tariff_period: Optional[int] = Field(default=None)
     tariff_slot: Optional[str] = Field(default=None)
-
     amount: Decimal = Field(...)
 
 
