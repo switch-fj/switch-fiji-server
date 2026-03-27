@@ -176,7 +176,7 @@ class ClientService:
             if client.is_email_verified:
                 return "Account already verified."
 
-            await self.client_repo.verify_email(email=client.client_email)
+            await self.client_repo.verify_email(client=client)
             await redis_client.add_to_blocklist(token)
 
             return "Account verified successfully."

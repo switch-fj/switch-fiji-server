@@ -6,11 +6,13 @@ from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.core.auth import Authentication
-from app.core.exceptions import BadRequest, NotFound
+from app.core.logger import setup_logger
 from app.database.postgres import get_session
 from app.modules.clients.model import Client
 from app.modules.clients.schema import CreateClientModel
 from app.shared.schema import UpdateIdentityPwdModel
+
+logger = setup_logger(__name__)
 
 
 class ClientRepository:
@@ -37,7 +39,10 @@ class ClientRepository:
         user_uid: Optional[UUID] = None,
     ):
         data_dict = data.model_dump()
-        data_dict["user_uid"] = user_uid
+
+        if user_uid:
+            data_dict["user_uid"] = user_uid
+
         new_client = Client(**data_dict)
 
         try:
@@ -48,14 +53,9 @@ class ClientRepository:
             return new_client
         except Exception as e:
             await self.session.rollback()
-            raise BadRequest(f"Error creating client {e}")
+            logger.error(f"Error creating client {e}")
 
-    async def update_pwd(self, client_uid: str, data: UpdateIdentityPwdModel):
-        client = await self.get_client_by_uid(client_uid=client_uid)
-
-        if not client:
-            raise NotFound("client not found")
-
+    async def update_pwd(self, client: Client, data: UpdateIdentityPwdModel):
         client.password_hash = Authentication.generate_password_hash(data.password)
 
         self.session.add(client)
@@ -64,11 +64,7 @@ class ClientRepository:
 
         return client
 
-    async def verify_email(self, email: str):
-        client = await self.get_client_by_mail(email=email)
-
-        if not client:
-            raise NotFound("client not found")
+    async def verify_email(self, client: Client):
         client.is_email_verified = True
 
         self.session.add(client)

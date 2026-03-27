@@ -6,11 +6,13 @@ from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.core.auth import Authentication
-from app.core.exceptions import BadRequest, NotFound
+from app.core.logger import setup_logger
 from app.database.postgres import get_session
 from app.modules.users.model import User
 from app.modules.users.schema import CreateUserModel
 from app.shared.schema import UpdateIdentityPwdModel
+
+logger = setup_logger(__name__)
 
 
 class UserRepository:
@@ -33,7 +35,10 @@ class UserRepository:
 
     async def create_user(self, data: CreateUserModel, user_uid: Optional[UUID] = None):
         data_dict = data.model_dump()
-        data_dict["registrar_uid"] = user_uid
+
+        if user_uid:
+            data_dict["registrar_uid"] = user_uid
+
         new_user = User(**data_dict)
 
         try:
@@ -43,15 +48,10 @@ class UserRepository:
 
             return new_user
         except Exception as e:
+            logger.error(f"Error creating user: {e}")
             await self.session.rollback()
-            raise BadRequest(f"Error creating user {e}")
 
-    async def update_pwd(self, user_uid: UUID, data: UpdateIdentityPwdModel):
-        user = await self.get_user_by_uid(user_uid=user_uid)
-
-        if not user:
-            raise NotFound("user not found")
-
+    async def update_pwd(self, user: User, data: UpdateIdentityPwdModel):
         user.password_hash = Authentication.generate_password_hash(data.password)
 
         self.session.add(user)
@@ -60,13 +60,8 @@ class UserRepository:
 
         return user
 
-    async def verify_email(self, email: str):
-        user = await self.get_user_by_mail(email=email)
-
-        if not user:
-            raise NotFound("user not found")
+    async def verify_email(self, user: User):
         user.is_email_verified = True
-
         self.session.add(user)
         await self.session.commit()
         await self.session.refresh(user)

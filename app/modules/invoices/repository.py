@@ -31,10 +31,10 @@ class InvoiceRepository:
         self.session = session
         self.contract_repo = ContractRepository(session=session)
 
-    def _build_invoice_ref(self):
+    def _build_invoice_ref(self) -> str:
         current_year = str(datetime.now().year)
-
-        return f"INV-{current_year}-{Authentication.generate_otp()}"
+        current_month = str(datetime.now().month).zfill(2)
+        return f"INV-{current_year}-{current_month}-{Authentication.generate_otp()}"
 
     async def get_invoice_by_uid(self, invoice_uid: UUID):
         statement = (
@@ -67,36 +67,31 @@ class InvoiceRepository:
             await self.session.rollback()
             logger.error(f"error creating invoice {e}")
 
-    async def create_invoice_line_item(self, data: CreateInvoiceLineItemModel):
-        await self.get_invoice_by_uid(invoice_uid=data.invoice_uid)
-        data_dict = data.model_dump()
-
+    async def create_invoice_line_item(self, data: list[CreateInvoiceLineItemModel]):
         try:
-            new_invoice_line_item = InvoiceLineItem(**data_dict)
-            await self.session.add(new_invoice_line_item)
+            line_items = [InvoiceLineItem(**datum.model_dump()) for datum in data]
+            await self.session.add_all(line_items)
             await self.session.commit()
 
-            return new_invoice_line_item
+            return data
         except Exception as e:
             await self.session.rollback()
             logger.error(f"error creating invoice line item {e}")
+            raise e
 
-    async def create_invoice_meter_data(self, data: CreateInvoiceMeterDataModel):
-        await self.get_invoice_by_uid(invoice_uid=data.invoice_uid)
-        data_dict = data.model_dump()
-
+    async def create_invoice_meter_data(self, data: list[CreateInvoiceMeterDataModel]):
         try:
-            new_invoice_meter_data = InvoiceMeterData(**data_dict)
-            await self.session.add(new_invoice_meter_data)
+            meter_data = [InvoiceMeterData(**datum.model_dump()) for datum in data]
+            await self.session.add_all(meter_data)
             await self.session.commit()
 
-            return new_invoice_meter_data
+            return data
         except Exception as e:
             await self.session.rollback()
             logger.error(f"error creating invoice meter data {e}")
+            raise e
 
     async def create_invoice_history(self, data: CreateInvoiceHistoryModel):
-        await self.get_invoice_by_uid(invoice_uid=data.invoice_uid)
         data_dict = data.model_dump()
 
         try:
@@ -108,6 +103,7 @@ class InvoiceRepository:
         except Exception as e:
             await self.session.rollback()
             logger.error(f"error creating invoice history {e}")
+            raise e
 
 
 def get_invoice_repo(session: AsyncSession = Depends(get_session)):

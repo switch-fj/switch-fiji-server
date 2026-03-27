@@ -179,7 +179,7 @@ class UserService:
             if user.is_email_verified:
                 return "Account already verified."
 
-            await self.user_repo.verify_email(email=user.email)
+            await self.user_repo.verify_email(user=user)
             await redis_client.add_to_blocklist(token)
 
             return "Account verified successfully."
