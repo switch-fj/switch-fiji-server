@@ -9,7 +9,6 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 from app.core.auth import Authentication
 from app.core.logger import setup_logger
 from app.database.postgres import get_session
-from app.modules.contracts.repository import ContractRepository
 from app.modules.invoices.model import (
     Invoice,
     InvoiceHistory,
@@ -29,7 +28,6 @@ logger = setup_logger(__name__)
 class InvoiceRepository:
     def __init__(self, session: AsyncSession):
         self.session = session
-        self.contract_repo = ContractRepository(session=session)
 
     def _build_invoice_ref(self) -> str:
         current_year = str(datetime.now().year)
@@ -59,21 +57,23 @@ class InvoiceRepository:
 
         try:
             new_invoice = Invoice(**data_dict)
-            await self.session.add(new_invoice)
+            self.session.add(new_invoice)
             await self.session.commit()
+            await self.session.refresh(new_invoice)
 
             return new_invoice
         except Exception as e:
             await self.session.rollback()
             logger.error(f"error creating invoice {e}")
+            raise e
 
     async def create_invoice_line_item(self, data: list[CreateInvoiceLineItemModel]):
         try:
             line_items = [InvoiceLineItem(**datum.model_dump()) for datum in data]
-            await self.session.add_all(line_items)
+            self.session.add_all(line_items)
             await self.session.commit()
 
-            return data
+            return line_items
         except Exception as e:
             await self.session.rollback()
             logger.error(f"error creating invoice line item {e}")
@@ -82,10 +82,10 @@ class InvoiceRepository:
     async def create_invoice_meter_data(self, data: list[CreateInvoiceMeterDataModel]):
         try:
             meter_data = [InvoiceMeterData(**datum.model_dump()) for datum in data]
-            await self.session.add_all(meter_data)
+            self.session.add_all(meter_data)
             await self.session.commit()
 
-            return data
+            return meter_data
         except Exception as e:
             await self.session.rollback()
             logger.error(f"error creating invoice meter data {e}")
@@ -96,7 +96,7 @@ class InvoiceRepository:
 
         try:
             new_invoice_history = InvoiceHistory(**data_dict)
-            await self.session.add(new_invoice_history)
+            self.session.add(new_invoice_history)
             await self.session.commit()
 
             return new_invoice_history

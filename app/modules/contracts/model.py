@@ -16,6 +16,7 @@ from app.shared.schema import CurrencyEnum
 
 if TYPE_CHECKING:
     from app.modules.clients.model import Client
+    from app.modules.invoices.model import Invoice
     from app.modules.sites.model import Site
 
 
@@ -32,10 +33,13 @@ class Contract(MyAbstractSQLModel, table=True):
         nullable=False,
     )
     currency: CurrencyEnum = Field(sa_type=Enum(CurrencyEnum), nullable=False)
-
     client: "Client" = Relationship(sa_relationship_kwargs={"foreign_keys": "[Contract.client_uid]"})
     site: "Site" = Relationship(sa_relationship_kwargs={"foreign_keys": "[Contract.site_uid]"})
     details: Optional["ContractDetails"] = Relationship(back_populates="contract")
+    invoices: list["Invoice"] = Relationship(
+        back_populates="contract",
+        sa_relationship_kwargs={"foreign_keys": "[Invoice.contract_uid]"},
+    )
 
 
 class ContractDetails(MyAbstractSQLModel, table=True):

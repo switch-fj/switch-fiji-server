@@ -74,6 +74,9 @@ class ContractService:
 
         return ContractDetailsResponse.model_validate(contract)
 
+    async def get_contract_invoices(self, contract_uid: UUID):
+        pass
+
     async def create_contract_details(self, contract_uid: UUID, data: CreateContractDetailsModel):
         contract = await self.contract_repo.get_contract_by_uid(contract_uid=contract_uid)
 
