@@ -8,6 +8,7 @@ from app.api.v1.auth.routes import auth_router
 from app.api.v1.client.routes import client_router
 from app.api.v1.contract.routes import contract_router
 from app.api.v1.engineer.routes import engineer_router
+from app.api.v1.invoice.routes import invoice_router
 from app.core.exceptions import register_exceptions
 from app.core.logger import setup_logger
 from app.core.middlewares import register_middlewares
@@ -68,6 +69,7 @@ def main(*, use_lifespan: bool = True, enable_middlewares: bool = True):
     app.include_router(engineer_router, prefix=f"{api_version}")
     app.include_router(client_router, prefix=f"{api_version}")
     app.include_router(contract_router, prefix=f"{api_version}")
+    app.include_router(invoice_router, prefix=f"{api_version}")
 
     return app
 

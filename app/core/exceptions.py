@@ -34,6 +34,13 @@ class NotFound(AppException):
         super().__init__(message or "Resource doesn't exist.")
 
 
+class Forbidden(AppException):
+    """Raised when a required resource is been accessed by unathorized users."""
+
+    def __init__(self, message: Optional[str] = None):
+        super().__init__(message or "You do not have access to this resource.")
+
+
 class InActive(AppException):
     """Raised when a required resource is inactive in the database"""
 
@@ -188,6 +195,7 @@ def register_exceptions(app: FastAPI):
     app.add_exception_handler(TooManyRequest, create_exception_handler(status.HTTP_400_BAD_REQUEST))
     app.add_exception_handler(TooManyAttempts, create_exception_handler(status.HTTP_400_BAD_REQUEST))
     app.add_exception_handler(UserNotVerified, create_exception_handler(status.HTTP_403_FORBIDDEN))
+    app.add_exception_handler(Forbidden, create_exception_handler(status.HTTP_403_FORBIDDEN))
     app.add_exception_handler(SameNewOldPassword, create_exception_handler(status.HTTP_403_FORBIDDEN))
 
     @app.exception_handler(status.HTTP_500_INTERNAL_SERVER_ERROR)

@@ -1,17 +1,18 @@
 from fastapi import Depends
 from sqlmodel import UUID
 
-from app.core.exceptions import BadRequest, NotFound
+from app.core.exceptions import BadRequest, Forbidden, NotFound
 from app.modules.contracts.model import Contract
 from app.modules.contracts.repository import ContractRepository, get_contract_repo
 from app.modules.contracts.schema import (
-    ContractDetailsResponse,
-    ContractResponse,
+    ContractDetailsRespModel,
+    ContractRespModel,
     ContractSystemModeEnum,
     ContractTypeEnum,
     CreateContractDetailsModel,
     CreateContractModel,
 )
+from app.shared.schema import IdentityTypeEnum, UserRoleEnum
 
 
 class ContractService:
@@ -58,13 +59,26 @@ class ContractService:
 
         return str(contract.uid)
 
-    async def get_contract_by_uid(self, contract_uid: UUID):
+    async def get_contract_by_uid(self, contract_uid: UUID, token_payload: dict):
         contract = await self.contract_repo.get_contract_by_uid(contract_uid=contract_uid)
 
         if not contract:
             raise NotFound(f"Contract with this {contract_uid} not found")
 
-        return ContractResponse.model_validate(contract)
+        token_user = token_payload.get("user")
+        identity = token_user.get("identity")
+        user_uid = token_user.get("uid")
+        role = token_user.get("role")
+
+        if identity == IdentityTypeEnum.USER.value and role == UserRoleEnum.ADMIN.value:
+            return ContractRespModel.model_validate(contract)
+
+        if identity == IdentityTypeEnum.CLIENT.value:
+            if str(contract.client_uid) != str(user_uid):
+                raise Forbidden("You do not have access to this contract")
+            return ContractRespModel.model_validate(contract)
+
+        raise Forbidden("You do not have access to this contract")
 
     async def get_contract_details_by_uid(self, contract_details_uid: UUID):
         contract = await self.contract_repo.get_contract_details_by_uid(contract_details_uid=contract_details_uid)
@@ -72,10 +86,7 @@ class ContractService:
         if not contract:
             raise NotFound(f"Contract details with this {contract_details_uid} not found")
 
-        return ContractDetailsResponse.model_validate(contract)
-
-    async def get_contract_invoices(self, contract_uid: UUID):
-        pass
+        return ContractDetailsRespModel.model_validate(contract)
 
     async def create_contract_details(self, contract_uid: UUID, data: CreateContractDetailsModel):
         contract = await self.contract_repo.get_contract_by_uid(contract_uid=contract_uid)

@@ -1,6 +1,7 @@
 from datetime import datetime
+from decimal import Decimal
 from enum import IntEnum, StrEnum
-from typing import Generic, Optional, TypeVar
+from typing import Annotated, Generic, Optional, TypeVar, Union
 from uuid import UUID
 
 from fastapi import UploadFile
@@ -9,6 +10,8 @@ from pydantic import BaseModel, ConfigDict, Field, field_serializer, field_valid
 from app.utils import email_validator, uuid_serializer
 
 T = TypeVar("T")
+
+TwoDP = Annotated[Decimal, Field(decimal_places=2, max_digits=10)]
 
 
 class UserRoleEnum(IntEnum):
@@ -70,6 +73,24 @@ class ServerRespModel(BaseModel, Generic[T]):
     message: str
 
     model_config = ConfigDict(arbitrary_types_allowed=True)
+
+
+class OffsetPaginationModel(BaseModel):
+    total: int
+    current_page: int
+    limit: int
+    total_pages: int
+
+
+class CursorPaginationModel(BaseModel):
+    limit: int
+    next_cursor: Optional[str]
+    prev_cursor: Optional[str]
+
+
+class PaginatedRespModel(BaseModel, Generic[T]):
+    items: list[T]
+    pagination: Union[OffsetPaginationModel, CursorPaginationModel]
 
 
 class EmailModel(BaseModel):

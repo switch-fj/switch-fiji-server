@@ -48,10 +48,11 @@ class Settings(BaseSettings):
     RESEND_API_KEY: str
 
     # app
-    DEFAULT_PAGE_MIN_LIMIT: int = 1
+    DEFAULT_PAGE_MIN_LIMIT: int = 10
     DEFAULT_PAGE_MAX_LIMIT: int = 100
     DEFAULT_PAGE_LIMIT: int = 30
     DEFAULT_PAGE_OFFSET: int = 0
+    CURSOR_SECRET: str
 
     PUBLIC_BASE_URL: str = "http://127.0.0.1:8000"
 

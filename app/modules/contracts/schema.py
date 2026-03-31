@@ -202,7 +202,7 @@ class CreateContractDetailsModel(BaseModel):
                 )
 
 
-class ContractResponse(DBModel):
+class ContractRespModel(DBModel):
     user_uid: UUID
     client_uid: UUID
     site_uid: UUID
@@ -218,7 +218,7 @@ class ContractResponse(DBModel):
     model_config = ConfigDict(from_attributes=True)
 
 
-class ContractDetailsResponse(DBModel):
+class ContractDetailsRespModel(DBModel):
     contract_uid: UUID
     term_years: Optional[int] = None
     billing_frequency: Optional[ContractBillingFrequencyEnum] = None

@@ -3,10 +3,11 @@ from uuid import UUID
 
 from fastapi import Depends
 from sqlalchemy.orm import selectinload
-from sqlmodel import select
+from sqlmodel import func, select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.core.auth import Authentication
+from app.core.config import Config
 from app.core.logger import setup_logger
 from app.database.postgres import get_session
 from app.modules.invoices.model import (
@@ -33,22 +34,6 @@ class InvoiceRepository:
         current_year = str(datetime.now().year)
         current_month = str(datetime.now().month).zfill(2)
         return f"INV-{current_year}-{current_month}-{Authentication.generate_otp()}"
-
-    async def get_invoice_by_uid(self, invoice_uid: UUID):
-        statement = (
-            select(Invoice)
-            .options(
-                selectinload(Invoice.contract),
-                selectinload(Invoice.line_items),
-                selectinload(Invoice.meter_data),
-            )
-            .where(Invoice.uid == invoice_uid)
-        )
-
-        result = await self.session.exec(statement=statement)
-        invoice = result.first()
-
-        return invoice
 
     async def create_invoice(self, contract_uid: UUID, data: CreateInvoiceModel):
         data_dict = data.model_dump()
@@ -104,6 +89,48 @@ class InvoiceRepository:
             await self.session.rollback()
             logger.error(f"error creating invoice history {e}")
             raise e
+
+    async def get_invoice_history_by_contract_uid(
+        self,
+        contract_uid: UUID,
+        limit: int = Config.DEFAULT_PAGE_LIMIT,
+        offset: int = Config.DEFAULT_PAGE_OFFSET,
+    ):
+        statement = (
+            select(InvoiceHistory)
+            .join(Invoice, Invoice.uid == InvoiceHistory.invoice_uid)
+            .where(Invoice.contract_uid == contract_uid)
+            .order_by(InvoiceHistory.sent_at.desc())
+            .offset(offset)
+            .limit(limit)
+        )
+
+        count_statement = select(func.count()).select_from(statement.subquery())
+
+        result = await self.session.exec(statement)
+        total = await self.session.scalar(count_statement)
+
+        return result.all(), total
+
+    async def get_invoice_by_uid(
+        self,
+        invoice_uid: UUID,
+    ):
+        statement = (
+            select(Invoice)
+            .options(
+                selectinload(Invoice.contract),
+                selectinload(Invoice.line_items),
+                selectinload(Invoice.meter_data),
+                selectinload(Invoice.history),
+            )
+            .where(Invoice.uid == invoice_uid)
+        )
+
+        result = await self.session.exec(statement=statement)
+        invoice = result.first()
+
+        return invoice
 
 
 def get_invoice_repo(session: AsyncSession = Depends(get_session)):

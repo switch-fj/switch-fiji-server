@@ -13,6 +13,7 @@ from app.core.exceptions import (
     TokenExpired,
 )
 from app.database.redis import redis_client
+from app.shared.schema import IdentityTypeEnum
 
 
 class TokenBearer(HTTPBearer):
@@ -97,8 +98,6 @@ class AccessTokenBearer(TokenBearer):
 
         if self.required_role:
             role = token_user.get("role")
-            if role is None:
-                raise InvalidToken()
-
-            if role not in self.required_role:
-                raise InsufficientPermissions()
+            if identity == IdentityTypeEnum.USER.value:
+                if role is None or role not in self.required_role:
+                    raise InsufficientPermissions()
