@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from decimal import Decimal
 from typing import TYPE_CHECKING, Optional
 from uuid import UUID
@@ -46,9 +46,6 @@ class ContractDetails(MyAbstractSQLModel, table=True):
     __tablename__ = "contract_details"
 
     contract_uid: UUID = Field(foreign_key="contracts.uid", index=True, nullable=False)
-    status: ContractDetailsStatus = Field(
-        default=ContractDetailsStatus.DRAFT.value, sa_type=Enum(ContractDetailsStatus)
-    )
     # applies to all contract types
     term_years: int = Field()
     billing_frequency: ContractBillingFrequencyEnum = Field(sa_type=Enum(ContractBillingFrequencyEnum))
@@ -113,3 +110,18 @@ class ContractDetails(MyAbstractSQLModel, table=True):
         if not self.tariff_periods:
             return None
         return self.term_months // self.tariff_periods
+
+    @property
+    def status(self) -> ContractDetailsStatus:
+        now = datetime.now(timezone.utc)
+
+        if not self.commissioned_at:
+            return ContractDetailsStatus.DRAFT
+
+        if now < self.commissioned_at:
+            return ContractDetailsStatus.PENDING.value
+
+        if now > self.end_at:
+            return ContractDetailsStatus.EXPIRED
+
+        return ContractDetailsStatus.ACTIVE

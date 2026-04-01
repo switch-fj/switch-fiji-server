@@ -31,6 +31,7 @@ class ContractSystemModeEnum(StrEnum):
 
 class ContractDetailsStatus(StrEnum):
     DRAFT = "draft"
+    PENDING = "pending"
     ACTIVE = "active"
     EXPIRED = "expired"
 
