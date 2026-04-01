@@ -28,8 +28,8 @@ class Settings(BaseSettings):
     DB_SSL: bool = False
 
     # redis
-    REDIS_HOST: str = "localhost"
-    REDIS_PORT: int = 6379
+    REDIS_HOST: str
+    REDIS_PORT: int
     REDIS_PASSWORD: Optional[str] = None
 
     # email

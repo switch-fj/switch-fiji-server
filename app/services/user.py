@@ -30,12 +30,14 @@ class UserService:
         self.user_repo = user_repo
 
     async def _initiate_verify_login_task(self, email: str):
+        logger.info("Logging task initiated!")
         text = await Authentication.generate_passcode(email=email)
 
         send_verify_login_task.delay(
             email=email,
             text=text,
         )
+        logger.info("Logging task sent!")
 
     async def _initiate_acct_verification_task(self, email: str):
         token_payload = {"email": email}
