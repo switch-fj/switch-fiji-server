@@ -30,14 +30,11 @@ class UserService:
         self.user_repo = user_repo
 
     async def _initiate_verify_login_task(self, email: str):
-        logger.info("Logging task initiated!")
         text = await Authentication.generate_passcode(email=email)
-
         send_verify_login_task.delay(
             email=email,
             text=text,
         )
-        logger.info("Logging task sent!")
 
     async def _initiate_acct_verification_task(self, email: str):
         token_payload = {"email": email}
@@ -69,6 +66,7 @@ class UserService:
         auth_type = AuthType.PWD.value if user.password_hash else AuthType.OTP.value
 
         if not user.is_email_verified:
+            await self._initiate_acct_verification_task(email=user.email)
             return (
                 None,
                 TokenModel(
