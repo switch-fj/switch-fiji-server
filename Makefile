@@ -20,5 +20,8 @@ alembic-gen:
 alembic-up:
 	uv run alembic upgrade head
 
+alembic-stamp:
+	uv run alembic stamp head
+
 mail-preview:
 	uv run fastapi dev app/templates/email_app.py
