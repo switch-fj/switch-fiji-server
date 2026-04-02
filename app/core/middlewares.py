@@ -16,7 +16,7 @@ async def custom_context_middleware(request, call_next):
 
 
 def register_middlewares(app: FastAPI):
-    allow_origins = []
+    allow_origins = ["http://localhost:3000"]
     if Config.FRONTEND_URL:
         allow_origins.append(Config.FRONTEND_URL)
 
