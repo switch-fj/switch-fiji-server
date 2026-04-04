@@ -88,9 +88,12 @@ class CursorPaginationModel(BaseModel):
     prev_cursor: Optional[str]
 
 
-class PaginatedRespModel(BaseModel, Generic[T]):
+P = TypeVar("P", bound=Union[OffsetPaginationModel, CursorPaginationModel])
+
+
+class PaginatedRespModel(BaseModel, Generic[T, P]):
     items: list[T]
-    pagination: Union[OffsetPaginationModel, CursorPaginationModel]
+    pagination: P
 
 
 class EmailModel(BaseModel):

@@ -55,6 +55,11 @@ class ContractService:
         token_user = token_payload.get("user")
         user_uid = token_user.get("uid")
 
+        site_contract = await self.contract_repo.get_contract_by_site_uid(site_uid=data.site_uid)
+
+        if site_contract:
+            return str(site_contract.uid)
+
         contract = await self.contract_repo.create_contract(user_uid=user_uid, data=data)
 
         return str(contract.uid)

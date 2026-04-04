@@ -54,6 +54,10 @@ class Client(MyAbstractSQLModel, table=True):
     def identity(self) -> int:
         return IdentityTypeEnum.CLIENT.value
 
+    @property
+    def sites_count(self):
+        return len(self.sites)
+
     sites: list["Site"] = Relationship(back_populates="client")
     user: Optional["User"] = Relationship(
         back_populates="clients",

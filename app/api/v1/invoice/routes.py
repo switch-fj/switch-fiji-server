@@ -10,6 +10,7 @@ from app.modules.invoices.schema import InvoiceHistoryRespModel, InvoiceRespMode
 from app.services.contract import ContractService, get_contract_service
 from app.services.invoice import InvoiceService, get_invoice_service
 from app.shared.schema import (
+    OffsetPaginationModel,
     PaginatedRespModel,
     ServerRespModel,
 )
@@ -43,7 +44,7 @@ async def get_invoice_by_uid(
 @invoice_router.get(
     "/history/{contract_uid}",
     status_code=status.HTTP_200_OK,
-    response_model=ServerRespModel[PaginatedRespModel[InvoiceHistoryRespModel]],
+    response_model=ServerRespModel[PaginatedRespModel[InvoiceHistoryRespModel, OffsetPaginationModel]],
 )
 async def get_invoice_history_by_contract_uid(
     contract_uid: UUID,
@@ -64,7 +65,7 @@ async def get_invoice_history_by_contract_uid(
 
     return JSONResponse(
         status_code=status.HTTP_200_OK,
-        content=ServerRespModel[PaginatedRespModel[InvoiceHistoryRespModel]](
+        content=ServerRespModel[PaginatedRespModel[InvoiceHistoryRespModel, OffsetPaginationModel]](
             data=resp,
             message="Invoice history retrieved!.",
         ).model_dump(),

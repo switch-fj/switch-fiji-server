@@ -6,11 +6,17 @@ from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.core.auth import Authentication
+from app.core.config import Config
 from app.core.logger import setup_logger
 from app.database.postgres import get_session
 from app.modules.clients.model import Client
-from app.modules.clients.schema import CreateClientModel
-from app.shared.schema import UpdateIdentityPwdModel
+from app.modules.clients.schema import ClientRespModel, CreateClientModel
+from app.shared.schema import (
+    CursorPaginationModel,
+    PaginatedRespModel,
+    UpdateIdentityPwdModel,
+)
+from app.utils.pagination import Pagination
 
 logger = setup_logger(__name__)
 
@@ -32,6 +38,55 @@ class ClientRepository:
         client = result.first()
 
         return client
+
+    async def get_clients(
+        self,
+        q: Optional[str],
+        limit: int = Config.DEFAULT_PAGE_LIMIT,
+        next_cursor: Optional[str] = None,
+        prev_cursor: Optional[str] = None,
+    ):
+        statement = select(Client).order_by(Client.created_at.desc())
+
+        if next_cursor:
+            cursor_id = Pagination.decrypt_cursor(next_cursor)
+            statement = statement.where(Client.id < cursor_id)
+
+        if prev_cursor:
+            cursor_id = Pagination.decrypt_cursor(prev_cursor)
+            statement = statement.where(Client.id > cursor_id)
+
+        if q:
+            search = f"{q}"
+            statement = statement.where(Client.client_name.ilike(search) | Client.client_email.ilike(search))
+
+        statement = statement.limit(limit + 1)
+        result = await self.session.exec(statement=statement)
+        rows = result.all()
+        has_more = len(rows) > limit
+        items = rows[:limit]
+
+        clients = [ClientRespModel.model_validate(item) for item in items]
+
+        next_cursor_out = None
+        prev_cursor_out = None
+
+        if items:
+            prev_cursor_out = Pagination.encrypt_cursor(items[0].id)
+
+        if has_more:
+            next_cursor_out = Pagination.encrypt_cursor(items[-1].id)
+
+        return PaginatedRespModel.model_validate(
+            {
+                "items": clients,
+                "pagination": CursorPaginationModel(
+                    limit=limit,
+                    next_cursor=next_cursor_out,
+                    prev_cursor=prev_cursor_out,
+                ),
+            }
+        )
 
     async def create_client(
         self,

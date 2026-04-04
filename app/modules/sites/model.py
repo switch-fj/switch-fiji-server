@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 from uuid import UUID
 
 from sqlalchemy import Column, Identity, Integer, String
@@ -8,6 +8,7 @@ from app.shared.model import MyAbstractSQLModel
 
 if TYPE_CHECKING:
     from app.modules.clients.model import Client
+    from app.modules.contracts.model import Contract
     from app.modules.devices.model import Device
 
 
@@ -44,8 +45,13 @@ class Site(MyAbstractSQLModel, table=True):
         )
     )
 
+    # Relationships
     client: "Client" = Relationship(
         back_populates="sites",
         sa_relationship_kwargs={"foreign_keys": "Site.client_uid"},
     )
     devices: list["Device"] = Relationship(back_populates="site")
+    contract: Optional["Contract"] = Relationship(
+        back_populates="site",
+        sa_relationship_kwargs={"foreign_keys": "[Contract.site_uid]"},
+    )

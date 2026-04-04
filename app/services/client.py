@@ -1,7 +1,11 @@
+from typing import Optional
+
 from fastapi import Depends
 
 from app.core.auth import Authentication
+from app.core.config import Config
 from app.core.exceptions import (
+    BadRequest,
     InvalidToken,
     NotFound,
     UserEmailExists,
@@ -200,6 +204,20 @@ class ClientService:
         await self._initiate_acct_verification_task(email=client.client_email)
 
         return "Verification email sent. Check your inbox"
+
+    async def get_clients(
+        self,
+        q: Optional[str],
+        limit: int = Config.DEFAULT_PAGE_LIMIT,
+        next_cursor: Optional[str] = None,
+        prev_cursor: Optional[str] = None,
+    ):
+        if next_cursor and prev_cursor:
+            raise BadRequest("Provide either next_cursor or prev_cursor, not both")
+
+        result = await self.client_repo.get_clients(q=q, limit=limit, next_cursor=next_cursor, prev_cursor=prev_cursor)
+
+        return result
 
 
 def get_client_service(client_repo: ClientRepository = Depends(get_client_repo)):
