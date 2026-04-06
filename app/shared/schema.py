@@ -159,7 +159,8 @@ class MailModel(BaseModel):
 
 class UserResponseModel(DBModel):
     email: str
-    role: int
+    role: Optional[int]
+    identity: int
     is_email_verified: bool
 
     model_config = ConfigDict(from_attributes=True)

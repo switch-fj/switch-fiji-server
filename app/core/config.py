@@ -54,6 +54,12 @@ class Settings(BaseSettings):
     DEFAULT_PAGE_OFFSET: int = 0
     CURSOR_SECRET: str
 
+    # aws
+    AWS_REGION: str = ""
+    AWS_ACCESS_KEY_ID: str = ""
+    AWS_SECRET_ACCESS_KEY: str = ""
+    AWS_TIME_SERIES_TABLE: str = ""
+
     PUBLIC_BASE_URL: str = "http://127.0.0.1:8000"
 
     @property
