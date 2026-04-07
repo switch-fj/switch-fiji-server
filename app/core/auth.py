@@ -119,6 +119,20 @@ class Authentication:
         return token
 
     @staticmethod
+    def set_refresh_token_cookie(response: Response, jti: str) -> None:
+        """Set refresh token JTI as HTTP-only cookie"""
+        response.set_cookie(
+            key="refresh_token",
+            value=jti,
+            httponly=Config.ENV != "development",
+            samesite="lax" if Config.ENV == "development" else "none",
+            secure=Config.ENV != "development",
+            max_age=Authentication.REFRESH_TOKEN_EXPIRY_IN_SECONDS,
+            path="/",
+            domain=("localhost" if Config.ENV == "development" else f".{Config.API_DOMAIN}"),
+        )
+
+    @staticmethod
     async def decode_token(token: str):
         try:
             token_payload = jwt.decode(

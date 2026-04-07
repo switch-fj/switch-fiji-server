@@ -29,7 +29,7 @@ async def login(
     data: IdentityLoginModel = Body(...),
     user_service: UserService = Depends(get_user_service),
 ):
-    token_identity_model, token_model = await user_service.login(data=data)
+    refresh_jti, token_model = await user_service.login(data=data)
     access_token = token_model.access_token
     auth_type = token_model.auth_type
 
@@ -48,8 +48,8 @@ async def login(
         content=ServerRespModel[TokenModel](data=token_model, message=message).model_dump(),
     )
 
-    if token_identity_model:
-        await Authentication.create_token(user_data=token_identity_model, refresh=True, response=response)
+    if refresh_jti:
+        Authentication.set_refresh_token_cookie(response=response, jti=refresh_jti)
 
     return response
 
