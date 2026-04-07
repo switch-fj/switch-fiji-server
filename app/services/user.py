@@ -1,9 +1,15 @@
+from uuid import UUID
+
 from fastapi import Depends
 
 from app.core.auth import Authentication
 from app.core.exceptions import (
+    InActive,
     InvalidToken,
     NotFound,
+    RefreshTokenExpired,
+    RefreshTokenRequired,
+    TokenExpired,
     UserEmailExists,
     WrongCredentials,
 )
@@ -208,6 +214,41 @@ class UserService:
         await self._initiate_acct_verification_task(email=user.email)
 
         return "Verification email sent. Check your inbox"
+
+    async def new_access_token(self, token_jti: UUID):
+        if not token_jti:
+            raise RefreshTokenRequired("Refresh token not found.")
+        try:
+            refresh_token = await redis_client.client.get(token_jti)
+
+            if not refresh_token:
+                raise RefreshTokenRequired("Refresh token invalid or expired.")
+
+            payload = await Authentication.decode_token(refresh_token)
+
+            if not payload.get("refresh", False):
+                raise RefreshTokenExpired("Invalid token type.")
+
+            user_data = payload["user"]
+
+            user = await self.user_repo.get_user_by_uid(user_uid=user_data["uid"])
+
+            if not user:
+                raise RefreshTokenExpired("Refresh token invalid or expired.")
+
+            if not user.is_email_verified:
+                raise InActive("Email not verified. Contact admin.")
+
+            auth_type = AuthType.PWD.value if user.password_hash else AuthType.OTP.value
+            token_identity = generate_token_identity_model(user)
+            new_access_token = await Authentication.create_token(user_data=token_identity)
+            return (new_access_token, user.is_email_verified, auth_type)
+
+        except (RefreshTokenRequired, RefreshTokenExpired, InvalidToken, TokenExpired):
+            raise
+        except Exception as e:
+            logger.error(f"Error generating new access token: {e}")
+            raise
 
 
 def get_user_service(user_repo: UserRepository = Depends(get_user_repo)):

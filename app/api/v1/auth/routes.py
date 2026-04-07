@@ -1,4 +1,6 @@
-from fastapi import APIRouter, Body, Depends, status
+from typing import Optional
+
+from fastapi import APIRouter, Body, Cookie, Depends, status
 from fastapi.responses import JSONResponse
 
 from app.core.auth import Authentication
@@ -139,6 +141,30 @@ async def profile(
         content=ServerRespModel[UserResponseModel](
             data=user_resp,
             message="Profile retrieved",
+        ).model_dump(),
+    )
+
+
+@auth_router.post(
+    "/new-access-token",
+    status_code=status.HTTP_200_OK,
+    response_model=ServerRespModel[TokenModel],
+)
+async def get_new_user_access_token(
+    token_jti: Optional[str] = Cookie(None, alias="refresh_token"),
+    user_service: UserService = Depends(get_user_service),
+):
+    new_access_token, is_email_verified, auth_type = await user_service.new_access_token(token_jti=token_jti)
+
+    return JSONResponse(
+        status_code=status.HTTP_200_OK,
+        content=ServerRespModel[TokenModel](
+            data={
+                "access_token": new_access_token,
+                "is_email_verified": is_email_verified,
+                "auth_type": auth_type,
+            },
+            message="new access token generated.",
         ).model_dump(),
     )
 
