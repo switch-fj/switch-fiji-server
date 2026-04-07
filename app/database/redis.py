@@ -59,6 +59,7 @@ class RedisClient:
         if self._client:
             await self._client.close()
             self._client = None
+            logger.info("Redis connection closed")
 
     @backoff.on_exception(backoff.expo, (ConnectionError, RedisError), max_tries=3, max_time=30)
     async def add_to_blocklist(self, key: str, expiry: int = 86400) -> bool:

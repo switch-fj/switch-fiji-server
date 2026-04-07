@@ -13,8 +13,9 @@ from app.core.exceptions import register_exceptions
 from app.core.logger import setup_logger
 from app.core.middlewares import register_middlewares
 from app.core.template_registry import TemplateRegistry
+from app.database.dynamo import dynamo_client, init_dynamo
 from app.database.postgres import init_db
-from app.database.redis import init_redis
+from app.database.redis import init_redis, redis_client
 from app.scripts.seed import seed_admin
 
 app_logger = setup_logger(__name__)
@@ -33,8 +34,11 @@ def main(*, use_lifespan: bool = True, enable_middlewares: bool = True):
             app_logger.info("🚀 Server starting...")
             await init_db()
             await init_redis()
+            await init_dynamo()
             await seed_admin()
             yield
+            await redis_client.close()
+            await dynamo_client.close()
             app_logger.info("👋 Server stopped...")
 
         lifespan_context = lifespan

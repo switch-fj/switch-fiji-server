@@ -2,6 +2,7 @@ from typing import Optional
 from uuid import UUID
 
 from fastapi import Depends
+from sqlalchemy.orm import selectinload
 from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
@@ -46,7 +47,7 @@ class ClientRepository:
         next_cursor: Optional[str] = None,
         prev_cursor: Optional[str] = None,
     ):
-        statement = select(Client).order_by(Client.created_at.desc())
+        statement = select(Client).options(selectinload(Client.sites)).order_by(Client.created_at.desc())
 
         if next_cursor:
             cursor_id = Pagination.decrypt_cursor(next_cursor)
