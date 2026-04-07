@@ -55,7 +55,7 @@ class Settings(BaseSettings):
     DEFAULT_PAGE_OFFSET: int = 0
     CURSOR_SECRET: str
 
-    USE_REMOTE_DB: bool = True
+    USE_REMOTE_DB: bool = False
 
     # aws
     AWS_REGION: str = ""
