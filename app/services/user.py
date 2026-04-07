@@ -77,7 +77,7 @@ class UserService:
             )
 
         if not data.password:
-            if auth_type == AuthType.OTP:
+            if auth_type == AuthType.OTP.value:
                 await self._initiate_verify_login_task(email=user.email)
 
             return (

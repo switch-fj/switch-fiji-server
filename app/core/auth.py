@@ -105,11 +105,11 @@ class Authentication:
                         key="refresh_token",
                         value=redis_key,
                         httponly=Config.ENV != "development",
-                        samesite=("lax" if Config.ENV == "development" else "none"),
+                        samesite="lax" if Config.ENV == "development" else "none",
                         secure=Config.ENV != "development",
                         max_age=Authentication.REFRESH_TOKEN_EXPIRY_IN_SECONDS,
                         path="/",
-                        domain=("localhost" if Config.ENV == "development" else f".{Config.API_DOMAIN}"),
+                        **({"domain": f".{Config.API_DOMAIN}"} if Config.ENV != "development" else {}),
                     )
 
             except Exception as e:
