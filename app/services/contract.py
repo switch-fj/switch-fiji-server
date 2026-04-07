@@ -1,5 +1,6 @@
+from uuid import UUID
+
 from fastapi import Depends
-from sqlmodel import UUID
 
 from app.core.exceptions import BadRequest, Forbidden, NotFound
 from app.modules.contracts.model import Contract
@@ -52,10 +53,11 @@ class ContractService:
                 raise BadRequest("minimum consumption monthly (kwh) is required for all PPA contracts.")
 
     async def create_contract(self, token_payload: dict, data: CreateContractModel):
+        data_dict = data.model_dump()
         token_user = token_payload.get("user")
         user_uid = token_user.get("uid")
 
-        site_contract = await self.contract_repo.get_contract_by_site_uid(site_uid=data.site_uid)
+        site_contract = await self.contract_repo.get_contract_by_site_uid(site_uid=data_dict.get("site_uid", ""))
 
         if site_contract:
             return str(site_contract.uid)
@@ -100,13 +102,17 @@ class ContractService:
             raise NotFound(f"Contract with this {contract_uid} not found")
 
         self._sanitize_contract_details(contract=contract, data=data)
-        await self.contract_repo.create_contract_details(contract_uid=contract_uid, data=data)
 
-        return True
+        contract_details = await self.contract_repo.create_contract_details(contract_uid=contract.uid, data=data)
 
-    async def update_contract_details(self, contract_details_uid: UUID, data: CreateContractDetailsModel):
+        if not contract_details:
+            raise BadRequest("Unable to create contract details")
+
+        return contract_details.uid
+
+    async def update_contract_details(self, contract_details_uid: str, data: CreateContractDetailsModel):
         contract_details = await self.contract_repo.get_contract_details_by_uid(
-            contract_details_uid=contract_details_uid
+            contract_details_uid=(contract_details_uid)
         )
 
         if not contract_details:

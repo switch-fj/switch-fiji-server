@@ -1,6 +1,7 @@
-from fastapi import APIRouter, Body, Depends, status
+from uuid import UUID
+
+from fastapi import APIRouter, Body, Depends, Security, status
 from fastapi.responses import JSONResponse
-from sqlmodel import UUID
 
 from app.core.security import AccessTokenBearer
 from app.modules.contracts.schema import CreateContractDetailsModel, CreateContractModel
@@ -11,19 +12,19 @@ contract_router = APIRouter(prefix="/contract", tags=["contract"])
 
 
 @contract_router.post(
-    "/new",
+    "/create",
     status_code=status.HTTP_201_CREATED,
     response_model=ServerRespModel[str],
 )
-async def new_contract(
-    data: CreateContractModel = Body(...),
-    client_service: ContractService = Depends(get_contract_service),
-    token_payload: dict = Depends(
+async def create_contract(
+    data: CreateContractModel,
+    token_payload: dict = Security(
         AccessTokenBearer(
             required_identity=[IdentityTypeEnum.USER.value],
             required_role=[UserRoleEnum.ADMIN.value],
         )
     ),
+    client_service: ContractService = Depends(get_contract_service),
 ):
     contract_uid = await client_service.create_contract(token_payload=token_payload, data=data)
 
@@ -48,7 +49,7 @@ async def new_contract_details(
     _: dict = Depends(
         AccessTokenBearer(
             required_identity=[IdentityTypeEnum.USER.value],
-            required_role=[UserRoleEnum.ENGINEER.value],
+            required_role=[UserRoleEnum.ADMIN.value],
         )
     ),
 ):
@@ -57,7 +58,7 @@ async def new_contract_details(
     return JSONResponse(
         status_code=status.HTTP_200_OK,
         content=ServerRespModel[str](
-            data=contract_details_uid,
+            data=str(contract_details_uid),
             message="Contract details created!.",
         ).model_dump(),
     )
@@ -79,7 +80,7 @@ async def edit_contract_details(
         )
     ),
 ):
-    resp = await client_service.update_contract_details(contract_details_uid=UUID(contract_details_uid), data=data)
+    resp = await client_service.update_contract_details(contract_details_uid=contract_details_uid, data=data)
 
     return JSONResponse(
         status_code=status.HTTP_200_OK,

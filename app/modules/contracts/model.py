@@ -90,9 +90,9 @@ class ContractDetails(MyAbstractSQLModel, table=True):
     grid_meter_reading_at_commissioning: Optional[float] = Field(nullable=True)
 
     # Lease (off-grid) specific
-    equipment_lease_amount: Optional[Decimal] = Field(nullable=True)
-    maintenance_amount: Optional[Decimal] = Field(nullable=True)
-    total: Optional[Decimal] = Field(nullable=True)
+    equipment_lease_amount: Optional[Decimal] = Field(default=None, nullable=True)
+    maintenance_amount: Optional[Decimal] = Field(default=None, nullable=True)
+    total: Optional[Decimal] = Field(default=None, nullable=True)
 
     contract: "Contract" = Relationship(
         back_populates="details",

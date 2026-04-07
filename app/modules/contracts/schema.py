@@ -90,8 +90,10 @@ class CreateContractModel(BaseModel):
         contract_type = self.contract_type
         system_mode = self.system_mode
 
-        if contract_type == ContractTypeEnum.LEASE.value and system_mode == ContractSystemModeEnum.OFF_GRID:
+        if contract_type == ContractTypeEnum.LEASE and system_mode == ContractSystemModeEnum.OFF_GRID:
             raise ValueError(f"Contract type of {contract_type} can't have system mode of {system_mode}")
+
+        return self
 
 
 class CreateContractDetailsModel(BaseModel):

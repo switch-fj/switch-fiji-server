@@ -87,20 +87,23 @@ class ContractRepository:
 
     async def create_contract_details(self, contract_uid: UUID, data: CreateContractDetailsModel):
         try:
-            data_dict = data.model_dump()
-
+            data_dict = data.model_dump(exclude_none=True)
             if data.tariffs and data.tariff_periods:
                 data_dict.pop("tariffs", None)
-                data_dict["tariff_slots"] = json.dumps(data.tariffs)
+
+                tariffs_as_dicts = [t.model_dump() for t in data.tariffs]
+                data_dict["tariff_slots"] = json.dumps(tariffs_as_dicts)
 
             data_dict["contract_uid"] = contract_uid
             contract_details = ContractDetails(**data_dict)
-            await self.session.add(contract_details)
+            self.session.add(contract_details)
             await self.session.commit()
 
             return contract_details
-        except Exception:
+        except Exception as e:
             await self.session.rollback()
+            logger.error(f"Failed to create contract details: {e}")
+            raise
 
     async def update_contract_details(self, contract_details: ContractDetails, data: CreateContractDetailsModel):
         try:
