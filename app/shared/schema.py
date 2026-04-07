@@ -58,7 +58,6 @@ class DBModel(BaseModel):
 
 
 class TokenIdentityModel(BaseModel):
-    id: int
     uid: str
     email: str
     identity: int

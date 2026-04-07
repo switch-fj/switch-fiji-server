@@ -67,7 +67,7 @@ class Authentication:
         payload = {}
 
         if refresh:
-            payload["user"] = user_data.model_dump(mode="json", include={"uid", "id"})
+            payload["user"] = user_data.model_dump(mode="json", include={"uid"})
         else:
             payload["user"] = user_data.model_dump(mode="json")
 
@@ -104,12 +104,12 @@ class Authentication:
                     response.set_cookie(
                         key="refresh_token",
                         value=redis_key,
-                        httponly=True,
+                        httponly=Config.ENV != "development",
                         samesite=("lax" if Config.ENV == "development" else "none"),
                         secure=Config.ENV != "development",
                         max_age=Authentication.REFRESH_TOKEN_EXPIRY_IN_SECONDS,
                         path="/",
-                        domain=(None if Config.ENV == "development" else f".{Config.API_DOMAIN}"),
+                        domain=("localhost" if Config.ENV == "development" else f".{Config.API_DOMAIN}"),
                     )
 
             except Exception as e:

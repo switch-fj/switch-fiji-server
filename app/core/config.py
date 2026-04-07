@@ -26,6 +26,7 @@ class Settings(BaseSettings):
     DB_USER: str
     DB_PASSWORD: str
     DB_SSL: bool = False
+    REMOTE_DB_URL: str = ""
 
     # redis
     REDIS_HOST: str
@@ -54,6 +55,8 @@ class Settings(BaseSettings):
     DEFAULT_PAGE_OFFSET: int = 0
     CURSOR_SECRET: str
 
+    USE_REMOTE_DB: bool = True
+
     # aws
     AWS_REGION: str = ""
     AWS_ACCESS_KEY_ID: str = ""
@@ -65,7 +68,9 @@ class Settings(BaseSettings):
     @property
     def DATABASE_URL(self) -> str:
         password = quote_plus(self.DB_PASSWORD)
-        return f"postgresql+asyncpg://{self.DB_USER}:{password}@{self.DB_HOST}:{self.DB_PORT}/{self.DB_NAME}"
+        url = f"postgresql+asyncpg://{self.DB_USER}:{password}@{self.DB_HOST}:{self.DB_PORT}/{self.DB_NAME}"
+
+        return self.REMOTE_DB_URL if self.USE_REMOTE_DB else url
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
