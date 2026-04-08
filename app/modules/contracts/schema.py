@@ -218,6 +218,9 @@ class CreateContractDetailsModel(BaseModel):
 class ContractDetailsRespModel(DBModel):
     contract_uid: UUID
     term_years: Optional[int] = None
+    term_months: Optional[int] = None
+    months_per_period: Optional[int] = None
+    status: ContractDetailsStatus
     billing_frequency: Optional[ContractBillingFrequencyEnum] = None
     implementation_period: Optional[int] = None
     signed_at: Optional[datetime] = None

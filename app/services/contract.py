@@ -2,7 +2,7 @@ from uuid import UUID
 
 from fastapi import Depends
 
-from app.core.exceptions import BadRequest, Forbidden, NotFound
+from app.core.exceptions import BadRequest, Forbidden, NotFound, ResourceExists
 from app.modules.contracts.model import Contract
 from app.modules.contracts.repository import ContractRepository, get_contract_repo
 from app.modules.contracts.schema import (
@@ -99,6 +99,9 @@ class ContractService:
 
         if not contract:
             raise NotFound(f"Contract with this {contract_uid} not found")
+
+        if contract.details:
+            raise ResourceExists("Contract already has details")
 
         self._sanitize_contract_details(contract=contract, data=data)
 
