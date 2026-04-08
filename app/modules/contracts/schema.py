@@ -63,7 +63,7 @@ class TariffSlotModel(BaseModel):
     period_number: int = Field(ge=1, le=4)
     slot: TariffSlotEnum = Field(...)
     slot_type: TariffSlotTypeEnum = Field(...)
-    rate: int = Field(...)
+    rate: float = Field(...)
 
     @model_validator(mode="after")
     def validate(self):
@@ -74,8 +74,17 @@ class TariffSlotModel(BaseModel):
             case TariffSlotEnum.B:
                 self._start_time = "16:30"
                 self._end_time = "07:30"
-            case _:
-                pass
+
+        if self.slot_type == TariffSlotTypeEnum.FIXED:
+            if not (0 <= self.rate <= 1):
+                raise ValueError(f"Slot {self.slot.value} (FIXED) rate must be between 0 and 1, got {self.rate}")
+
+        elif self.slot_type == TariffSlotTypeEnum.VARIABLE:
+            if not (-100 <= self.rate <= 100):
+                raise ValueError(
+                    f"Slot {self.slot.value} (VARIABLE) rate must be between -100 and 100, got {self.rate}"
+                )
+
         return self
 
 
@@ -104,7 +113,7 @@ class CreateContractDetailsModel(BaseModel):
     signed_at: datetime = Field(default=None)
     commissioned_at: datetime = Field(default=None)
     end_at: datetime = Field(default=None)
-    efl_rate: Optional[float] = Field(default=None)
+    efl_rate: Optional[float] = Field(default=None, ge=0, le=1)
 
     # system mode (On-grid) specific
     system_size_kwp: Optional[float] = Field(default=None)
@@ -120,7 +129,7 @@ class CreateContractDetailsModel(BaseModel):
     monthly_baseline_consumption_kwh: Optional[float] = Field(default=None)
     minimum_consumption_monthly_kwh: Optional[float] = Field(default=None)
     minimum_spend: Optional[float] = Field(default=None)
-    tariff_periods: Optional[int] = Field(default=None, max=4, min=2)
+    tariff_periods: Optional[int] = Field(default=None, le=4, ge=2)
     tariffs: Optional[list[TariffSlotModel]] = Field(default=None)
     estimated_utility: Optional[int] = Field(default=None)
 
