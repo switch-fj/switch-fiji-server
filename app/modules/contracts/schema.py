@@ -215,6 +215,10 @@ class CreateContractDetailsModel(BaseModel):
                 )
 
 
+class UpdateDetailsRespModel:
+    pass
+
+
 class ContractDetailsRespModel(DBModel):
     contract_uid: UUID
     term_years: Optional[int] = None

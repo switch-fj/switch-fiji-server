@@ -4,7 +4,7 @@ from fastapi import APIRouter, Body, Depends, status
 from fastapi.responses import JSONResponse
 
 from app.core.logger import setup_logger
-from app.core.security import AccessTokenBearer
+from app.core.security import AccessTokenBearer, AdminAccessBearer
 from app.modules.contracts.schema import (
     ContractDetailedRespModel,
     CreateContractDetailsModel,
@@ -104,12 +104,7 @@ async def edit_contract_details(
     contract_details_uid: str,
     data: CreateContractDetailsModel = Body(...),
     client_service: ContractService = Depends(get_contract_service),
-    _: dict = Depends(
-        AccessTokenBearer(
-            required_identity=[IdentityTypeEnum.USER.value],
-            required_role=[UserRoleEnum.ENGINEER.value],
-        )
-    ),
+    _: dict = Depends(AdminAccessBearer()),
 ):
     resp = await client_service.update_contract_details(contract_details_uid=contract_details_uid, data=data)
 
