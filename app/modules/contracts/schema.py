@@ -15,6 +15,7 @@ from pydantic import (
     model_validator,
 )
 
+from app.modules.clients.schema import ClientRespModel
 from app.shared.schema import CurrencyEnum, DBModel
 from app.utils import uuid_serializer
 
@@ -205,22 +206,6 @@ class CreateContractDetailsModel(BaseModel):
                 )
 
 
-class ContractRespModel(DBModel):
-    user_uid: UUID
-    client_uid: UUID
-    site_uid: UUID
-    contract_ref: str
-    contract_type: ContractTypeEnum
-    system_mode: ContractSystemModeEnum
-    currency: CurrencyEnum
-
-    @field_serializer("user_uid", "client_uid", "site_uid")
-    def serialize_contracts_uuid(self, value: UUID):
-        return uuid_serializer(value)
-
-    model_config = ConfigDict(from_attributes=True)
-
-
 class ContractDetailsRespModel(DBModel):
     contract_uid: UUID
     term_years: Optional[int] = None
@@ -246,7 +231,7 @@ class ContractDetailsRespModel(DBModel):
     minimum_consumption_monthly_kwh: Optional[float] = None
     minimum_spend: Optional[float] = None
     tariff_periods: Optional[int] = None
-    tariffs: Optional[list[TariffSlotModel]] = None
+    tariff_slots: Optional[str] = None
     estimated_utility: Optional[int] = None
 
     @field_serializer("signed_at", "commissioned_at", "end_at")
@@ -259,3 +244,25 @@ class ContractDetailsRespModel(DBModel):
         return uuid_serializer(value)
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class ContractRespModel(DBModel):
+    user_uid: UUID
+    client_uid: UUID
+    site_uid: UUID
+    contract_ref: str
+    contract_type: ContractTypeEnum
+    system_mode: ContractSystemModeEnum
+    currency: CurrencyEnum
+
+    @field_serializer("user_uid", "client_uid", "site_uid")
+    def serialize_contracts_uuid(self, value: UUID):
+        return uuid_serializer(value)
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class ContractDetailedRespModel(ContractRespModel):
+    client: ClientRespModel
+    # site: SiteRespModel
+    details: Optional[ContractDetailsRespModel]

@@ -7,7 +7,6 @@ from app.modules.contracts.model import Contract
 from app.modules.contracts.repository import ContractRepository, get_contract_repo
 from app.modules.contracts.schema import (
     ContractDetailsRespModel,
-    ContractRespModel,
     ContractSystemModeEnum,
     ContractTypeEnum,
     CreateContractDetailsModel,
@@ -78,12 +77,12 @@ class ContractService:
         role = token_user.get("role")
 
         if identity == IdentityTypeEnum.USER.value and role == UserRoleEnum.ADMIN.value:
-            return ContractRespModel.model_validate(contract)
+            return contract
 
         if identity == IdentityTypeEnum.CLIENT.value:
             if str(contract.client_uid) != str(user_uid):
                 raise Forbidden("You do not have access to this contract")
-            return ContractRespModel.model_validate(contract)
+            return contract
 
         raise Forbidden("You do not have access to this contract")
 

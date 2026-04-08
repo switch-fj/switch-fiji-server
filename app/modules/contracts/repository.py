@@ -3,7 +3,7 @@ from datetime import datetime
 from uuid import UUID
 
 from fastapi import Depends
-from sqlalchemy.orm import selectinload
+from sqlalchemy.orm import joinedload, selectinload
 from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
@@ -48,9 +48,9 @@ class ContractRepository:
         statement = (
             select(Contract)
             .options(
-                selectinload(Contract.client),
-                selectinload(Contract.site),
-                selectinload(Contract.details),
+                joinedload(Contract.client),
+                joinedload(Contract.site),
+                joinedload(Contract.details),
             )
             .where(Contract.site_uid == site_uid)
         )

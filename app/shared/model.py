@@ -12,7 +12,6 @@ class MyAbstractSQLModel(SQLModel):
     uid: UUID = Field(
         primary_key=True,
         default_factory=uuid4,
-        index=True,
         unique=True,
     )
 
