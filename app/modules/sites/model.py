@@ -29,19 +29,28 @@ class Site(MyAbstractSQLModel, table=True):
         description="external identifier, scoped to a client",
         sa_column=Column(
             String(255),
-            nullable=False,
+            nullable=True,
         ),
+    )
+    site_name: Optional[str] = Field(
+        sa_column=Column(
+            String(255),
+            default=None,
+            nullable=True,
+        )
     )
     gateway_id: str = Field(
         sa_column=Column(
             String(255),
-            nullable=False,
+            default=None,
+            nullable=True,
         )
     )
-    firmware: str = Field(
+    firmware: Optional[str] = Field(
         sa_column=Column(
             String(255),
-            nullable=False,
+            default=None,
+            nullable=True,
         )
     )
 

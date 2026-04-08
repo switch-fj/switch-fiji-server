@@ -25,12 +25,13 @@ class Client(MyAbstractSQLModel, table=True):
             nullable=False,
         )
     )
-    client_id: str = Field(
+    client_id: Optional[str] = Field(
         description="external identifier, used for upsert conflict detection",
         sa_column=Column(
             String(255),
             unique=True,
-            nullable=False,
+            default=None,
+            nullable=True,
         ),
     )
     client_name: str = Field(

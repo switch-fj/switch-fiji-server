@@ -76,7 +76,7 @@ class DynamoClient:
             end_ms = int(end_ts.timestamp() * 1000)
 
             async with self._client as dynamodb:
-                table = await dynamodb.Table(Config.DYNAMO_TABLE_NAME)
+                table = await dynamodb.Table(Config.AWS_TIME_SERIES_TABLE)
 
                 response = await table.query(
                     IndexName="site_id-ts_epoch_ms-index",

@@ -1,4 +1,5 @@
 from typing import Optional
+from uuid import UUID
 
 from fastapi import Depends
 
@@ -15,7 +16,7 @@ from app.core.logger import setup_logger
 from app.database.redis import redis_client
 from app.jobs.auth import send_email_verification_task, send_verify_login_task
 from app.modules.clients.repository import ClientRepository, get_client_repo
-from app.modules.clients.schema import CreateClientModel
+from app.modules.clients.schema import CreateClientModel, UpdateClientModel
 from app.shared.schema import (
     AuthType,
     EmailModel,
@@ -105,7 +106,7 @@ class ClientService:
             ),
         )
 
-    async def register(self, token_payload: dict, data: CreateClientModel):
+    async def register_client(self, token_payload: dict, data: CreateClientModel):
         token_user = token_payload.get("user")
         token_user_uid = token_user.get("uid")
         client = await self.client_repo.get_client_by_mail(email=data.client_email)
@@ -115,6 +116,14 @@ class ClientService:
 
         new_client = await self.client_repo.create_client(user_uid=token_user_uid, data=data)
         return new_client
+
+    async def update_client(self, client_uid: UUID, data: UpdateClientModel):
+        client = await self.client_repo.get_client_by_uid(client_uid=client_uid)
+        if not client:
+            raise NotFound("Client not found!")
+
+        updated_client = await self.client_repo.update_client(client=client, data=data)
+        return updated_client
 
     async def request_login(self, data: EmailModel):
         client = await self.client_repo.get_client_by_mail(email=data.email)

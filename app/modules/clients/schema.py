@@ -1,3 +1,5 @@
+from typing import Optional
+
 import email_validator
 from pydantic import BaseModel, Field, field_validator
 
@@ -5,7 +7,6 @@ from app.shared.schema import DBModel
 
 
 class CreateClientModel(BaseModel):
-    client_id: str = Field(...)
     client_email: str = Field(...)
     client_name: str = Field(...)
 
@@ -15,11 +16,16 @@ class CreateClientModel(BaseModel):
         return email_validator(value)
 
 
+class UpdateClientModel(BaseModel):
+    client_id: Optional[str] = Field(default=None)
+    client_name: Optional[str] = Field(default=None)
+
+
 class ClientRespModel(DBModel):
-    client_id: str
+    client_id: Optional[str]
     client_name: str
     client_email: str
-    sites_count: int
+    sites_count: Optional[int]
 
 
 class ClientDetailedRespModel(ClientRespModel):

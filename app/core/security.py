@@ -13,7 +13,7 @@ from app.core.exceptions import (
     TokenExpired,
 )
 from app.database.redis import redis_client
-from app.shared.schema import IdentityTypeEnum
+from app.shared.schema import IdentityTypeEnum, UserRoleEnum
 
 
 class TokenBearer(HTTPBearer):
@@ -101,3 +101,31 @@ class AccessTokenBearer(TokenBearer):
             if identity == IdentityTypeEnum.USER.value:
                 if role is None or role not in self.required_role:
                     raise InsufficientPermissions()
+
+
+class AdminAccessBearer(AccessTokenBearer):
+    def __init__(
+        self,
+        auto_error: bool = True,
+        is_not_protected: bool = False,
+    ):
+        super().__init__(
+            auto_error=auto_error,
+            required_identity=[IdentityTypeEnum.USER.value],
+            required_role=[UserRoleEnum.ADMIN.value],
+            is_not_protected=is_not_protected,
+        )
+
+
+class EngineerAccessBearer(AccessTokenBearer):
+    def __init__(
+        self,
+        auto_error: bool = True,
+        is_not_protected: bool = False,
+    ):
+        super().__init__(
+            auto_error=auto_error,
+            required_identity=[IdentityTypeEnum.USER.value],
+            required_role=[UserRoleEnum.ENGINEER.value],
+            is_not_protected=is_not_protected,
+        )

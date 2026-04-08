@@ -10,7 +10,11 @@ from app.core.config import Config
 from app.core.logger import setup_logger
 from app.database.postgres import get_session
 from app.modules.clients.model import Client
-from app.modules.clients.schema import ClientRespModel, CreateClientModel
+from app.modules.clients.schema import (
+    ClientRespModel,
+    CreateClientModel,
+    UpdateClientModel,
+)
 from app.shared.schema import (
     CursorPaginationModel,
     PaginatedRespModel,
@@ -126,6 +130,16 @@ class ClientRepository:
         await self.session.commit()
         await self.session.refresh(client)
 
+        return client
+
+    async def update_client(self, client: Client, data: UpdateClientModel):
+        data_dict = data.model_dump(exclude_none=True)
+
+        for key, value in data_dict.items():
+            setattr(client, key, value)
+
+        await self.session.commit()
+        await self.session.refresh(client)
         return client
 
 
