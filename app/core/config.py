@@ -9,9 +9,9 @@ class Settings(BaseSettings):
     ENV: str = "development"
 
     # general
-    API_DOMAIN: str = "http://localhost:8000"
-    STAGING_API_DOMAIN: str
-    FRONTEND_URL: str
+    API_DOMAIN: Optional[str] = ""
+    STAGING_API_DOMAIN: Optional[str] = None
+    FRONTEND_URL: Optional[str] = "http://localhost:3000"
 
     # auth
     JWT_SECRET: str

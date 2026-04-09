@@ -99,19 +99,6 @@ class Authentication:
                     value=token,
                     ex=Authentication.REFRESH_TOKEN_EXPIRY_IN_SECONDS,
                 )
-
-                if response:
-                    response.set_cookie(
-                        key="refresh_token",
-                        value=redis_key,
-                        httponly=Config.ENV != "development",
-                        samesite="lax" if Config.ENV == "development" else "none",
-                        secure=Config.ENV != "development",
-                        max_age=Authentication.REFRESH_TOKEN_EXPIRY_IN_SECONDS,
-                        path="/",
-                        **({"domain": f".{Config.API_DOMAIN}"} if Config.ENV != "development" else {}),
-                    )
-
             except Exception as e:
                 logging.error(f"Failed to initialize Redis client: {e}")
                 pass
@@ -125,7 +112,7 @@ class Authentication:
             key="refresh_token",
             value=jti,
             httponly=Config.ENV != "development",
-            samesite="lax" if Config.ENV == "development" else "none",
+            samesite="none",
             secure=Config.ENV != "development",
             max_age=Authentication.REFRESH_TOKEN_EXPIRY_IN_SECONDS,
             path="/",
