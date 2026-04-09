@@ -48,7 +48,7 @@ class Mailer:
         html = Mailer._render_template(template_name, context)
         resend.Emails.send(
             {
-                "from": "switch.fj <noreply@contact.switch.com.fj>",
+                "from": "no-reply <noreply@noreply.switch.com.fj>",
                 "to": to,
                 "subject": subject,
                 "html": html,
