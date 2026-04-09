@@ -64,7 +64,7 @@ async def get_clients(
     next_cursor: Optional[str] = Query(default=None),
     prev_cursor: Optional[str] = Query(default=None),
     client_service: ClientService = Depends(get_client_service),
-    _: dict = Depends(AdminAccessBearer),
+    _: dict = Depends(AdminAccessBearer()),
 ):
     result = await client_service.get_clients(q=q, limit=limit, next_cursor=next_cursor, prev_cursor=prev_cursor)
 
@@ -83,7 +83,7 @@ async def get_clients(
 async def get_client_sites_by_uid(
     client_uid: UUID,
     site_service: SiteService = Depends(get_site_service),
-    _: dict = Depends(AdminAccessBearer),
+    _: dict = Depends(AdminAccessBearer()),
 ):
     sites = await site_service.get_sites_by_client_uid(client_uid=client_uid)
 
