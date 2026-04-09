@@ -1,9 +1,9 @@
 from typing import Optional
 
-import email_validator
 from pydantic import BaseModel, Field, field_validator
 
 from app.shared.schema import DBModel
+from app.utils import email_validator
 
 
 class CreateClientModel(BaseModel):
