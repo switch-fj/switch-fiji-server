@@ -1,7 +1,7 @@
 from uuid import UUID
 
 from fastapi import Depends
-from sqlalchemy.orm import selectinload
+from sqlalchemy.orm import joinedload, selectinload
 from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
@@ -23,7 +23,7 @@ class SiteRepository:
         self.session = session
 
     async def get_sites_by_client_uid(self, client_uid: UUID):
-        statement = select(Site).where(Site.client_uid == client_uid)
+        statement = select(Site).options(joinedload(Site.contract)).where(Site.client_uid == client_uid)
         result = await self.session.exec(statement=statement)
         sites = result.all()
 

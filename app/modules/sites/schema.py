@@ -27,6 +27,8 @@ class SiteRespModel(DBModel):
     site_name: Optional[str]
     gateway_id: Optional[str]
     firmware: Optional[str]
+    device_count: Optional[int]
+    contract: Optional[ContractRespModel]
 
     @field_serializer("client_uid")
     def serialize_client_uid(self, value: UUID):

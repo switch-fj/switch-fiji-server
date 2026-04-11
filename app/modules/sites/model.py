@@ -2,7 +2,8 @@ from typing import TYPE_CHECKING, Optional
 from uuid import UUID
 
 from sqlalchemy import Column, Identity, Integer, String
-from sqlmodel import Field, Relationship, UniqueConstraint
+from sqlalchemy.orm import column_property
+from sqlmodel import Field, Relationship, UniqueConstraint, func, select
 
 from app.shared.model import MyAbstractSQLModel
 
@@ -64,3 +65,11 @@ class Site(MyAbstractSQLModel, table=True):
         back_populates="site",
         sa_relationship_kwargs={"foreign_keys": "[Contract.site_uid]"},
     )
+
+    @classmethod
+    def __declare_last__(cls):
+        from app.modules.devices.model import Device
+
+        cls.device_count = column_property(
+            select(func.count(Device.id)).where(Device.site_uid == cls.uid).correlate_except(Device).scalar_subquery()
+        )
