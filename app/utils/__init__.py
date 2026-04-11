@@ -8,6 +8,8 @@ from fastapi import Request
 from pydantic import validate_email
 from starlette_context import context
 
+from app.core.config import Config
+
 if TYPE_CHECKING:
     from app.modules.clients.model import Client
     from app.modules.users.model import User
@@ -70,3 +72,9 @@ def build_ref_no(name: str, id: int):
     current_year = str(datetime.now().year)
 
     return f"{prefix}-{current_year}-{str(id).zfill(4)}"
+
+
+def build_redis_url(db: int = 0) -> str:
+    if Config.REDIS_PASSWORD:
+        return f"redis://:{Config.REDIS_PASSWORD}@{Config.REDIS_HOST}:{Config.REDIS_PORT}/{db}"
+    return f"redis://{Config.REDIS_HOST}:{Config.REDIS_PORT}/{db}"

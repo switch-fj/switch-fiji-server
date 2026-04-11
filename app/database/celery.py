@@ -1,22 +1,26 @@
-from contextlib import asynccontextmanager
+# app/database/celery.py
 
-from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
-from sqlmodel.ext.asyncio.session import AsyncSession
+from contextlib import contextmanager
 
-from core.config import Config
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+
+from app.core.config import Config
+
+_sync_url = Config.DATABASE_URL.replace("postgresql+asyncpg", "postgresql+psycopg2")
+
+_engine = create_engine(_sync_url, pool_pre_ping=True)
+_SessionLocal = sessionmaker(bind=_engine, expire_on_commit=False)
 
 
-@asynccontextmanager
-async def get_celery_db_session():
-    engine = create_async_engine(Config.DATABASE_URL, pool_pre_ping=True)
-    session_maker = async_sessionmaker(
-        bind=engine,
-        class_=AsyncSession,
-        expire_on_commit=False,
-    )
-    async with session_maker() as session:
-        try:
-            yield session
-        finally:
-            await session.close()
-    await engine.dispose()
+@contextmanager
+def get_celery_db_session():
+    session = _SessionLocal()
+    try:
+        yield session
+        session.commit()
+    except Exception:
+        session.rollback()
+        raise
+    finally:
+        session.close()

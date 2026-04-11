@@ -12,7 +12,7 @@ from fastapi import Response
 from itsdangerous import BadSignature, SignatureExpired, URLSafeTimedSerializer
 from jwt import ExpiredSignatureError, PyJWTError
 
-from app.database.redis import redis_client
+from app.database.redis import async_redis_client
 from app.shared.schema import PasscodeEnum, TokenIdentityModel
 
 from .config import Config
@@ -94,7 +94,7 @@ class Authentication:
         if refresh:
             try:
                 redis_key = payload["jti"]
-                await redis_client.client.set(
+                await async_redis_client.client.set(
                     name=redis_key,
                     value=token,
                     ex=Authentication.REFRESH_TOKEN_EXPIRY_IN_SECONDS,
@@ -174,7 +174,7 @@ class Authentication:
                 )
             )
 
-            success = await redis_client.client.set(
+            success = await async_redis_client.client.set(
                 name=redis_name,
                 value=token,
                 ex=ex,
@@ -182,7 +182,7 @@ class Authentication:
             if not success:
                 raise ValueError("Failed to store token in Redis")
 
-            stored_token = await redis_client.client.get(redis_name)
+            stored_token = await async_redis_client.client.get(redis_name)
             if stored_token != token:
                 raise ValueError(f"Token verification failed for {redis_name}")
 
@@ -231,14 +231,14 @@ class Authentication:
         redis_name = f"{type}:{email}"
         cooldown_key = f"{redis_name}:cooldown"
 
-        if await redis_client.client.exists(cooldown_key):
+        if await async_redis_client.client.exists(cooldown_key):
             raise TooManyRequest("Please wait before requesting another code")
 
         ex = exp if exp else Authentication.VERIFY_LOGIN_PASSCODE_EXPIRY_IN_SECONDS
         hashed_otp = hashlib.sha256(otp.encode()).hexdigest()
 
         try:
-            resp = await redis_client.client.set(
+            resp = await async_redis_client.client.set(
                 name=redis_name,
                 value=hashed_otp,
                 ex=ex,
@@ -247,14 +247,14 @@ class Authentication:
             if not resp:
                 raise ValueError("Failed to store token in Redis")
 
-            await redis_client.client.set(
+            await async_redis_client.client.set(
                 name=cooldown_key,
                 value="1",
                 ex=Authentication.RESEND_COOLDOWN,
             )
 
             attempts_key = f"{redis_name}:attempts"
-            await redis_client.client.delete(attempts_key)
+            await async_redis_client.client.delete(attempts_key)
 
             return otp
         except Exception as e:
@@ -270,16 +270,16 @@ class Authentication:
         redis_name = f"{type}:{email}"
         attempts_key = f"{redis_name}:attempts"
 
-        stored_otp = await redis_client.client.get(redis_name)
+        stored_otp = await async_redis_client.client.get(redis_name)
 
         if not stored_otp:
             raise InvalidOTP()
 
-        attempts = await redis_client.client.incr(attempts_key)
-        await redis_client.client.expire(attempts_key, 300)
+        attempts = await async_redis_client.client.incr(attempts_key)
+        await async_redis_client.client.expire(attempts_key, 300)
 
         if attempts > Authentication.MAX_ATTEMPTS:
-            await redis_client.client.delete(redis_name)
+            await async_redis_client.client.delete(redis_name)
             raise TooManyAttempts("Too many incorrect attempts")
 
         hashed_input = hashlib.sha256(otp.encode()).hexdigest()
@@ -287,7 +287,7 @@ class Authentication:
         if stored_otp != hashed_input:
             raise InvalidOTP()
 
-        await redis_client.client.delete(redis_name)
-        await redis_client.client.delete(attempts_key)
+        await async_redis_client.client.delete(redis_name)
+        await async_redis_client.client.delete(attempts_key)
 
         return True

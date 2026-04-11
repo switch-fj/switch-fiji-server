@@ -14,7 +14,7 @@ from app.core.exceptions import (
     WrongCredentials,
 )
 from app.core.logger import setup_logger
-from app.database.redis import redis_client
+from app.database.redis import async_redis_client
 from app.jobs.auth import send_email_verification_task, send_verify_login_task
 from app.modules.users.repository import UserRepository, get_user_repo
 from app.modules.users.schema import CreateUserModel
@@ -191,7 +191,7 @@ class UserService:
                 return "Account already verified."
 
             await self.user_repo.verify_email(user=user)
-            await redis_client.add_to_blocklist(token)
+            await async_redis_client.add_to_blocklist(token)
 
             return "Account verified successfully."
 
@@ -208,7 +208,7 @@ class UserService:
         if user.is_email_verified:
             return "Account already verified."
 
-        if await redis_client.client.exists(f"verify:{user.email}") > 0:
+        if await async_redis_client.client.exists(f"verify:{user.email}") > 0:
             return "A verification email was recently sent. Check your inbox."
 
         await self._initiate_acct_verification_task(email=user.email)
@@ -219,7 +219,7 @@ class UserService:
         if not token_jti:
             raise RefreshTokenRequired("Refresh token not found.")
         try:
-            refresh_token = await redis_client.client.get(token_jti)
+            refresh_token = await async_redis_client.client.get(token_jti)
 
             if not refresh_token:
                 raise RefreshTokenRequired("Refresh token invalid or expired.")

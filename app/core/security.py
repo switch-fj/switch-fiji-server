@@ -12,7 +12,7 @@ from app.core.exceptions import (
     RefreshTokenExpired,
     TokenExpired,
 )
-from app.database.redis import redis_client
+from app.database.redis import async_redis_client
 from app.shared.schema import IdentityTypeEnum, UserRoleEnum
 
 
@@ -27,7 +27,7 @@ class TokenBearer(HTTPBearer):
         try:
             token_payload = await Authentication.decode_token(token)
 
-            if await redis_client.in_blocklist(token_payload["jti"]):
+            if await async_redis_client.in_blocklist(token_payload["jti"]):
                 raise InvalidToken()
 
             return token_payload

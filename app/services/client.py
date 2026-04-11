@@ -13,7 +13,7 @@ from app.core.exceptions import (
     WrongCredentials,
 )
 from app.core.logger import setup_logger
-from app.database.redis import redis_client
+from app.database.redis import async_redis_client
 from app.jobs.auth import send_email_verification_task, send_verify_login_task
 from app.modules.clients.repository import ClientRepository, get_client_repo
 from app.modules.clients.schema import CreateClientModel, UpdateClientModel
@@ -190,7 +190,7 @@ class ClientService:
                 return "Account already verified."
 
             await self.client_repo.verify_email(client=client)
-            await redis_client.add_to_blocklist(token)
+            await async_redis_client.add_to_blocklist(token)
 
             return "Account verified successfully."
 
@@ -207,7 +207,7 @@ class ClientService:
         if client.is_email_verified:
             return "Account already verified."
 
-        if await redis_client.client.exists(f"verify:{client.client_email}") > 0:
+        if await async_redis_client.client.exists(f"verify:{client.client_email}") > 0:
             return "A verification email was recently sent. Check your inbox."
 
         await self._initiate_acct_verification_task(email=client.client_email)

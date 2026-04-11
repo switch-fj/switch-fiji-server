@@ -1,19 +1,32 @@
 from celery import Celery
 
-from app.core.config import Config
+from app.database.redis import sync_redis_client
+from app.utils import build_redis_url
 
-if Config.REDIS_PASSWORD:
-    redis_url = f"redis://:{Config.REDIS_PASSWORD}@{Config.REDIS_HOST}:{Config.REDIS_PORT}"
-else:
-    redis_url = f"redis://{Config.REDIS_HOST}:{Config.REDIS_PORT}"
+broker_url = build_redis_url(db=1)
+backend_url = build_redis_url(db=2)
 
 celery_app = Celery(
     "switch-network",
-    broker=f"{redis_url}/1",
-    backend=f"{redis_url}/2",
+    broker=broker_url,
+    backend=backend_url,
 )
 
 
+@celery_app.on_after_configure.connect
+def setup_sync_redis(sender, **kwargs):
+    sync_redis_client.init()
+
+
+celery_app.conf.beat_schedule = {
+    "compute-site-stats-every-5-mins": {
+        "task": "compute_all_site_stats",
+        "schedule": 300,
+    },
+}
+
+celery_app.conf.timezone = "UTC"
 celery_app.autodiscover_tasks(["app.jobs"])
 
 from app.jobs import auth  # noqa
+from app.jobs import site_stats  # noqa
