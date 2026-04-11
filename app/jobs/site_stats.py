@@ -27,7 +27,9 @@ def compute_all_site_stats(self):
                 FROM sites s
                 JOIN contracts c         ON c.site_uid    = s.uid
                 JOIN contract_details cd ON cd.contract_uid = c.uid
-                WHERE cd.status = 'active'
+                WHERE cd.commissioned_at IS NOT NULL
+                    AND cd.commissioned_at <= NOW()
+                    AND cd.end_at >= NOW()
             """
                 )
             )
@@ -63,7 +65,9 @@ def compute_single_site_stats(self, site_uid: str, gateway_id: str):
                 FROM contracts c
                 JOIN contract_details cd ON cd.contract_uid = c.uid
                 WHERE c.site_uid = :site_uid
-                  AND cd.status  = 'active'
+                    AND cd.commissioned_at IS NOT NULL
+                    AND cd.commissioned_at <= NOW()
+                    AND cd.end_at >= NOW()
                 LIMIT 1
             """
                 ),

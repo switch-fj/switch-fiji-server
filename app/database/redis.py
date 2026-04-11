@@ -53,12 +53,14 @@ class AsyncRedisClient:
     def client(self) -> Optional[aioredis.Redis]:
         return self._client
 
-    async def close(self):
-        """Close Redis connection"""
-        if self._client:
-            await self._client.close()
-            self._client = None
-            logger.info("Redis connection closed")
+    async def get_site_stats(self, site_uid: str):
+        if not self._client:
+            return None
+        try:
+            return await self._client.get(f"site_stats:{site_uid}")
+        except Exception as e:
+            logger.error(f"Error getting site stats for {site_uid}: {e}")
+            return None
 
     @backoff.on_exception(backoff.expo, (ConnectionError, RedisError), max_tries=3, max_time=30)
     async def add_to_blocklist(self, key: str, expiry: int = 86400) -> bool:
@@ -85,6 +87,13 @@ class AsyncRedisClient:
         except Exception as e:
             logger.error(f"Error checking blocklist: {e}")
             return False
+
+    async def close(self):
+        """Close Redis connection"""
+        if self._client:
+            await self._client.close()
+            self._client = None
+            logger.info("Redis connection closed")
 
 
 class SyncRedisClient:

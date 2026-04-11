@@ -1,11 +1,14 @@
+import asyncio
+import json
 from typing import Optional
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, Query, status
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, StreamingResponse
 
 from app.core.config import Config
 from app.core.security import AdminAccessBearer
+from app.database.redis import async_redis_client
 from app.modules.clients.schema import ClientRespModel, CreateClientModel
 from app.modules.sites.schema import CreateSiteModel, SiteRespModel
 from app.services.client import ClientService, get_client_service
@@ -89,4 +92,40 @@ async def get_client_sites_by_uid(
 
     return JSONResponse(
         content=ServerRespModel[list[SiteRespModel]](data=sites, message="client's sites retrieved").model_dump()
+    )
+
+
+@admin_router.get(
+    "/sites/{site_uid}/stats/stream",
+    status_code=status.HTTP_200_OK,
+    summary="Stream live stats for a single site via SSE",
+)
+async def stream_site_stats(
+    site_uid: UUID,
+    # _: dict = Depends(AdminAccessBearer()),
+):
+    async def event_generator():
+        while True:
+            try:
+                stats = await async_redis_client.get_site_stats(site_uid=str(site_uid))
+
+                if stats:
+                    yield f"data: {stats}\n\n".encode("utf-8")
+                else:
+                    yield f"data: {json.dumps({'status': 'computing', 'site_uid': str(site_uid)})}\n\n".encode("utf-8")
+
+            except Exception as e:
+                yield f"data: {json.dumps({'status': 'error', 'detail': str(e)})}\n\n".encode("utf-8")
+
+            await asyncio.sleep(30)
+
+    return StreamingResponse(
+        content=event_generator(),
+        status_code=status.HTTP_200_OK,
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "X-Accel-Buffering": "no",
+            "Connection": "keep-alive",
+        },
     )

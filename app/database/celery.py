@@ -9,7 +9,7 @@ from app.core.config import Config
 
 _sync_url = Config.DATABASE_URL.replace("postgresql+asyncpg", "postgresql+psycopg2")
 
-_engine = create_engine(_sync_url, pool_pre_ping=True)
+_engine = create_engine(url=_sync_url, pool_pre_ping=True)
 _SessionLocal = sessionmaker(bind=_engine, expire_on_commit=False)
 
 
