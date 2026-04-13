@@ -1,5 +1,3 @@
-# app/database/celery.py
-
 from contextlib import contextmanager
 
 from sqlalchemy import create_engine

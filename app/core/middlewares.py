@@ -21,6 +21,9 @@ def register_middlewares(app: FastAPI):
         "http://127.0.0.1:3000",
         "https://localhost:3000",
         "https://127.0.0.1:3000",
+        "https://finance.switch.com.fj",
+        "https://client.switch.com.fj",
+        "https://engineer.switch.com.fj",
     ]
     if Config.FRONTEND_URL:
         allow_origins.append(Config.FRONTEND_URL)
