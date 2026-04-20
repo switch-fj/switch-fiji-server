@@ -295,17 +295,13 @@ def register_exceptions(app: FastAPI):
 
         for err in exc.errors():
             loc = [x for x in err.get("loc", []) if x != "body"]
+            field_name = loc[-1] if loc else None
 
-            label = get_label(model, loc)
+            title = get_field_title(model, field_name) if field_name else None
+            label = title if title else get_label(model, loc)
+            messages.append(format_error_message(label, err))
 
-            error_type = err.get("type")
-
-            if error_type == "missing":
-                messages.append(f"{label} is required")
-            else:
-                messages.append(f"{label}: {err.get('msg')}")
-
-        combined_message = "; ".join(messages)
+        combined_message = ", ".join(messages)
 
         return JSONResponse(
             status_code=400,
