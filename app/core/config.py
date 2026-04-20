@@ -45,7 +45,7 @@ class Settings(BaseSettings):
     EMAIL_SALT: str
 
     # resend
-    USE_RESEND: bool
+    USE_RESEND: bool = False
     RESEND_API_KEY: str
 
     # app

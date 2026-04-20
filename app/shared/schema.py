@@ -165,6 +165,16 @@ class UserResponseModel(DBModel):
     model_config = ConfigDict(from_attributes=True)
 
 
+class TimeFormatEnum(StrEnum):
+    TWELVE = "12"
+    TWENTY_FOUR = "24"
+
+
+class DateFormatEnum(StrEnum):
+    DMY = "dmy"
+    mdy = "mdy"
+
+
 class CurrencyEnum(StrEnum):
     # AED = "AED"
     # AFN = "AFN"

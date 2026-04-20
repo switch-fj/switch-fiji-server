@@ -18,13 +18,6 @@ def setup_sync_redis(sender, **kwargs):
     sync_redis_client.init()
 
 
-celery_app.conf.beat_schedule = {
-    "compute-site-stats-every-5-mins": {
-        "task": "compute_all_site_stats",
-        "schedule": 300,
-    },
-}
-
 celery_app.conf.timezone = "UTC"
 celery_app.autodiscover_tasks(["app.jobs"])
 

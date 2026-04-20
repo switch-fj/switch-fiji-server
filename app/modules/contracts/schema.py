@@ -107,12 +107,12 @@ class CreateContractModel(BaseModel):
 
 
 class CreateContractDetailsModel(BaseModel):
-    term_years: int = Field(default=None)
-    billing_frequency: ContractBillingFrequencyEnum = Field(default=None)
-    implementation_period: int = Field(default=None)
-    signed_at: datetime = Field(default=None)
-    commissioned_at: datetime = Field(default=None)
-    end_at: datetime = Field(default=None)
+    term_years: int = Field(..., ge=0, le=10)
+    billing_frequency: ContractBillingFrequencyEnum = Field(...)
+    implementation_period: int = Field(...)
+    signed_at: datetime = Field(...)
+    commissioned_at: datetime = Field(...)
+    end_at: datetime = Field(...)
     efl_rate: Optional[float] = Field(default=None, ge=0, le=1)
 
     # system mode (On-grid) specific

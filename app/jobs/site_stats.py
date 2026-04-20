@@ -8,6 +8,13 @@ from app.database.celery import get_celery_db_session
 from app.database.redis import sync_redis_client
 from app.jobs.celery import celery_app
 
+celery_app.conf.beat_schedule = {
+    "compute-site-stats-every-5-mins": {
+        "task": "compute_all_site_stats",
+        "schedule": 300,
+    },
+}
+
 
 @celery_app.task(name="compute_all_site_stats", bind=True, max_retries=3, default_retry_delay=5)
 def compute_all_site_stats(self):
