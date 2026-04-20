@@ -1,8 +1,13 @@
+from fastapi import Depends
 from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
+from app.core.logger import setup_logger
+from app.database.postgres import get_session
 from app.modules.settings.model import ContractSettings
 from app.modules.settings.schema import UpdateContractSettingsModel
+
+logger = setup_logger(__name__)
 
 
 class SettingsRepository:
@@ -27,3 +32,7 @@ class SettingsRepository:
         await self.session.refresh(contract_settings)
 
         return True
+
+
+def get_settings_repo(session: AsyncSession = Depends(get_session)):
+    return SettingsRepository(session=session)

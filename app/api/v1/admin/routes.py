@@ -10,8 +10,10 @@ from app.core.config import Config
 from app.core.security import AdminAccessBearer
 from app.database.redis import async_redis_client
 from app.modules.clients.schema import ClientRespModel, CreateClientModel
+from app.modules.settings.schema import ContractSettingsModel
 from app.modules.sites.schema import CreateSiteModel, SiteRespModel
 from app.services.client import ClientService, get_client_service
+from app.services.settings import SettingsService, get_settings_service
 from app.services.sites import SiteService, get_site_service
 from app.shared.schema import (
     CursorPaginationModel,
@@ -128,4 +130,22 @@ async def stream_site_stats(
             "X-Accel-Buffering": "no",
             "Connection": "keep-alive",
         },
+    )
+
+
+@admin_router.get(
+    "/contracts-settings",
+    status_code=status.HTTP_200_OK,
+    response_model=ServerRespModel[ContractSettingsModel],
+)
+async def get_contracts_general_settings(
+    ccontract_settings_service: SettingsService = Depends(get_settings_service),
+    _: dict = Depends(AdminAccessBearer()),
+):
+    contract_settings = await ccontract_settings_service.get_contract_general_settings()
+
+    return JSONResponse(
+        content=ServerRespModel[list[SiteRespModel]](
+            data=contract_settings, message="contract general settings retrieved"
+        ).model_dump()
     )

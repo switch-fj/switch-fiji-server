@@ -107,16 +107,26 @@ class Authentication:
 
     @staticmethod
     def set_refresh_token_cookie(response: Response, jti: str) -> None:
-        """Set refresh token JTI as HTTP-only cookie"""
+        is_production = Config.ENV == "production"
+        is_localhost = "localhost" in Config.API_DOMAIN
+        secure = is_production
+        samesite = "none" if is_production else "lax"
+        domain = None
+
+        if is_production:
+            domain = f".{Config.API_DOMAIN}"
+        elif not is_localhost:
+            domain = Config.API_DOMAIN
+
         response.set_cookie(
             key="refresh_token",
             value=jti,
-            httponly=Config.ENV != "development",
-            samesite="none",
-            secure=Config.ENV != "development",
+            httponly=True,
+            secure=secure,
+            samesite=samesite,
             max_age=Authentication.REFRESH_TOKEN_EXPIRY_IN_SECONDS,
             path="/",
-            domain=("localhost" if Config.ENV == "development" else f".{Config.API_DOMAIN}"),
+            domain=domain,
         )
 
     @staticmethod

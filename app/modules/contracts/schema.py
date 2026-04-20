@@ -10,6 +10,7 @@ from pydantic import (
     ConfigDict,
     Field,
     PrivateAttr,
+    computed_field,
     field_serializer,
     field_validator,
     model_validator,
@@ -68,14 +69,6 @@ class TariffSlotModel(BaseModel):
 
     @model_validator(mode="after")
     def validate(self):
-        match self.slot:
-            case TariffSlotEnum.A:
-                self._start_time = "07:30"
-                self._end_time = "16:30"
-            case TariffSlotEnum.B:
-                self._start_time = "16:30"
-                self._end_time = "07:30"
-
         if self.slot_type == TariffSlotTypeEnum.FIXED:
             if not (0 <= self.rate <= 1):
                 raise BadRequest(f"Slot {self.slot.value} (FIXED) rate must be between 0 and 1, got {self.rate}")
@@ -87,6 +80,16 @@ class TariffSlotModel(BaseModel):
                 )
 
         return self
+
+    @computed_field
+    @property
+    def start_time(self) -> str:
+        return "07:30" if self.slot == TariffSlotEnum.A else "16:30"
+
+    @computed_field
+    @property
+    def end_time(self) -> str:
+        return "16:30" if self.slot == TariffSlotEnum.A else "07:30"
 
 
 class CreateContractModel(BaseModel):
