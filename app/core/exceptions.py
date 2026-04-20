@@ -1,4 +1,4 @@
-from typing import Callable, Optional
+from typing import Callable, Optional, Union, get_args, get_origin
 
 from fastapi import FastAPI, status
 from fastapi.exceptions import RequestValidationError
@@ -174,6 +174,94 @@ def create_exception_handler(
     return exception_handler
 
 
+def get_model_from_request(request: Request):
+    try:
+        return request.scope["route"].body_field.type_
+    except Exception:
+        return None
+
+
+def get_field_title(model, field_name: str) -> str | None:
+    if not model or not hasattr(model, "model_fields"):
+        return None
+
+    field = model.model_fields.get(field_name)
+    if not field:
+        return None
+
+    return field.title
+
+
+def prettify(name: str) -> str:
+    return name.replace("_", " ").capitalize()
+
+
+def format_error_message(label: str, err: dict) -> str:
+    error_type = err.get("type")
+
+    if error_type == "missing":
+        return f"{label} is required"
+
+    return f"{label}: {err.get('msg')}"
+
+
+def unwrap_type(annotation):
+    origin = get_origin(annotation)
+
+    if origin is None:
+        return annotation
+
+    if origin is list:
+        return get_args(annotation)[0]
+
+    if origin is tuple:
+        return get_args(annotation)[0]
+
+    if origin is dict:
+        return get_args(annotation)[1]
+
+    if origin is Union:
+        args = [arg for arg in get_args(annotation) if arg is not type(None)]
+        return args[0] if args else annotation
+
+    return annotation
+
+
+def resolve_field(model, loc: list):
+    current_model = model
+    field_info = None
+
+    for part in loc:
+        if isinstance(part, int):
+            continue
+
+        if not hasattr(current_model, "model_fields"):
+            return None, None
+
+        field_info = current_model.model_fields.get(part)
+        if not field_info:
+            return None, None
+
+        annotation = unwrap_type(field_info.annotation)
+        current_model = annotation
+
+    return field_info, current_model
+
+
+def get_label(model, loc: list) -> str:
+    field_name = loc[-1] if loc else None
+
+    field_info, _ = resolve_field(model, loc)
+
+    if field_info and field_info.title:
+        return field_info.title
+
+    if field_name:
+        return prettify(field_name)
+
+    return "Field"
+
+
 def register_exceptions(app: FastAPI):
     app.add_exception_handler(InvalidToken, create_exception_handler(status.HTTP_401_UNAUTHORIZED))
     app.add_exception_handler(NotFound, create_exception_handler(status.HTTP_404_NOT_FOUND))
@@ -201,14 +289,21 @@ def register_exceptions(app: FastAPI):
 
     @app.exception_handler(RequestValidationError)
     async def validation_exception_handler(request: Request, exc: RequestValidationError):
+        model = get_model_from_request(request)
+
         messages = []
 
         for err in exc.errors():
-            loc = [str(x) for x in err.get("loc", []) if x != "body"]
-            field = " -> ".join(loc)
-            msg = err.get("msg", "Invalid value")
+            loc = [x for x in err.get("loc", []) if x != "body"]
 
-            messages.append(f"{field}: {msg}")
+            label = get_label(model, loc)
+
+            error_type = err.get("type")
+
+            if error_type == "missing":
+                messages.append(f"{label} is required")
+            else:
+                messages.append(f"{label}: {err.get('msg')}")
 
         combined_message = "; ".join(messages)
 
