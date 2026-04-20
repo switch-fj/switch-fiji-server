@@ -1,6 +1,7 @@
 from typing import Callable, Optional
 
 from fastapi import FastAPI, status
+from fastapi.exceptions import RequestValidationError
 from fastapi.requests import Request
 from fastapi.responses import JSONResponse
 
@@ -119,7 +120,7 @@ class InsufficientPermissions(Exception):
         super().__init__(self.message)
 
 
-class BadRequest(Exception):
+class BadRequest(AppException):
     """Raised when a bad request is made to the api."""
 
     def __init__(self, message: Optional[str] = None):
@@ -127,7 +128,7 @@ class BadRequest(Exception):
         super().__init__(self.message)
 
 
-class TooManyRequest(Exception):
+class TooManyRequest(AppException):
     """Raised when a too many requests are made to the api."""
 
     def __init__(self, message: Optional[str] = None):
@@ -135,7 +136,7 @@ class TooManyRequest(Exception):
         super().__init__(self.message)
 
 
-class TooManyAttempts(Exception):
+class TooManyAttempts(AppException):
     """Raised when a too many attempts are made to the api."""
 
     def __init__(self, message: Optional[str] = None):
@@ -143,7 +144,7 @@ class TooManyAttempts(Exception):
         super().__init__(self.message)
 
 
-class UserNotVerified(Exception):
+class UserNotVerified(AppException):
     """Raised when an unverified user calls an endpoint."""
 
     def __init__(self, message: Optional[str] = None):
@@ -151,7 +152,7 @@ class UserNotVerified(Exception):
         super().__init__(self.message)
 
 
-class SameNewOldPassword(Exception):
+class SameNewOldPassword(AppException):
     """Raised when old password is same as new password."""
 
     def __init__(self, message: Optional[str] = None):
@@ -197,6 +198,27 @@ def register_exceptions(app: FastAPI):
     app.add_exception_handler(UserNotVerified, create_exception_handler(status.HTTP_403_FORBIDDEN))
     app.add_exception_handler(Forbidden, create_exception_handler(status.HTTP_403_FORBIDDEN))
     app.add_exception_handler(SameNewOldPassword, create_exception_handler(status.HTTP_403_FORBIDDEN))
+
+    @app.exception_handler(RequestValidationError)
+    async def validation_exception_handler(request: Request, exc: RequestValidationError):
+        messages = []
+
+        for err in exc.errors():
+            loc = [str(x) for x in err.get("loc", []) if x != "body"]
+            field = " -> ".join(loc)
+            msg = err.get("msg", "Invalid value")
+
+            messages.append(f"{field}: {msg}")
+
+        combined_message = "; ".join(messages)
+
+        return JSONResponse(
+            status_code=400,
+            content={
+                "error_code": "BadRequest",
+                "message": combined_message,
+            },
+        )
 
     @app.exception_handler(status.HTTP_500_INTERNAL_SERVER_ERROR)
     async def internal_server_error(request: Request, exc):
