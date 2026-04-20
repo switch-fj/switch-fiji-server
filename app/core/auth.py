@@ -108,8 +108,7 @@ class Authentication:
     @staticmethod
     def set_refresh_token_cookie(response: Response, jti: str) -> None:
         """Set refresh token JTI as HTTP-only cookie"""
-
-        is_relaxed = Config.is_relaxed_cookie_env()
+        is_relaxed = Config.is_relaxed_cookie_env
 
         response.set_cookie(
             key="refresh_token",
