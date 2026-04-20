@@ -78,11 +78,11 @@ class TariffSlotModel(BaseModel):
 
         if self.slot_type == TariffSlotTypeEnum.FIXED:
             if not (0 <= self.rate <= 1):
-                raise ValueError(f"Slot {self.slot.value} (FIXED) rate must be between 0 and 1, got {self.rate}")
+                raise BadRequest(f"Slot {self.slot.value} (FIXED) rate must be between 0 and 1, got {self.rate}")
 
         elif self.slot_type == TariffSlotTypeEnum.VARIABLE:
             if not (-100 <= self.rate <= 100):
-                raise ValueError(
+                raise BadRequest(
                     f"Slot {self.slot.value} (VARIABLE) rate must be between -100 and 100, got {self.rate}"
                 )
 
@@ -102,7 +102,7 @@ class CreateContractModel(BaseModel):
         system_mode = self.system_mode
 
         if contract_type == ContractTypeEnum.LEASE and system_mode == ContractSystemModeEnum.OFF_GRID:
-            raise ValueError(f"Contract type of {contract_type} can't have system mode of {system_mode}")
+            raise BadRequest(f"Contract type of {contract_type} can't have system mode of {system_mode}")
 
         return self
 
