@@ -65,6 +65,12 @@ class Settings(BaseSettings):
 
     PUBLIC_BASE_URL: str = "http://127.0.0.1:8000"
 
+    ALLOW_LOCAL_FRONTEND: bool
+
+    @classmethod
+    def is_relaxed_cookie_env(cls) -> bool:
+        return cls.ENV == "development" or cls.ALLOW_LOCAL_FRONTEND
+
     @property
     def DATABASE_URL(self) -> str:
         password = quote_plus(self.DB_PASSWORD)
