@@ -15,6 +15,7 @@ from pydantic import (
     model_validator,
 )
 
+from app.core.exceptions import BadRequest
 from app.modules.clients.schema import ClientRespModel
 from app.shared.schema import CurrencyEnum, DBModel
 from app.utils import uuid_serializer
@@ -165,13 +166,13 @@ class CreateContractDetailsModel(BaseModel):
 
         if commissioned and end:
             if end <= commissioned:
-                raise ValueError("end_at must be after commissioned_at")
+                raise BadRequest("end_at must be after commissioned_at")
 
             if self.term_years:
                 expected_end = commissioned + relativedelta(years=self.term_years)
                 delta_days = abs((end - expected_end).days)
                 if delta_days > 1:
-                    raise ValueError(
+                    raise BadRequest(
                         f"end_at ({end.date()}) does not match "
                         f"commissioned_at + {self.term_years} years "
                         f"(expected ~{expected_end.date()})"
@@ -179,7 +180,7 @@ class CreateContractDetailsModel(BaseModel):
 
         if signed and commissioned:
             if signed > commissioned:
-                raise ValueError("signed_at must be before or on commissioned_at")
+                raise BadRequest("signed_at must be before or on commissioned_at")
 
     def _validate_tariffs_align_with_periods(self):
         """
@@ -194,7 +195,7 @@ class CreateContractDetailsModel(BaseModel):
 
         expected_count = self.tariff_periods * 2  # A + B per period
         if len(self.tariffs) != expected_count:
-            raise ValueError(
+            raise BadRequest(
                 f"Expected {expected_count} tariffs for {self.tariff_periods} "
                 f"period(s) (A + B per period), got {len(self.tariffs)}"
             )
@@ -210,7 +211,7 @@ class CreateContractDetailsModel(BaseModel):
         for period_num in range(1, self.tariff_periods + 1):
             slots = period_slots.get(period_num, set())
             if slots != {"A", "B"}:
-                raise ValueError(
+                raise BadRequest(
                     f"Tariff period {period_num} must have both slot A and slot B, got: {slots or 'nothing'}"
                 )
 
