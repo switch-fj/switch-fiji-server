@@ -1,5 +1,4 @@
 from fastapi import APIRouter, Body, Depends, status
-from fastapi.responses import JSONResponse
 
 from app.core.security import EngineerAccessBearer
 from app.modules.clients.schema import UpdateClientModel
@@ -24,12 +23,9 @@ async def update_client(
 ):
     await client_service.update_client(client_uid=client_uid, data=data)
 
-    return JSONResponse(
-        status_code=status.HTTP_200_OK,
-        content=ServerRespModel[bool](
-            data=True,
-            message="Client updated!.",
-        ).model_dump(),
+    return ServerRespModel[bool](
+        data=True,
+        message="Client updated!.",
     )
 
 
@@ -46,10 +42,7 @@ async def update_site(
 ):
     await site_service.update_site(site_uid=site_uid, data=data)
 
-    return JSONResponse(
-        status_code=status.HTTP_200_OK,
-        content=ServerRespModel[bool](
-            data=True,
-            message="Site updated!.",
-        ).model_dump(),
+    return ServerRespModel[bool](
+        data=True,
+        message="Site updated!.",
     )

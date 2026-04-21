@@ -266,7 +266,7 @@ class ContractDetailsRespModel(DBModel):
     @field_serializer("equipment_lease_amount", "maintenance_amount", "total")
     def serialize_decimals(self, value: Decimal):
         if value:
-            return f"${value:.2f}"
+            return f"{value:.2f}"
 
     model_config = ConfigDict(from_attributes=True)
 

@@ -2,7 +2,6 @@ from typing import Optional
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, Query, status
-from fastapi.responses import JSONResponse
 
 from app.core.config import Config
 from app.core.security import AccessTokenBearer
@@ -32,12 +31,9 @@ async def get_invoice_by_uid(
     invoice = await invoice_service.get_invoice_by_uid(invoice_uid=invoice_uid)
     await contract_service.get_contract_by_uid(contract_uid=invoice.contract.uid, token_payload=token_payload)
 
-    return JSONResponse(
-        status_code=status.HTTP_200_OK,
-        content=ServerRespModel[InvoiceRespModel](
-            data=invoice,
-            message="Invoice retrieved!.",
-        ).model_dump(),
+    return ServerRespModel[InvoiceRespModel](
+        data=invoice,
+        message="Invoice retrieved!.",
     )
 
 
@@ -63,10 +59,7 @@ async def get_invoice_history_by_contract_uid(
         contract_uid=contract_uid, limit=limit, offset=offset
     )
 
-    return JSONResponse(
-        status_code=status.HTTP_200_OK,
-        content=ServerRespModel[PaginatedRespModel[InvoiceHistoryRespModel, OffsetPaginationModel]](
-            data=resp,
-            message="Invoice history retrieved!.",
-        ).model_dump(),
+    return ServerRespModel[PaginatedRespModel[InvoiceHistoryRespModel, OffsetPaginationModel]](
+        data=resp,
+        message="Invoice history retrieved!.",
     )

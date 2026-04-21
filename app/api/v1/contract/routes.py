@@ -1,7 +1,6 @@
 from uuid import UUID
 
 from fastapi import APIRouter, Body, Depends, status
-from fastapi.responses import JSONResponse
 
 from app.core.logger import setup_logger
 from app.core.security import AccessTokenBearer, AdminAccessBearer
@@ -34,12 +33,9 @@ async def create_contract(
 ):
     contract_uid = await client_service.create_contract(token_payload=token_payload, data=data)
 
-    return JSONResponse(
-        status_code=status.HTTP_200_OK,
-        content=ServerRespModel[str](
-            data=contract_uid,
-            message="New Contract created!.",
-        ).model_dump(),
+    return ServerRespModel[str](
+        data=contract_uid,
+        message="New Contract created!.",
     )
 
 
@@ -60,12 +56,7 @@ async def get_contract(
 ):
     contract = await contract_service.get_contract_by_uid(contract_uid=UUID(contract_uid), token_payload=token_payload)
     contract_detailed_resp = ContractDetailedRespModel.model_validate(contract)
-    return JSONResponse(
-        status_code=status.HTTP_200_OK,
-        content=ServerRespModel[ContractDetailedRespModel](
-            data=contract_detailed_resp, message="Contract retrieved!"
-        ).model_dump(),
-    )
+    return ServerRespModel[ContractDetailedRespModel](data=contract_detailed_resp, message="Contract retrieved!")
 
 
 @contract_router.post(
@@ -86,12 +77,9 @@ async def new_contract_details(
 ):
     contract_details_uid = await contract_service.create_contract_details(contract_uid=UUID(contract_uid), data=data)
 
-    return JSONResponse(
-        status_code=status.HTTP_200_OK,
-        content=ServerRespModel[str](
-            data=str(contract_details_uid),
-            message="Contract details created!.",
-        ).model_dump(),
+    return ServerRespModel[str](
+        data=str(contract_details_uid),
+        message="Contract details created!.",
     )
 
 
@@ -108,10 +96,7 @@ async def edit_contract_details(
 ):
     resp = await client_service.update_contract_details(contract_details_uid=contract_details_uid, data=data)
 
-    return JSONResponse(
-        status_code=status.HTTP_200_OK,
-        content=ServerRespModel[resp](
-            data=contract_details_uid,
-            message="Contract details updated!.",
-        ).model_dump(),
+    return ServerRespModel[resp](
+        data=contract_details_uid,
+        message="Contract details updated!.",
     )

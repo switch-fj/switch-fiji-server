@@ -1,6 +1,5 @@
 from fastapi import Depends
 
-from app.core.exceptions import NotFound
 from app.modules.settings.repository import SettingsRepository, get_settings_repo
 from app.modules.settings.schema import UpdateContractSettingsModel
 
@@ -10,12 +9,13 @@ class SettingsService:
         self.settings_repo = settings_repo
 
     async def get_contract_general_settings(self):
-        contract = await self.settings_repo.get_contract_settings()
+        contract_settings = await self.settings_repo.get_contract_settings()
 
-        if not contract:
-            raise NotFound("General settings for contracts not found")
+        if not contract_settings:
+            new_contract_settings = await self.settings_repo.create_contract_settings()
+            return new_contract_settings
 
-        return contract
+        return contract_settings
 
     async def update_contract_general_settings(self, data: UpdateContractSettingsModel, token_payload: dict):
         user_payload = token_payload.get("user")

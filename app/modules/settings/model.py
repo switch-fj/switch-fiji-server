@@ -13,7 +13,7 @@ class ContractSettings(MyAbstractSQLModel, table=True):
 
     # general
     vat_rate: Optional[int] = Field(nullable=True, default=None)
-    efl_standard_rate: Optional[Decimal] = Field(nullable=True, default=None)
+    efl_standard_rate_kwh: Optional[Decimal] = Field(nullable=True, default=None)
     primary_currency: str = Field(nullable=False, default=CurrencyEnum.USD.value)
 
     # date, time format
@@ -21,8 +21,8 @@ class ContractSettings(MyAbstractSQLModel, table=True):
     date_format: str = Field(nullable=False, default=DateFormatEnum.DMY)
 
     # notifications
-    asset_perfomance: bool = Field(nullable=False, default=False)
+    asset_performance: bool = Field(nullable=False, default=False)
     invoice_generated: bool = Field(nullable=False, default=False)
     invoice_emailed: bool = Field(nullable=False, default=False)
 
-    updated_by_uid: UUID = Field(foreign_key="users.uid")
+    updated_by_uid: Optional[UUID] = Field(foreign_key="users.uid", nullable=True, default=None)

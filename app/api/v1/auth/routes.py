@@ -45,10 +45,7 @@ async def login(
         elif auth_type == AuthType.OTP.value:
             message = "user login otp sent to inbox."
 
-    response = JSONResponse(
-        status_code=status.HTTP_200_OK,
-        content=ServerRespModel[TokenModel](data=token_model, message=message).model_dump(),
-    )
+    response = ServerRespModel[TokenModel](data=token_model, message=message)
 
     if refresh_jti:
         Authentication.set_refresh_token_cookie(response=response, jti=refresh_jti)
@@ -72,12 +69,9 @@ async def register(
     ),
 ):
     await user_service.register(token_payload=token_payload, data=data)
-    return JSONResponse(
-        status_code=status.HTTP_200_OK,
-        content=ServerRespModel[bool](
-            data=True,
-            message="User registered!.",
-        ).model_dump(),
+    return ServerRespModel[bool](
+        data=True,
+        message="User registered!.",
     )
 
 
@@ -116,12 +110,9 @@ async def send_verify_acct(
 ):
     resp = await user_service.send_verification_email(email=email)
 
-    return JSONResponse(
-        status_code=status.HTTP_200_OK,
-        content=ServerRespModel[TokenModel](
-            data=True,
-            message=resp,
-        ).model_dump(),
+    return ServerRespModel[TokenModel](
+        data=True,
+        message=resp,
     )
 
 
@@ -136,12 +127,9 @@ async def profile(
 ):
     user_resp = await user_service.get_current_user(token_payload=token_payload)
 
-    return JSONResponse(
-        status_code=status.HTTP_200_OK,
-        content=ServerRespModel[UserResponseModel](
-            data=user_resp,
-            message="Profile retrieved",
-        ).model_dump(),
+    return ServerRespModel[UserResponseModel](
+        data=user_resp,
+        message="Profile retrieved",
     )
 
 
@@ -156,16 +144,13 @@ async def get_new_user_access_token(
 ):
     new_access_token, is_email_verified, auth_type = await user_service.new_access_token(token_jti=token_jti)
 
-    return JSONResponse(
-        status_code=status.HTTP_200_OK,
-        content=ServerRespModel[TokenModel](
-            data={
-                "access_token": new_access_token,
-                "is_email_verified": is_email_verified,
-                "auth_type": auth_type,
-            },
-            message="new access token generated.",
-        ).model_dump(),
+    return ServerRespModel[TokenModel](
+        data={
+            "access_token": new_access_token,
+            "is_email_verified": is_email_verified,
+            "auth_type": auth_type,
+        },
+        message="new access token generated.",
     )
 
 
@@ -180,10 +165,7 @@ async def verify_acct(
 ):
     resp = await user_service.verify_account(token=token)
 
-    return JSONResponse(
-        status_code=status.HTTP_200_OK,
-        content=ServerRespModel[bool](
-            data=True,
-            message=resp,
-        ).model_dump(),
+    return ServerRespModel[bool](
+        data=True,
+        message=resp,
     )

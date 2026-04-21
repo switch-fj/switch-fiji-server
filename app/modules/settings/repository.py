@@ -1,3 +1,4 @@
+from decimal import Decimal
 from uuid import UUID
 
 from fastapi import Depends
@@ -8,6 +9,7 @@ from app.core.logger import setup_logger
 from app.database.postgres import get_session
 from app.modules.settings.model import ContractSettings
 from app.modules.settings.schema import UpdateContractSettingsModel
+from app.shared.schema import CurrencyEnum
 
 logger = setup_logger(__name__)
 
@@ -22,6 +24,24 @@ class SettingsRepository:
         contract_settings = result.first()
 
         return contract_settings
+
+    async def create_contract_settings(self):
+        new_contract_settings = ContractSettings(
+            **{
+                "vat_rate": 15,
+                "efl_standard_rate_kwh": Decimal("0.32"),
+                "primary_currency": CurrencyEnum.USD.value,
+                "asset_performance": False,
+                "invoice_emailed": True,
+                "invoice_generated": False,
+            }
+        )
+
+        self.session.add(new_contract_settings)
+        await self.session.commit()
+        await self.session.refresh(new_contract_settings)
+
+        return new_contract_settings
 
     async def update_contract_settings(
         self,

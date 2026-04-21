@@ -304,7 +304,7 @@ def register_exceptions(app: FastAPI):
         combined_message = ", ".join(messages)
 
         return JSONResponse(
-            status_code=400,
+            status_code=status.HTTP_400_BAD_REQUEST,
             content={
                 "error_code": "BadRequest",
                 "message": combined_message,

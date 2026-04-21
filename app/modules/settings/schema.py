@@ -1,37 +1,39 @@
 from decimal import Decimal
 from typing import Optional
 
-from pydantic import BaseModel, Field, field_serializer
+from pydantic import BaseModel, ConfigDict, Field, field_serializer
 
-from app.shared.schema import CurrencyEnum, DBModel
+from app.shared.schema import CurrencyEnum, DateFormatEnum, TimeFormatEnum
 
 
 class UpdateContractSettingsModel(BaseModel):
     vat_rate: Optional[int] = Field(default=None)
-    efl_standard_rate: Optional[Decimal] = Field(default=None)
+    efl_standard_rate_kwh: Optional[Decimal] = Field(default=None)
     primary_currency: Optional[CurrencyEnum] = Field(default=None)
 
-    time_format: Optional[str] = Field(default=None)
-    date_format: Optional[str] = Field(default=None)
+    time_format: Optional[TimeFormatEnum] = Field(default=None)
+    date_format: Optional[DateFormatEnum] = Field(default=None)
 
-    asset_perfomance: Optional[bool] = Field(default=None)
+    asset_performance: Optional[bool] = Field(default=None)
     invoice_generated: Optional[bool] = Field(default=None)
     invoice_emailed: Optional[bool] = Field(default=None)
 
 
-class ContractSettingsModel(DBModel):
-    vat_rate: Optional[int]
-    efl_standard_rate: Optional[Decimal]
-    primary_currency: Optional[CurrencyEnum]
+class ContractSettingsModel(BaseModel):
+    vat_rate: int
+    efl_standard_rate_kwh: Decimal
+    primary_currency: CurrencyEnum
 
-    time_format: Optional[str]
-    date_format: Optional[str]
+    time_format: str
+    date_format: str
 
-    asset_perfomance: Optional[bool]
-    invoice_generated: Optional[bool]
-    invoice_emailed: Optional[bool]
+    asset_performance: bool
+    invoice_generated: bool
+    invoice_emailed: bool
 
-    @field_serializer("efl_standard_rate")
+    @field_serializer("efl_standard_rate_kwh")
     def serialize_decimals(self, value: Decimal):
         if value:
-            return f"${value:.2f}"
+            return f"{value:.2f}"
+
+    model_config = ConfigDict(from_attributes=True)

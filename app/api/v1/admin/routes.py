@@ -4,7 +4,7 @@ from typing import Optional
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, Query, status
-from fastapi.responses import JSONResponse, StreamingResponse
+from fastapi.responses import StreamingResponse
 
 from app.core.config import Config
 from app.core.security import AdminAccessBearer
@@ -39,9 +39,7 @@ async def add_client(
 ):
     client = await client_service.register_client(data=data, token_payload=token_payload)
 
-    return JSONResponse(
-        content=ServerRespModel[str](data=str(client.uid), message="client added successfully").model_dump()
-    )
+    return ServerRespModel[str](data=str(client.uid), message="client added successfully")
 
 
 @admin_router.post(
@@ -56,9 +54,7 @@ async def add_site(
 ):
     site = await site_service.create_site(data=data)
 
-    return JSONResponse(
-        content=ServerRespModel[str](data=str(site.uid), message="Site added to client successfully").model_dump()
-    )
+    return ServerRespModel[str](data=str(site.uid), message="Site added to client successfully")
 
 
 @admin_router.get(
@@ -76,10 +72,8 @@ async def get_clients(
 ):
     result = await client_service.get_clients(q=q, limit=limit, next_cursor=next_cursor, prev_cursor=prev_cursor)
 
-    return JSONResponse(
-        content=ServerRespModel[PaginatedRespModel[ClientRespModel, CursorPaginationModel]](
-            data=result, message="clients retrieved"
-        ).model_dump()
+    return ServerRespModel[PaginatedRespModel[ClientRespModel, CursorPaginationModel]](
+        data=result, message="clients retrieved"
     )
 
 
@@ -95,9 +89,7 @@ async def get_client_sites_by_uid(
 ):
     sites = await site_service.get_sites_by_client_uid(client_uid=client_uid)
 
-    return JSONResponse(
-        content=ServerRespModel[list[SiteRespModel]](data=sites, message="client's sites retrieved").model_dump()
-    )
+    return ServerRespModel[list[SiteRespModel]](data=sites, message="client's sites retrieved")
 
 
 @admin_router.get(
@@ -147,10 +139,9 @@ async def get_contracts_general_settings(
 ):
     contract_settings = await contract_settings_service.get_contract_general_settings()
 
-    return JSONResponse(
-        content=ServerRespModel[list[ContractSettingsModel]](
-            data=contract_settings, message="contract general settings retrieved"
-        ).model_dump()
+    return ServerRespModel[ContractSettingsModel](
+        data=ContractSettingsModel.model_validate(contract_settings),
+        message="contract general settings retrieved",
     )
 
 
@@ -166,6 +157,4 @@ async def update_contracts_generat_settings(
 ):
     resp = await contract_settings_service.update_contract_general_settings(data=data, token_payload=token_payload)
 
-    return JSONResponse(
-        content=ServerRespModel[bool](data=resp, message="contract general settings updated").model_dump()
-    )
+    return ServerRespModel[bool](data=resp, message="contract general settings updated")

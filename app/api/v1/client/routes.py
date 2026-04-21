@@ -51,12 +51,9 @@ async def request_login(
     client_service: ClientService = Depends(get_client_service),
 ):
     await client_service.request_login(data=data)
-    return JSONResponse(
-        status_code=status.HTTP_200_OK,
-        content=ServerRespModel[bool](
-            data=True,
-            message="Login code sent to your email!.",
-        ).model_dump(),
+    return ServerRespModel[bool](
+        data=True,
+        message="Login code sent to your email!.",
     )
 
 
@@ -95,12 +92,9 @@ async def send_verify_acct(
 ):
     resp = await client_service.send_verification_email(email=email)
 
-    return JSONResponse(
-        status_code=status.HTTP_200_OK,
-        content=ServerRespModel[TokenModel](
-            data=True,
-            message=resp,
-        ).model_dump(),
+    return ServerRespModel[TokenModel](
+        data=True,
+        message=resp,
     )
 
 
@@ -120,12 +114,9 @@ async def profile(
 ):
     user_resp = await client_service.get_current_client(token_payload=token_payload)
 
-    return JSONResponse(
-        status_code=status.HTTP_200_OK,
-        content=ServerRespModel[TokenModel](
-            data=user_resp,
-            message="Profile retrieved",
-        ).model_dump(),
+    return ServerRespModel[TokenModel](
+        data=user_resp,
+        message="Profile retrieved",
     )
 
 
@@ -140,10 +131,7 @@ async def verify_acct(
 ):
     resp = await client_service.verify_account(token=token)
 
-    return JSONResponse(
-        status_code=status.HTTP_200_OK,
-        content=ServerRespModel[TokenModel](
-            data=True,
-            message=resp,
-        ).model_dump(),
+    return ServerRespModel[TokenModel](
+        data=True,
+        message=resp,
     )
