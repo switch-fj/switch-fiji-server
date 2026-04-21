@@ -263,6 +263,10 @@ class ContractDetailsRespModel(DBModel):
     def serialize_other_uuid(self, value: UUID):
         return uuid_serializer(value)
 
+    @field_serializer("equipment_lease_amount", "maintenance_amount", "total")
+    def serialize_decimals(self, value: Decimal):
+        return f"${value:.2f}"
+
     model_config = ConfigDict(from_attributes=True)
 
 

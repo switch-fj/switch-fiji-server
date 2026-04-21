@@ -17,9 +17,13 @@ class SettingsService:
 
         return contract
 
-    async def update_contract_general_settings(self, data: UpdateContractSettingsModel):
+    async def update_contract_general_settings(self, data: UpdateContractSettingsModel, token_payload: dict):
+        user_payload = token_payload.get("user")
+        user_uid = user_payload.get("uid")
         contract_settings = await self.get_contract_general_settings()
-        result = await self.settings_repo.update_contract_settings(contract_settings=contract_settings, data=data)
+        result = await self.settings_repo.update_contract_settings(
+            contract_settings=contract_settings, data=data, user_uid=user_uid
+        )
 
         return result
 

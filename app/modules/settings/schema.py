@@ -1,7 +1,7 @@
 from decimal import Decimal
 from typing import Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_serializer
 
 from app.shared.schema import CurrencyEnum, DBModel
 
@@ -30,3 +30,7 @@ class ContractSettingsModel(DBModel):
     asset_perfomance: Optional[bool]
     invoice_generated: Optional[bool]
     invoice_emailed: Optional[bool]
+
+    @field_serializer("efl_standard_rate")
+    def serialize_decimals(self, value: Decimal):
+        return f"${value:.2f}"

@@ -10,7 +10,10 @@ from app.core.config import Config
 from app.core.security import AdminAccessBearer
 from app.database.redis import async_redis_client
 from app.modules.clients.schema import ClientRespModel, CreateClientModel
-from app.modules.settings.schema import ContractSettingsModel
+from app.modules.settings.schema import (
+    ContractSettingsModel,
+    UpdateContractSettingsModel,
+)
 from app.modules.sites.schema import CreateSiteModel, SiteRespModel
 from app.services.client import ClientService, get_client_service
 from app.services.settings import SettingsService, get_settings_service
@@ -139,13 +142,30 @@ async def stream_site_stats(
     response_model=ServerRespModel[ContractSettingsModel],
 )
 async def get_contracts_general_settings(
-    ccontract_settings_service: SettingsService = Depends(get_settings_service),
+    contract_settings_service: SettingsService = Depends(get_settings_service),
     _: dict = Depends(AdminAccessBearer()),
 ):
-    contract_settings = await ccontract_settings_service.get_contract_general_settings()
+    contract_settings = await contract_settings_service.get_contract_general_settings()
 
     return JSONResponse(
-        content=ServerRespModel[list[SiteRespModel]](
+        content=ServerRespModel[list[ContractSettingsModel]](
             data=contract_settings, message="contract general settings retrieved"
         ).model_dump()
+    )
+
+
+@admin_router.patch(
+    "/contracts-settings",
+    status_code=status.HTTP_202_ACCEPTED,
+    response_model=ServerRespModel[bool],
+)
+async def update_contracts_generat_settings(
+    data: UpdateContractSettingsModel,
+    contract_settings_service: SettingsService = Depends(get_settings_service),
+    token_payload: dict = Depends(AdminAccessBearer()),
+):
+    resp = await contract_settings_service.update_contract_general_settings(data=data, token_payload=token_payload)
+
+    return JSONResponse(
+        content=ServerRespModel[bool](data=resp, message="contract general settings updated").model_dump()
     )

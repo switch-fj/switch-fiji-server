@@ -1,3 +1,5 @@
+from uuid import UUID
+
 from fastapi import Depends
 from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
@@ -21,12 +23,21 @@ class SettingsRepository:
 
         return contract_settings
 
-    async def update_contract_settings(self, contract_settings: ContractSettings, data: UpdateContractSettingsModel):
+    async def update_contract_settings(
+        self,
+        user_uid: UUID,
+        contract_settings: ContractSettings,
+        data: UpdateContractSettingsModel,
+    ):
         data_dict = data.model_dump(exclude_none=True)
 
         if len(list(data_dict.keys())) == 0:
             return True
 
+        for key, value in data_dict.items():
+            setattr(contract_settings, key, value)
+
+        setattr(contract_settings, "updated_by_uid", user_uid)
         self.session.add(contract_settings)
         await self.session.commit()
         await self.session.refresh(contract_settings)
