@@ -45,7 +45,10 @@ async def login(
         elif auth_type == AuthType.OTP.value:
             message = "user login otp sent to inbox."
 
-    response = ServerRespModel[TokenModel](data=token_model, message=message)
+    response = JSONResponse(
+        status_code=status.HTTP_200_OK,
+        content=ServerRespModel[TokenModel](data=token_model, message=message).model_dump(),
+    )
 
     if refresh_jti:
         Authentication.set_refresh_token_cookie(response=response, jti=refresh_jti)
