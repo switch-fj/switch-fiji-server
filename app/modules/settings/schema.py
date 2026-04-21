@@ -33,4 +33,5 @@ class ContractSettingsModel(DBModel):
 
     @field_serializer("efl_standard_rate")
     def serialize_decimals(self, value: Decimal):
-        return f"${value:.2f}"
+        if value:
+            return f"${value:.2f}"
