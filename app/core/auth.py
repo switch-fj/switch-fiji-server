@@ -110,6 +110,9 @@ class Authentication:
         """Set refresh token JTI as HTTP-only cookie"""
         is_relaxed = Config.is_relaxed_cookie_env
 
+        _parts = Config.API_DOMAIN.split(".")
+        _cookie_domain = ("." + ".".join(_parts[1:])) if len(_parts) > 2 else f".{Config.API_DOMAIN}"
+
         response.set_cookie(
             key="refresh_token",
             value=jti,
@@ -118,7 +121,7 @@ class Authentication:
             secure=not is_relaxed,
             max_age=Authentication.REFRESH_TOKEN_EXPIRY_IN_SECONDS,
             path="/",
-            domain=(None if is_relaxed else f".{Config.API_DOMAIN}"),
+            domain=(None if is_relaxed else _cookie_domain),
         )
 
     @staticmethod

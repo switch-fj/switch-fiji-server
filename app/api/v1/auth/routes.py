@@ -97,7 +97,10 @@ async def verify_login_code(
     )
 
     if token_identity_model:
-        await Authentication.create_token(user_data=token_identity_model, refresh=True, response=response)
+        refresh_token = await Authentication.create_token(user_data=token_identity_model, refresh=True)
+        refresh_token_payload = await Authentication.decode_token(refresh_token)
+        refresh_jti = refresh_token_payload["jti"]
+        Authentication.set_refresh_token_cookie(response=response, jti=refresh_jti)
 
     return response
 
