@@ -38,11 +38,10 @@ def register_middlewares(app: FastAPI):
     )
 
     allowed_hosts = [
+        ".switch.com.fj",
         "localhost",
         "127.0.0.1",
         "server-production-3118.up.railway.app",
-        "staging-api.switch.com.fj",
-        "api.switch.com.fj",
     ]
     if Config.API_DOMAIN:
         allowed_hosts.append(Config.API_DOMAIN)
