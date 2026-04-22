@@ -6,6 +6,7 @@ from app.core.exceptions import BadRequest, Forbidden, NotFound, ResourceExists
 from app.modules.contracts.model import Contract
 from app.modules.contracts.repository import ContractRepository, get_contract_repo
 from app.modules.contracts.schema import (
+    ContractDetailedRespModel,
     ContractDetailsRespModel,
     ContractSystemModeEnum,
     ContractTypeEnum,
@@ -77,14 +78,15 @@ class ContractService:
         identity = token_user.get("identity")
         user_uid = token_user.get("uid")
         role = token_user.get("role")
+        contract_details_resp = ContractDetailedRespModel.model_validate(contract)
 
         if identity == IdentityTypeEnum.USER.value and role == UserRoleEnum.ADMIN.value:
-            return contract
+            return contract_details_resp
 
         if identity == IdentityTypeEnum.CLIENT.value:
             if str(contract.client_uid) != str(user_uid):
                 raise Forbidden("You do not have access to this contract")
-            return contract
+            return contract_details_resp
 
         raise Forbidden("You do not have access to this contract")
 
@@ -114,7 +116,7 @@ class ContractService:
 
         return contract_details.uid
 
-    async def update_contract_details(self, contract_details_uid: str, data: CreateContractDetailsModel):
+    async def update_contract_details(self, contract_details_uid: UUID, data: CreateContractDetailsModel):
         contract_details = await self.contract_repo.get_contract_details_with_contract(
             contract_details_uid=(contract_details_uid)
         )

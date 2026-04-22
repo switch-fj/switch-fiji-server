@@ -159,14 +159,8 @@ async def init_async_redis() -> bool:
         logger.info(f"🔄 Connecting to Redis at {Config.REDIS_HOST}:{Config.REDIS_PORT}...")
         await async_redis_client.init()
 
-        # Verify connection with PING
         if await async_redis_client.client.ping():
             logger.info("✅ Redis connection established successfully")
-
-            # Log Redis server info
-            info = await async_redis_client.client.info()
-            logger.info(f"📊 Redis Version: {info.get('redis_version')}")
-            logger.info(f"💾 Memory Used: {info.get('used_memory_human')}")
             return True
 
     except ConnectionError as e:

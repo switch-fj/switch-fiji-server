@@ -1,3 +1,4 @@
+import asyncio
 import logging
 from contextlib import asynccontextmanager
 
@@ -33,9 +34,8 @@ def main(*, use_lifespan: bool = True, enable_middlewares: bool = True):
             root_logger.handlers.clear()
             app_logger.info("🚀 Server starting...")
             await init_db()
-            await init_async_redis()
-            await init_dynamo()
-            await seed_admin()
+            await asyncio.gather(init_async_redis(), init_dynamo(), seed_admin())
+
             yield
             await async_redis_client.close()
             await dynamo_client.close()

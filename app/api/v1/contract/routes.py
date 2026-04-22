@@ -45,7 +45,7 @@ async def create_contract(
     response_model=ServerRespModel[ContractDetailedRespModel],
 )
 async def get_contract(
-    contract_uid: str,
+    contract_uid: UUID,
     contract_service: ContractService = Depends(get_contract_service),
     token_payload: dict = Depends(
         AccessTokenBearer(
@@ -54,9 +54,11 @@ async def get_contract(
         )
     ),
 ):
-    contract = await contract_service.get_contract_by_uid(contract_uid=UUID(contract_uid), token_payload=token_payload)
-    contract_detailed_resp = ContractDetailedRespModel.model_validate(contract)
-    return ServerRespModel[ContractDetailedRespModel](data=contract_detailed_resp, message="Contract retrieved!")
+    contract_details_resp = await contract_service.get_contract_by_uid(
+        contract_uid=contract_uid, token_payload=token_payload
+    )
+
+    return ServerRespModel[ContractDetailedRespModel](data=contract_details_resp, message="Contract retrieved!")
 
 
 @contract_router.post(
@@ -65,7 +67,7 @@ async def get_contract(
     response_model=ServerRespModel[str],
 )
 async def new_contract_details(
-    contract_uid: str,
+    contract_uid: UUID,
     data: CreateContractDetailsModel = Body(...),
     contract_service: ContractService = Depends(get_contract_service),
     _: dict = Depends(
@@ -75,7 +77,7 @@ async def new_contract_details(
         )
     ),
 ):
-    contract_details_uid = await contract_service.create_contract_details(contract_uid=UUID(contract_uid), data=data)
+    contract_details_uid = await contract_service.create_contract_details(contract_uid=contract_uid, data=data)
 
     return ServerRespModel[str](
         data=str(contract_details_uid),
@@ -89,14 +91,14 @@ async def new_contract_details(
     response_model=ServerRespModel[bool],
 )
 async def edit_contract_details(
-    contract_details_uid: str,
+    contract_details_uid: UUID,
     data: CreateContractDetailsModel = Body(...),
     client_service: ContractService = Depends(get_contract_service),
     _: dict = Depends(AdminAccessBearer()),
 ):
     resp = await client_service.update_contract_details(contract_details_uid=contract_details_uid, data=data)
 
-    return ServerRespModel[resp](
+    return ServerRespModel[bool](
         data=resp,
         message="Contract details updated!.",
     )

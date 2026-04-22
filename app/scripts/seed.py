@@ -16,7 +16,7 @@ async def seed_admin():
         default_pass = Config.DEFAULT_ADMIN_PASS
 
         result = await session.exec(select(User).where(User.email == admin_email))
-        admin = result.scalar_one_or_none()
+        admin = result.one_or_none()
 
         if not admin:
             new_admin = User(
