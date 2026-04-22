@@ -121,7 +121,7 @@ class ContractService:
             raise NotFound(f"Contract details with this {contract_details_uid} not found")
 
         self._sanitize_contract_details(contract=contract_details.contract, data=data)
-        await self.contract_repo.update_contract_details(contract_details_uid=contract_details_uid, data=data)
+        await self.contract_repo.update_contract_details(contract_details=contract_details, data=data)
 
         return True
 
