@@ -33,9 +33,9 @@ class ContractRepository:
         statement = (
             select(Contract)
             .options(
-                selectinload(Contract.client),
-                selectinload(Contract.site),
-                selectinload(Contract.details),
+                joinedload(Contract.client),
+                joinedload(Contract.site),
+                joinedload(Contract.details),
             )
             .where(Contract.uid == contract_uid)
         )
