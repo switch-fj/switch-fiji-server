@@ -97,6 +97,6 @@ async def edit_contract_details(
     resp = await client_service.update_contract_details(contract_details_uid=contract_details_uid, data=data)
 
     return ServerRespModel[resp](
-        data=contract_details_uid,
+        data=resp,
         message="Contract details updated!.",
     )
