@@ -59,6 +59,11 @@ class ContractRepository:
 
         return contract
 
+    async def get_contract_uid_by_site_uid(self, site_uid: UUID):
+        statement = select(Contract.uid).where(Contract.site_uid == site_uid)
+        result = await self.session.exec(statement)
+        return result.first()
+
     async def get_contract_details_by_uid(self, contract_details_uid: UUID):
         statement = (
             select(ContractDetails)
@@ -69,6 +74,25 @@ class ContractRepository:
         contract_details = result.first()
 
         return contract_details
+
+    async def get_contract_with_details_only(self, contract_uid: UUID):
+        statement = select(Contract).options(selectinload(Contract.details)).where(Contract.uid == contract_uid)
+        result = await self.session.exec(statement)
+        return result.first()
+
+    async def get_contract_details_with_contract(self, contract_details_uid: UUID):
+        statement = (
+            select(ContractDetails)
+            .options(
+                selectinload(ContractDetails.contract).load_only(
+                    Contract.contract_type,
+                    Contract.system_mode,
+                )
+            )
+            .where(ContractDetails.uid == contract_details_uid)
+        )
+        result = await self.session.exec(statement)
+        return result.first()
 
     async def create_contract(self, user_uid: UUID, data: CreateContractModel):
         data_dict = data.model_dump()
@@ -116,7 +140,7 @@ class ContractRepository:
             for field, value in data_dict.items():
                 if field == "tariff_periods":
                     setattr(contract_details, "tariff_periods", value)
-                elif field == "tariffs":
+                elif field == "tariffs" and value is not None:
                     setattr(
                         contract_details,
                         "tariff_slots",

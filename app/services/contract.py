@@ -56,10 +56,12 @@ class ContractService:
         token_user = token_payload.get("user")
         user_uid = token_user.get("uid")
 
-        site_contract = await self.contract_repo.get_contract_by_site_uid(site_uid=data_dict.get("site_uid", ""))
+        site_contract_uid = await self.contract_repo.get_contract_uid_by_site_uid(
+            site_uid=data_dict.get("site_uid", "")
+        )
 
-        if site_contract:
-            return str(site_contract.uid)
+        if site_contract_uid:
+            return str(site_contract_uid)
 
         contract = await self.contract_repo.create_contract(user_uid=user_uid, data=data)
 
@@ -95,7 +97,7 @@ class ContractService:
         return ContractDetailsRespModel.model_validate(contract)
 
     async def create_contract_details(self, contract_uid: UUID, data: CreateContractDetailsModel):
-        contract = await self.contract_repo.get_contract_by_uid(contract_uid=contract_uid)
+        contract = await self.contract_repo.get_contract_with_details_only(contract_uid=contract_uid)
 
         if not contract:
             raise NotFound(f"Contract with this {contract_uid} not found")
@@ -113,7 +115,7 @@ class ContractService:
         return contract_details.uid
 
     async def update_contract_details(self, contract_details_uid: str, data: CreateContractDetailsModel):
-        contract_details = await self.contract_repo.get_contract_details_by_uid(
+        contract_details = await self.contract_repo.get_contract_details_with_contract(
             contract_details_uid=(contract_details_uid)
         )
 
