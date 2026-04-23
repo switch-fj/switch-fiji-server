@@ -1,7 +1,7 @@
 import json
 from datetime import datetime, timezone
 
-from celery.schedules import crontab
+# from celery.schedules import crontab
 from sqlalchemy import text
 from sqlalchemy.orm import joinedload
 from sqlmodel import Session, select
@@ -37,7 +37,8 @@ logger = setup_logger(__name__)
 celery_app.conf.beat_schedule = {
     "compute-contract-bill-every-day-at_midnight": {
         "task": "compute_all_contracts_bill",
-        "schedule": crontab(minute=0, hour=0),
+        # "schedule": crontab(minute=0, hour=0),
+        "schedule": 30,
     }
 }
 
