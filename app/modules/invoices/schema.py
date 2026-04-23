@@ -1,4 +1,5 @@
 from datetime import datetime
+from enum import StrEnum
 from typing import Optional
 from uuid import UUID
 
@@ -7,6 +8,24 @@ from pydantic import BaseModel, Field, field_serializer
 from app.modules.contracts.schema import ContractRespModel
 from app.shared.schema import DBModel, TwoDP
 from app.utils import uuid_serializer
+
+
+class InvoiceMeterLabelEnum(StrEnum):
+    SITE_METER_1_DAY = "Site Meter 1 - Day"
+    SITE_METER_1_NIGHT = "Site Meter 1 - Night"
+    GEN_METER_1_DAY = "Generator Meter 1 - Day"
+    GEN_METER_1_NIGHT = "Generator Meter 1 - Night"
+    SOLAR_GENRATION = "Solar Generation"
+    SELF_CONSUMPTION = "Self Consumption"
+    FED_TO_GRID = "Fed to Grid"
+    GRID_ENERGY = "Grid Energy"
+
+
+class InvoiceLineItemEnum(StrEnum):
+    ON_SOLAR_ENERGY_SUPPLIED = "On Solar Energy Supplied"
+    OFF_SOLAR_ENERGY_SUPPLIED = "Off Solar Energy Supplied"
+    FIXED_ASSET_LEASE = "Fixed Asset Lease"
+    MONTHLY_MAINTENANCE_FEE = "Monthly Maintenance Fee"
 
 
 class CreateInvoiceModel(BaseModel):

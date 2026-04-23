@@ -4,7 +4,7 @@ from datetime import datetime, timezone
 from sqlalchemy import text
 
 from app.core.billing import Billing
-from app.database.celery import get_celery_db_session
+from app.database.celery import celery_dynamo_client, get_celery_db_session
 from app.database.redis import sync_redis_client
 from app.jobs.celery import celery_app
 
@@ -28,24 +28,24 @@ def compute_all_site_stats(self):
             result = session.execute(
                 text(
                     """
-                SELECT DISTINCT
-                    s.uid::text  AS site_uid,
-                    s.gateway_id AS gateway_id
-                FROM sites s
-                JOIN contracts c         ON c.site_uid    = s.uid
-                JOIN contract_details cd ON cd.contract_uid = c.uid
-                WHERE cd.commissioned_at IS NOT NULL
-                    AND cd.commissioned_at <= NOW()
-                    AND cd.end_at >= NOW()
-            """
+                    SELECT DISTINCT
+                        s.uid::text  AS site_uid,
+                        s.gateway_id AS gateway_id
+                    FROM sites s
+                    JOIN contracts c ON c.site_uid = s.uid
+                    JOIN contract_details cd ON cd.contract_uid = c.uid
+                    WHERE cd.commissioned_at IS NOT NULL
+                        AND NOW() > cd.commissioned_at
+                        AND NOW() < cd.end_at
+                    """
                 )
             )
             sites = result.fetchall()
 
         for site in sites:
             compute_single_site_stats.delay(
-                site.site_uid,
-                site.gateway_id,
+                site_uid=site.site_uid,
+                gateway_id=site.gateway_id,
             )
 
     except Exception as exc:
@@ -63,20 +63,20 @@ def compute_single_site_stats(self, site_uid: str, gateway_id: str):
             result = session.execute(
                 text(
                     """
-                SELECT
-                    cd.system_size_kwp,
-                    cd.guaranteed_production_kwh_per_kwp,
-                    cd.commissioned_at,
-                    cd.billing_frequency,
-                    cd.grid_meter_reading_at_commissioning
-                FROM contracts c
-                JOIN contract_details cd ON cd.contract_uid = c.uid
-                WHERE c.site_uid = :site_uid
-                    AND cd.commissioned_at IS NOT NULL
-                    AND cd.commissioned_at <= NOW()
-                    AND cd.end_at >= NOW()
-                LIMIT 1
-            """
+                    SELECT
+                        cd.system_size_kwp,
+                        cd.guaranteed_production_kwh_per_kwp,
+                        cd.commissioned_at,
+                        cd.billing_frequency,
+                        cd.grid_meter_reading_at_commissioning
+                    FROM contracts c
+                    JOIN contract_details cd ON cd.contract_uid = c.uid
+                    WHERE c.site_uid = :site_uid
+                        AND cd.commissioned_at IS NOT NULL
+                        AND NOW() > cd.commissioned_at
+                        AND NOW() < cd.end_at
+                    LIMIT 1
+                    """
                 ),
                 {"site_uid": site_uid},
             )
@@ -107,7 +107,7 @@ def compute_single_site_stats(self, site_uid: str, gateway_id: str):
         billing_progress_pct = round((elapsed_secs / total_secs) * 100, 2)
 
         # 4. actual generation (DynamoDB only — sync boto3)
-        billing_data = Billing.get_readings_for_billing_period_sync(
+        billing_data = celery_dynamo_client.get_readings_for_billing_period(
             gateway_id=gateway_id,
             period_start=period_start,
             period_end=period_end,

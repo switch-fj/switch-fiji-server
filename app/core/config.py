@@ -78,6 +78,13 @@ class Settings(BaseSettings):
 
         return self.REMOTE_DB_URL if self.USE_REMOTE_DB else url
 
+    @property
+    def DATABASE_URL_SYNC(self) -> str:
+        password = quote_plus(self.DB_PASSWORD)
+        url = f"postgresql+psycopg2://{self.DB_USER}:{password}@{self.DB_HOST}:{self.DB_PORT}/{self.DB_NAME}"
+
+        return self.REMOTE_DB_URL if self.USE_REMOTE_DB else url
+
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
 

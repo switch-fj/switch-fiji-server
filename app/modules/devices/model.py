@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 from uuid import UUID
 
 from sqlalchemy import Column, Identity, Integer
@@ -28,6 +28,16 @@ class Device(MyAbstractSQLModel, table=True):
         nullable=False,
     )
     device_type: str = Field(nullable=False)
+    meter_role: Optional[str] = Field(
+        default=None,
+        nullable=True,
+        description="Only applies when device_type is 'meter'. e.g. gen_meter, load_meter, aux_loads, micro_inv",
+    )
+    is_dual_tariff: Optional[bool] = Field(
+        default=None,
+        nullable=True,
+        description="Only applies when device_type is 'meter'. Derived from firmware isDualTariff()",
+    )
 
     site: "Site" = Relationship(
         back_populates="devices",

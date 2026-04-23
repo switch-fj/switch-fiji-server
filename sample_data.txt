@@ -1,0 +1,175 @@
+{
+ "gateway_id": "M300-TAVEUNI-001",
+ "ts_epoch_ms": 1776925925801,
+ "ac_units": [
+  {
+   "slave_id": 21,
+   "status": "ok",
+   "temperature_c": 0
+  },
+  {
+   "slave_id": 22,
+   "status": "ok",
+   "temperature_c": 0
+  }
+ ],
+ "client": {
+  "client_email": "allan@paradiseinfiji.com",
+  "client_id": 1,
+  "client_name": "Paradise Resort",
+  "site_id": 1
+ },
+ "gateway": {
+  "gateway_id": "M300-TAVEUNI-001",
+  "firmware": "m300-taveuni-1.0"
+ },
+ "inverters": [
+  {
+   "battery_current_a": 0.09,
+   "battery_power_w": 40,
+   "battery_soc": 69,
+   "battery_soc2": 70,
+   "freq_hz": 49.95,
+   "pv1_i": 0,
+   "pv1_v": 0,
+   "pv1_w": 0,
+   "pv2_i": 0,
+   "pv2_v": 0,
+   "pv2_w": 0,
+   "pv3_i": 0,
+   "pv3_v": 31.8,
+   "pv3_w": 0,
+   "pv4_i": 0.2,
+   "pv4_v": 62.6,
+   "pv4_w": 10,
+   "p_total_w": -165,
+   "slave_id": 1,
+   "status": "running"
+  },
+  {
+   "battery_current_a": 0.11,
+   "battery_power_w": 50,
+   "battery_soc": 85,
+   "freq_hz": 49.91,
+   "pv1_i": 0,
+   "pv1_v": 0,
+   "pv1_w": 0,
+   "pv2_i": 0,
+   "pv2_v": 33,
+   "pv2_w": 0,
+   "pv3_i": 0,
+   "pv3_v": 34.4,
+   "pv3_w": 0,
+   "pv4_i": 0,
+   "pv4_v": 0,
+   "pv4_w": 0,
+   "p_total_w": -81,
+   "slave_id": 2,
+   "status": "running"
+  },
+  {
+   "battery_current_a": 0.08,
+   "battery_power_w": 40,
+   "battery_soc": 83,
+   "freq_hz": 49.87,
+   "pv1_i": 0,
+   "pv1_v": 0,
+   "pv1_w": 0,
+   "pv2_i": 0,
+   "pv2_v": 40.7,
+   "pv2_w": 0,
+   "pv3_i": 0,
+   "pv3_v": 0,
+   "pv3_w": 0,
+   "pv4_i": 0,
+   "pv4_v": 0,
+   "pv4_w": 0,
+   "p_total_w": -85,
+   "slave_id": 3,
+   "status": "running"
+  }
+ ],
+ "irradiance_meters": [
+  {
+   "irradiance_w_per_m2": 0,
+   "slave_id": 30
+  }
+ ],
+ "meters": [
+  {
+   "description": "gen_meter",
+   "freq_hz": 49.91,
+   "i1": 119.928,
+   "i2": 114.06,
+   "i3": 121.011,
+   "p1_w": 26962.482,
+   "p2_w": 25556.332,
+   "p3_w": 27365.793,
+   "p_total_w": 81987.3,
+   "slave_id": 12,
+   "tariff": {
+    "kwh_t1": 22972.752,
+    "kwh_t2": 3878.681
+   },
+   "v1": 231.149,
+   "v2": 231.991,
+   "v3": 232.084
+  },
+  {
+   "description": "load_meter",
+   "i1": 122.379,
+   "i2": 103.207,
+   "p1_w": 27426.734,
+   "p2_w": 22956.438,
+   "p3_w": 28633.432,
+   "p_total_w": 78977.156,
+   "slave_id": 13,
+   "tariff": {
+    "kwh_t1": 67454.789,
+    "kwh_t2": 59341.539
+   },
+   "v1": 231.248,
+   "v2": 230.015,
+   "v3": 230.991
+  },
+  {
+   "description": "aux_loads",
+   "freq_hz": 49.9,
+   "i1": 1.485,
+   "i2": 9.391,
+   "i3": 0,
+   "kwh_total": 5258.18,
+   "p1_w": 182.934,
+   "p2_w": 2099.698,
+   "p3_w": 0,
+   "p_total_w": 2288.4,
+   "slave_id": 14,
+   "v1": 230.241,
+   "v2": 231.328,
+   "v3": 231.113
+  },
+  {
+   "description": "micro_inv",
+   "freq_hz": 49.9,
+   "i1": 0.528,
+   "i2": 0.536,
+   "i3": 0.53,
+   "kwh_total": 2344.5,
+   "p1_w": 0,
+   "p2_w": 0,
+   "p3_w": 0,
+   "p_total_w": 0,
+   "slave_id": 15,
+   "v1": 230.392,
+   "v2": 231.367,
+   "v3": 231.46
+  }
+ ],
+ "timestamp": {
+  "ts_epoch_ms": 1776925925724
+ }
+}
+
+
+
+[{"period_number": 1, "slot": "A", "slot_type": "Fixed", "rate": 0.5, "start_time": "07:30", "end_time": "16:30"}, {"period_number": 1, "slot": "B", "slot_type": "Fixed", "rate": 0.5, "start_time": "16:30", "end_time": "07:30"}, {"period_number": 2, "slot": "A", "slot_type": "Variable", "rate": 0.49, "start_time": "07:30", "end_time": "16:30"}, {"period_number": 2, "slot": "B", "slot_type": "Variable", "rate": 0.49, "start_time": "16:30", "end_time": "07:30"}]

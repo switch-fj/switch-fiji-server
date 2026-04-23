@@ -30,7 +30,8 @@ class InvoiceRepository:
     def __init__(self, session: AsyncSession):
         self.session = session
 
-    def _build_invoice_ref(self) -> str:
+    @staticmethod
+    def _build_invoice_ref() -> str:
         current_year = str(datetime.now().year)
         current_month = str(datetime.now().month).zfill(2)
         return f"INV-{current_year}-{current_month}-{Authentication.generate_otp()}"

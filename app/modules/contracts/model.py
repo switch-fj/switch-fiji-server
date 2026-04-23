@@ -1,8 +1,10 @@
+import json
 from datetime import datetime, timezone
 from decimal import Decimal
 from typing import TYPE_CHECKING, Optional
 from uuid import UUID
 
+from dateutil.relativedelta import relativedelta
 from sqlmodel import DateTime, Enum, Field, Relationship
 
 from app.modules.contracts.schema import (
@@ -110,6 +112,21 @@ class ContractDetails(MyAbstractSQLModel, table=True):
         if not self.tariff_periods:
             return None
         return self.term_months // self.tariff_periods
+
+    @property
+    def active_tariff_slots(self) -> Optional[list[dict]]:
+        if not self.tariff_slots or not self.commissioned_at or not self.months_per_period:
+            return None
+
+        now = datetime.now(timezone.utc)
+        diff = relativedelta(now, self.commissioned_at)
+        months_elapsed = diff.years * 12 + diff.months
+        current_period = (months_elapsed // self.months_per_period) + 1
+
+        slots = json.loads(self.tariff_slots)
+        active = [s for s in slots if s["period_number"] == current_period]
+
+        return active if active else None
 
     @property
     def status(self) -> ContractDetailsStatus:
