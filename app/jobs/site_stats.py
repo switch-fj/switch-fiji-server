@@ -3,15 +3,15 @@ from datetime import datetime, timezone
 
 from sqlalchemy import text
 
-from app.core.billing import Billing
 from app.database.celery import celery_dynamo_client, get_celery_db_session
 from app.database.redis import sync_redis_client
+from app.jobs.billing.engine import Billing
 from app.jobs.celery import celery_app
 
 celery_app.conf.beat_schedule = {
     "compute-site-stats-every-5-mins": {
         "task": "compute_all_site_stats",
-        "schedule": 300,
+        "schedule": 40,
     },
 }
 

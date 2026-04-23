@@ -7,6 +7,7 @@ from app.modules.invoices.model import (
     InvoiceLineItem,
     InvoiceMeterData,
 )
+from app.modules.settings.model import ContractSettings
 from app.modules.sites.model import Site
 from app.modules.users.model import User
 
@@ -21,4 +22,5 @@ __all__ = [
     "InvoiceLineItem",
     "InvoiceMeterData",
     "InvoiceHistory",
+    "ContractSettings",
 ]
