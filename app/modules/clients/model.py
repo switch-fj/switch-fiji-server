@@ -3,7 +3,7 @@ from uuid import UUID
 
 from pydantic import EmailStr
 from sqlalchemy import Boolean, Column, Identity, Integer, String
-from sqlmodel import Field, Index, Relationship, desc
+from sqlmodel import Field, Index, Relationship, text
 
 from app.shared.model import MyAbstractSQLModel
 from app.shared.schema import IdentityTypeEnum
@@ -16,10 +16,7 @@ if TYPE_CHECKING:
 class Client(MyAbstractSQLModel, table=True):
     __tablename__ = "clients"
 
-    __table_args__ = (
-        Index("ix_clients_created_at", desc("created_at")),
-        Index("ix_clients_id", "id"),
-    )
+    __table_args__ = (Index("ix_clients_created_at", text("created_at DESC")),)
 
     id: int = Field(
         sa_column=Column(

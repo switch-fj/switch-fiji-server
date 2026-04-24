@@ -22,7 +22,7 @@ class Device(MyAbstractSQLModel, table=True):
             nullable=False,
         )
     )
-    site_uid: UUID = Field(foreign_key="sites.uid", nullable=False)
+    site_uid: UUID = Field(foreign_key="sites.uid", index=True, nullable=False)
     slave_id: int = Field(
         description="external identifier, scoped to a site + device_type",
         nullable=False,
