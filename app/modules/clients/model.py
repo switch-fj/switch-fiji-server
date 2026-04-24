@@ -3,8 +3,7 @@ from uuid import UUID
 
 from pydantic import EmailStr
 from sqlalchemy import Boolean, Column, Identity, Integer, String
-from sqlalchemy.orm import column_property
-from sqlmodel import Field, Index, Relationship, desc, func, select
+from sqlmodel import Field, Index, Relationship, desc
 
 from app.shared.model import MyAbstractSQLModel
 from app.shared.schema import IdentityTypeEnum
@@ -66,11 +65,3 @@ class Client(MyAbstractSQLModel, table=True):
         back_populates="clients",
         sa_relationship_kwargs={"foreign_keys": "[Client.user_uid]"},
     )
-
-    @classmethod
-    def __declare_last__(cls):
-        from app.modules.sites.model import Site
-
-        cls.sites_count = column_property(
-            select(func.count(Site.id)).where(Site.client_uid == cls.uid).correlate_except(Site).scalar_subquery()
-        )

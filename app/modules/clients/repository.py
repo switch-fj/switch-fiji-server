@@ -2,7 +2,7 @@ from typing import Optional
 from uuid import UUID
 
 from fastapi import Depends
-from sqlmodel import select
+from sqlmodel import func, select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.core.auth import Authentication
@@ -15,6 +15,7 @@ from app.modules.clients.schema import (
     CreateClientModel,
     UpdateClientModel,
 )
+from app.modules.sites.model import Site
 from app.shared.schema import (
     CursorPaginationModel,
     PaginatedRespModel,
@@ -50,7 +51,18 @@ class ClientRepository:
         next_cursor: Optional[str] = None,
         prev_cursor: Optional[str] = None,
     ):
-        statement = select(Client).order_by(Client.created_at.desc())
+        sites_count_subq = (
+            select(Site.client_uid, func.count(Site.id).label("sites_count")).group_by(Site.client_uid).subquery()
+        )
+
+        statement = (
+            select(
+                Client,
+                func.coalesce(sites_count_subq.c.sites_count, 0).label("sites_count"),
+            )
+            .outerjoin(sites_count_subq, sites_count_subq.c.client_uid == Client.uid)
+            .order_by(Client.created_at.desc())
+        )
 
         if next_cursor:
             cursor_id = Pagination.decrypt_cursor(next_cursor)
@@ -61,25 +73,29 @@ class ClientRepository:
             statement = statement.where(Client.id > cursor_id)
 
         if q:
-            search = f"{q}"
+            search = f"%{q}%"
             statement = statement.where(Client.client_name.ilike(search) | Client.client_email.ilike(search))
 
         statement = statement.limit(limit + 1)
-        result = await self.session.exec(statement=statement)
+
+        result = await self.session.exec(statement)
         rows = result.all()
+
         has_more = len(rows) > limit
         items = rows[:limit]
 
-        clients = [ClientRespModel.model_validate(item) for item in items]
+        clients = [
+            ClientRespModel.model_validate({**row.Client.__dict__, "sites_count": row.sites_count}) for row in items
+        ]
 
         next_cursor_out = None
         prev_cursor_out = None
 
         if items:
-            prev_cursor_out = Pagination.encrypt_cursor(items[0].id)
+            prev_cursor_out = Pagination.encrypt_cursor(items[0].Client.id)
 
         if has_more:
-            next_cursor_out = Pagination.encrypt_cursor(items[-1].id)
+            next_cursor_out = Pagination.encrypt_cursor(items[-1].Client.id)
 
         return PaginatedRespModel.model_validate(
             {
