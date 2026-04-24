@@ -10,11 +10,13 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 from app.core.auth import Authentication
 from app.core.logger import setup_logger
 from app.database.postgres import get_session
+from app.modules.clients.model import Client
 from app.modules.contracts.model import Contract, ContractDetails
 from app.modules.contracts.schema import (
     CreateContractDetailsModel,
     CreateContractModel,
 )
+from app.modules.sites.model import Site
 
 logger = setup_logger(__name__)
 
@@ -31,18 +33,19 @@ class ContractRepository:
 
     async def get_contract_by_uid(self, contract_uid: UUID):
         statement = (
-            select(Contract)
-            .options(
-                joinedload(Contract.client),
-                joinedload(Contract.site),
-                joinedload(Contract.details),
-            )
+            select(Contract, Client, Site, ContractDetails)
+            .outerjoin(Client, Client.uid == Contract.client_uid)
+            .outerjoin(Site, Site.uid == Contract.site_uid)
+            .outerjoin(ContractDetails, ContractDetails.contract_uid == Contract.uid)
             .where(Contract.uid == contract_uid)
         )
-        result = await self.session.exec(statement=statement)
-        contract = result.first()
+        result = await self.session.exec(statement)
+        row = result.first()
 
-        return contract
+        if not row:
+            return None
+
+        return row
 
     async def get_contract_by_site_uid(self, site_uid: UUID):
         statement = (

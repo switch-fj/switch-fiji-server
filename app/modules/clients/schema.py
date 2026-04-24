@@ -28,5 +28,11 @@ class ClientRespModel(DBModel):
     sites_count: Optional[int]
 
 
+class ClientRespWithoutSitesCountModel(DBModel):
+    client_id: Optional[str]
+    client_name: str
+    client_email: str
+
+
 class ClientDetailedRespModel(ClientRespModel):
     pass

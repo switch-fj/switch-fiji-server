@@ -69,16 +69,26 @@ class ContractService:
         return str(contract.uid)
 
     async def get_contract_by_uid(self, contract_uid: UUID, token_payload: dict):
-        contract = await self.contract_repo.get_contract_by_uid(contract_uid=contract_uid)
+        resp = await self.contract_repo.get_contract_by_uid(contract_uid=contract_uid)
 
-        if not contract:
+        if not resp:
             raise NotFound(f"Contract with this {contract_uid} not found")
+
+        contract, client, Site, contract_details = resp
 
         token_user = token_payload.get("user")
         identity = token_user.get("identity")
         user_uid = token_user.get("uid")
         role = token_user.get("role")
-        contract_details_resp = ContractDetailedRespModel.model_validate(contract)
+
+        contract_details_resp = ContractDetailedRespModel.model_validate(
+            {
+                **contract.__dict__,
+                "client": client,
+                "site": Site,
+                "details": contract_details,
+            }
+        )
 
         if identity == IdentityTypeEnum.USER.value and role == UserRoleEnum.ADMIN.value:
             return contract_details_resp

@@ -17,7 +17,7 @@ from pydantic import (
 )
 
 from app.core.exceptions import BadRequest
-from app.modules.clients.schema import ClientRespModel
+from app.modules.clients.schema import ClientRespWithoutSitesCountModel
 from app.shared.schema import CurrencyEnum, DBModel
 from app.utils import uuid_serializer
 
@@ -40,6 +40,7 @@ class ContractDetailsStatus(StrEnum):
 
 
 class ContractBillingFrequencyEnum(StrEnum):
+    MINUTES = "minutes"
     WEEKLY = "weekly"
     BI_WEEKLY = "bi-weekly"
     MONTHLY = "monthly"
@@ -287,7 +288,15 @@ class ContractRespModel(DBModel):
     model_config = ConfigDict(from_attributes=True)
 
 
+class ContractSiteModel(DBModel):
+    client_uid: UUID
+    site_id: Optional[str]
+    site_name: Optional[str]
+    gateway_id: Optional[str]
+    firmware: Optional[str]
+
+
 class ContractDetailedRespModel(ContractRespModel):
-    client: ClientRespModel
-    # site: SiteRespModel
+    client: ClientRespWithoutSitesCountModel
+    site: ContractSiteModel
     details: Optional[ContractDetailsRespModel]
