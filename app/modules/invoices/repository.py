@@ -2,7 +2,6 @@ from datetime import datetime
 from uuid import UUID
 
 from fastapi import Depends
-from sqlalchemy.orm import selectinload
 from sqlmodel import func, select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
@@ -10,6 +9,7 @@ from app.core.auth import Authentication
 from app.core.config import Config
 from app.core.logger import setup_logger
 from app.database.postgres import get_session
+from app.modules.contracts.model import Contract
 from app.modules.invoices.model import (
     Invoice,
     InvoiceHistory,
@@ -113,25 +113,36 @@ class InvoiceRepository:
 
         return result.all(), total
 
-    async def get_invoice_by_uid(
-        self,
-        invoice_uid: UUID,
-    ):
+    async def get_invoice_by_uid(self, invoice_uid: UUID):
         statement = (
-            select(Invoice)
-            .options(
-                selectinload(Invoice.contract),
-                selectinload(Invoice.line_items),
-                selectinload(Invoice.meter_data),
-                selectinload(Invoice.history),
-            )
+            select(Invoice, Contract)
+            .outerjoin(Contract, Contract.uid == Invoice.contract_uid)
             .where(Invoice.uid == invoice_uid)
         )
+        result = await self.session.exec(statement)
+        row = result.first()
 
-        result = await self.session.exec(statement=statement)
-        invoice = result.first()
+        if not row:
+            return None
 
-        return invoice
+        invoice, contract = row
+
+        line_items_result = await self.session.exec(
+            select(InvoiceLineItem).where(InvoiceLineItem.invoice_uid == invoice_uid)
+        )
+        line_items = line_items_result.all()
+
+        meter_data_result = await self.session.exec(
+            select(InvoiceMeterData).where(InvoiceMeterData.invoice_uid == invoice_uid)
+        )
+        meter_data = meter_data_result.all()
+
+        return (
+            invoice,
+            contract,
+            line_items,
+            meter_data,
+        )
 
 
 def get_invoice_repo(session: AsyncSession = Depends(get_session)):

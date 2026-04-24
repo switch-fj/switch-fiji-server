@@ -3,7 +3,7 @@ from decimal import Decimal
 from typing import TYPE_CHECKING, Optional
 from uuid import UUID
 
-from sqlmodel import DateTime, Field, Relationship
+from sqlmodel import DateTime, Field, Index, Relationship, text
 
 from app.shared.model import MyAbstractSQLModel
 
@@ -14,6 +14,12 @@ if TYPE_CHECKING:
 
 class Invoice(MyAbstractSQLModel, table=True):
     __tablename__ = "invoices"
+
+    __table_args__ = (
+        Index("ix_invoices_contract_uid", "contract_uid"),
+        Index("ix_invoices_created_at", text("created_at DESC")),
+        Index("ix_invoices_period_start_at", "period_start_at"),
+    )
 
     contract_uid: UUID = Field(foreign_key="contracts.uid")
     invoice_ref: str = Field(nullable=False, unique=True)

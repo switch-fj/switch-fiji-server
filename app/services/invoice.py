@@ -2,12 +2,17 @@ from uuid import UUID
 
 from fastapi import Depends
 
-from app.core.exceptions import NotFound
+from app.core.exceptions import InsufficientPermissions, NotFound
 from app.core.logger import setup_logger
 from app.modules.contracts.repository import ContractRepository, get_contract_repo
 from app.modules.invoices.repository import InvoiceRepository, get_invoice_repo
 from app.modules.invoices.schema import InvoiceHistoryRespModel, InvoiceRespModel
-from app.shared.schema import OffsetPaginationModel, PaginatedRespModel
+from app.shared.schema import (
+    IdentityTypeEnum,
+    OffsetPaginationModel,
+    PaginatedRespModel,
+    UserRoleEnum,
+)
 from app.utils.pagination import Pagination
 
 logger = setup_logger(__name__)
@@ -53,16 +58,31 @@ class InvoiceService:
             }
         )
 
-    async def get_invoice_by_uid(
-        self,
-        invoice_uid: UUID,
-    ):
-        invoice = await self.invoice_repo.get_invoice_by_uid(invoice_uid=invoice_uid)
+    async def get_invoice_by_uid(self, invoice_uid: UUID, token_payload: dict):
+        token_user = token_payload.get("user")
+        identity = token_user.get("identity")
+        role = token_user.get("role")
+        user_uid = token_user.get("uid")
+
+        invoice, contract, line_items, meter_data = await self.invoice_repo.get_invoice_by_uid(invoice_uid=invoice_uid)
 
         if not invoice:
             raise NotFound("Invoice not found")
 
-        return InvoiceRespModel.model_validate(invoice)
+        if identity == IdentityTypeEnum.USER.value and not role == UserRoleEnum.ADMIN:
+            raise InsufficientPermissions("Access denied")
+
+        if identity == IdentityTypeEnum.CLIENT.value and not invoice.contract.client_uid == user_uid:
+            raise InsufficientPermissions("Access denied")
+
+        return InvoiceRespModel.model_validate(
+            {
+                **invoice.__dict__,
+                "contract": contract,
+                "line_items": line_items,
+                "meter_data": meter_data,
+            }
+        )
 
 
 def get_invoice_service(

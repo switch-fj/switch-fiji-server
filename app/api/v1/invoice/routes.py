@@ -24,13 +24,10 @@ invoice_router = APIRouter(prefix="/invoice", tags=["invoice"])
 )
 async def get_invoice_by_uid(
     invoice_uid: UUID,
-    contract_service: ContractService = Depends(get_contract_service),
     invoice_service: InvoiceService = Depends(get_invoice_service),
     token_payload: dict = Depends(AccessTokenBearer()),
 ):
-    invoice = await invoice_service.get_invoice_by_uid(invoice_uid=invoice_uid)
-    await contract_service.get_contract_by_uid(contract_uid=invoice.contract.uid, token_payload=token_payload)
-
+    invoice = await invoice_service.get_invoice_by_uid(invoice_uid=invoice_uid, token_payload=token_payload)
     return ServerRespModel[InvoiceRespModel](
         data=invoice,
         message="Invoice retrieved!.",
