@@ -45,10 +45,15 @@ class SiteRepository:
         if cached:
             return [SiteRespModel.model_validate(item) for item in json.loads(cached)]
 
-        await self.get_client_exists(client_uid=client_uid)
+        relevant_sites_subq = (
+            select(Site.uid).where(Site.client_uid == client_uid).where(Site.deleted_at.is_(None)).subquery()
+        )
 
         device_count_subq = (
-            select(Device.site_uid, func.count(Device.id).label("device_count")).group_by(Device.site_uid).subquery()
+            select(Device.site_uid, func.count(Device.id).label("device_count"))
+            .where(Device.site_uid.in_(select(relevant_sites_subq)))
+            .group_by(Device.site_uid)
+            .subquery()
         )
 
         statement = (
@@ -64,8 +69,13 @@ class SiteRepository:
             .order_by(Site.created_at.desc())
         )
 
-        result = await self.session.exec(statement)
+        result = await self.session.execute(statement)
         rows = result.all()
+
+        if not rows:
+            client_exists = await self.session.get(Client, client_uid)
+            if not client_exists:
+                return None
 
         sites = [
             SiteRespModel.model_validate(
