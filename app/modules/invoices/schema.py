@@ -1,4 +1,5 @@
 from datetime import datetime
+from decimal import Decimal
 from enum import StrEnum
 from typing import Optional
 from uuid import UUID
@@ -6,7 +7,7 @@ from uuid import UUID
 from pydantic import BaseModel, Field, field_serializer
 
 from app.modules.contracts.schema import ContractRespModel
-from app.shared.schema import DBModel, TwoDP
+from app.shared.schema import DBModel, FourDP
 from app.utils import uuid_serializer
 
 
@@ -31,27 +32,27 @@ class InvoiceLineItemEnum(StrEnum):
 class CreateInvoiceModel(BaseModel):
     period_start_at: datetime = Field(...)
     period_end_at: datetime = Field(...)
-    subtotal: TwoDP = Field(default=TwoDP("0.00"))
-    vat_rate: TwoDP = Field(default=TwoDP("0.00"))
+    subtotal: FourDP = Field(default=Decimal("0.0000"))
+    vat_rate: FourDP = Field(default=Decimal("0.0000"))
     energy_mix: Optional[str] = Field(default=None)
 
 
 class CreateInvoiceLineItemModel(BaseModel):
     invoice_uid: UUID = Field(...)
     description: str = Field(...)
-    energy_kwh: Optional[TwoDP] = Field(default=None)
-    tariff_rate: Optional[TwoDP] = Field(default=None)
+    energy_kwh: Optional[FourDP] = Field(default=None)
+    tariff_rate: Optional[FourDP] = Field(default=None)
     tariff_period: Optional[int] = Field(default=None)
     tariff_slot: Optional[str] = Field(default=None)
-    amount: TwoDP = Field(...)
+    amount: FourDP = Field(...)
 
 
 class CreateInvoiceMeterDataModel(BaseModel):
     invoice_uid: UUID = Field(...)
     device_uid: Optional[UUID] = Field(default=None)
     label: str = Field(...)
-    period_start_reading: TwoDP = Field(...)
-    period_end_reading: TwoDP = Field(...)
+    period_start_reading: FourDP = Field(...)
+    period_end_reading: FourDP = Field(...)
 
 
 class CreateInvoiceHistoryModel(BaseModel):
@@ -82,11 +83,11 @@ class InvoiceHistoryRespModel(DBModel):
 class InvoiceLineItemRespModel(DBModel):
     invoice_uid: UUID
     description: str
-    energy_kwh: Optional[TwoDP]
-    tariff_rate: Optional[TwoDP]
+    energy_kwh: Optional[FourDP]
+    tariff_rate: Optional[FourDP]
     tariff_period: Optional[int]
     tariff_slot: Optional[str]
-    amount: TwoDP
+    amount: FourDP
 
     @field_serializer("invoice_uid")
     def serialize_invoice_uuid(self, value: UUID):
@@ -97,10 +98,10 @@ class InvoiceMeterDataRespModel(DBModel):
     invoice_uid: UUID = Field(...)
     device_uid: Optional[UUID] = Field(default=None)
     label: str = Field(...)
-    period_start_reading: TwoDP = Field(...)
-    period_end_reading: TwoDP = Field(...)
-    vat_amount: TwoDP = Field(...)
-    total: TwoDP = Field(...)
+    period_start_reading: FourDP = Field(...)
+    period_end_reading: FourDP = Field(...)
+    vat_amount: FourDP = Field(...)
+    total: FourDP = Field(...)
 
     @field_serializer("invoice_uid", "device_uid")
     def serialize_invoice_uuid(self, value: UUID):
@@ -116,8 +117,8 @@ class InvoiceRespModel(DBModel):
     invoice_ref: str
     period_start_at: datetime = Field(...)
     period_end_at: datetime = Field(...)
-    subtotal: TwoDP
-    vat_rate: TwoDP
+    subtotal: FourDP
+    vat_rate: FourDP
     energy_mix: Optional[str]
     contract: ContractRespModel
     line_items: list[InvoiceLineItemRespModel]

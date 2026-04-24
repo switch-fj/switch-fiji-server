@@ -40,7 +40,6 @@ class ContractDetailsStatus(StrEnum):
 
 
 class ContractBillingFrequencyEnum(StrEnum):
-    MINUTES = "minutes"
     WEEKLY = "weekly"
     BI_WEEKLY = "bi-weekly"
     MONTHLY = "monthly"

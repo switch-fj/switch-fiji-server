@@ -37,14 +37,14 @@ class Billing:
 
         diff = relativedelta(as_of, commissioned_at)
         match freq:
-            case ContractBillingFrequencyEnum.MINUTES:
+            case ContractBillingFrequencyEnum.WEEKLY:
                 total_seconds = (as_of - commissioned_at).total_seconds()
                 n = int(total_seconds // (5 * 60))
                 delta = relativedelta(minutes=5)
-            case ContractBillingFrequencyEnum.WEEKLY:
-                total_days = (as_of - commissioned_at).days
-                n = total_days // 7
-                delta = relativedelta(weeks=1)
+            # case ContractBillingFrequencyEnum.WEEKLY:
+            #     total_days = (as_of - commissioned_at).days
+            #     n = total_days // 7
+            #     delta = relativedelta(weeks=1)
             case ContractBillingFrequencyEnum.BI_WEEKLY:
                 total_days = (as_of - commissioned_at).days
                 n = total_days // 14
@@ -131,6 +131,9 @@ class Billing:
         efl_rate_kwh: int,
         active_tariff: list[dict],
     ):
+        on_solar_energy_kwh = float(on_solar_energy_kwh)
+        off_solar_energy_kwh = float(off_solar_energy_kwh)
+
         day_tariff = active_tariff[0]
         night_tariff = active_tariff[1]
 

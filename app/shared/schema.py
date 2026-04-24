@@ -1,17 +1,31 @@
 from datetime import datetime
-from decimal import Decimal
+from decimal import ROUND_HALF_UP, Decimal
 from enum import IntEnum, StrEnum
 from typing import Annotated, Generic, Optional, TypeVar, Union
 from uuid import UUID
 
 from fastapi import UploadFile
-from pydantic import BaseModel, ConfigDict, Field, field_serializer, field_validator
+from pydantic import (
+    BaseModel,
+    BeforeValidator,
+    ConfigDict,
+    Field,
+    field_serializer,
+    field_validator,
+)
 
 from app.utils import email_validator, uuid_serializer
 
 T = TypeVar("T")
 
-TwoDP = Annotated[Decimal, Field(decimal_places=2, max_digits=10)]
+
+def to_4dp(value) -> Decimal:
+    if value is None:
+        return value
+    return Decimal(str(value)).quantize(Decimal("0.0001"), rounding=ROUND_HALF_UP)
+
+
+FourDP = Annotated[Decimal, BeforeValidator(to_4dp), Field(decimal_places=4)]
 
 
 class UserRoleEnum(IntEnum):

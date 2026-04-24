@@ -1,5 +1,6 @@
 import json
 from datetime import datetime, timezone
+from decimal import Decimal
 
 # from celery.schedules import crontab
 from sqlalchemy import text
@@ -188,7 +189,7 @@ def _compute_ppa_off_grid(
         period_end_at=period_end,
         subtotal=subtotal,
         vat_rate=vat_rate,
-        energy_mix=json.dumps({"solar": solar_energy_kwh, "gen": gen_energy_kwh}),
+        energy_mix=json.dumps({"solar": float(solar_energy_kwh), "gen": float(gen_energy_kwh)}),
     ).model_dump()
     create_invoice_dict["contract_uid"] = contract.uid
     create_invoice_dict["invoice_ref"] = InvoiceRepository._build_invoice_ref()
@@ -206,15 +207,15 @@ def _compute_ppa_off_grid(
                         invoice_uid=new_invoice.uid,
                         device_uid=device.uid,
                         label=InvoiceMeterLabelEnum.SITE_METER_1_DAY.value,
-                        period_start_reading=period_start_meter[0][0],
-                        period_end_reading=period_end_meter[0][0],
+                        period_start_reading=Decimal(period_start_meter[0][0]),
+                        period_end_reading=Decimal(period_end_meter[0][0]),
                     ),
                     CreateInvoiceMeterDataModel(
                         invoice_uid=new_invoice.uid,
                         device_uid=device.uid,
                         label=InvoiceMeterLabelEnum.SITE_METER_1_NIGHT.value,
-                        period_start_reading=period_start_meter[0][1],
-                        period_end_reading=period_end_meter[0][1],
+                        period_start_reading=Decimal(period_start_meter[0][1]),
+                        period_end_reading=Decimal(period_end_meter[0][1]),
                     ),
                 ]
             )
@@ -226,15 +227,15 @@ def _compute_ppa_off_grid(
                         invoice_uid=new_invoice.uid,
                         device_uid=device.uid,
                         label=InvoiceMeterLabelEnum.GEN_METER_1_DAY.value,
-                        period_start_reading=period_start_meter[1][0],
-                        period_end_reading=period_end_meter[1][0],
+                        period_start_reading=Decimal(period_start_meter[1][0]),
+                        period_end_reading=Decimal(period_end_meter[1][0]),
                     ),
                     CreateInvoiceMeterDataModel(
                         invoice_uid=new_invoice.uid,
                         device_uid=device.uid,
                         label=InvoiceMeterLabelEnum.GEN_METER_1_NIGHT.value,
-                        period_start_reading=period_start_meter[1][1],
-                        period_end_reading=period_end_meter[1][1],
+                        period_start_reading=Decimal(period_start_meter[1][1]),
+                        period_end_reading=Decimal(period_end_meter[1][1]),
                     ),
                 ]
             )
@@ -243,20 +244,20 @@ def _compute_ppa_off_grid(
         CreateInvoiceLineItemModel(
             invoice_uid=new_invoice.uid,
             description=InvoiceLineItemEnum.ON_SOLAR_ENERGY_SUPPLIED,
-            energy_kwh=on_solar_energy_kwh,
-            tariff_rate=active_tariff_slots[0]["rate"],
+            energy_kwh=Decimal(on_solar_energy_kwh),
+            tariff_rate=Decimal(active_tariff_slots[0]["rate"]),
             tariff_slot=active_tariff_slots[0]["slot"],
-            tariff_period=active_tariff_slots[0]["period_number"],
-            amount=on_solar_energy_amount,
+            tariff_period=int(active_tariff_slots[0]["period_number"]),
+            amount=Decimal(on_solar_energy_amount),
         ),
         CreateInvoiceLineItemModel(
             invoice_uid=new_invoice.uid,
             description=InvoiceLineItemEnum.OFF_SOLAR_ENERGY_SUPPLIED,
-            energy_kwh=off_solar_energy_kwh,
-            tariff_rate=active_tariff_slots[1]["rate"],
+            energy_kwh=Decimal(off_solar_energy_kwh),
+            tariff_rate=Decimal(active_tariff_slots[1]["rate"]),
             tariff_slot=active_tariff_slots[1]["slot"],
-            tariff_period=active_tariff_slots[1]["period_number"],
-            amount=off_solar_energy_amount,
+            tariff_period=int(active_tariff_slots[1]["period_number"]),
+            amount=Decimal(off_solar_energy_amount),
         ),
     ]
 
