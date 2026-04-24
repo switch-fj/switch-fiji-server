@@ -41,7 +41,7 @@ class SiteRepository:
         return client is not None
 
     async def get_sites_by_client_uid(self, client_uid: UUID):
-        cached = await async_redis_client.set_client_sites(str(client_uid))
+        cached = await async_redis_client.get_client_sites(str(client_uid))
         if cached:
             return [SiteRespModel.model_validate(item) for item in json.loads(cached)]
 
