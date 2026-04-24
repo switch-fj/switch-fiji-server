@@ -141,7 +141,7 @@ def compute_single_contract_bill(self, contract_uid, gateway_id, site_uid, site_
 def _compute_ppa_off_grid(
     session: Session,
     contract: Contract,
-    devices: Device,
+    devices: list[Device],
     contract_settings: ContractSettings,
     gateway_id: str,
 ):
@@ -172,7 +172,7 @@ def _compute_ppa_off_grid(
         period_start_meter_tariff_reading=period_start_meter,
         period_end_meter_tariff_reading=period_end_meter,
     )
-    on_solar_energy_kwh, off_solar_energy_kwh = Billing.compute_ppa_on_grid_line_items(usage=usage)
+    on_solar_energy_kwh, off_solar_energy_kwh = Billing.compute_ppa_off_grid_line_items(usage=usage)
     solar_energy_kwh, gen_energy_kwh = Billing.compute_ppa_off_grid_energy_mix(usage=usage)
     subtotal, vat_rate, on_solar_energy_amount, off_solar_energy_amount = (
         Billing.compute_ppa_off_grid_subtotal_and_vat_rate(
@@ -197,7 +197,7 @@ def _compute_ppa_off_grid(
     session.add(new_invoice)
     session.flush()
 
-    create_meter_data = []
+    create_meter_data: list[CreateInvoiceMeterDataModel] = []
     for device in devices:
         if device.slave_id == load_meter.get("slave_id"):
             create_meter_data.extend(

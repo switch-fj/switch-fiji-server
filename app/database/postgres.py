@@ -1,9 +1,7 @@
 from typing import AsyncGenerator
 
 from sqlalchemy.ext.asyncio import AsyncEngine, async_sessionmaker, create_async_engine
-
-# from sqlmodel import SQLModel, text
-from sqlmodel import SQLModel
+from sqlmodel import text
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.core.config import Config
@@ -27,8 +25,7 @@ async def init_db():
     async with async_engine.begin() as conn:
         try:
             logger.info("🔄 Connecting to Postgres...")
-            # await conn.execute(text("SELECT 1"))
-            await conn.run_sync(SQLModel.metadata.create_all)
+            await conn.execute(text("SELECT 1"))
             logger.info("successfully connected to Postgres.")
         except ConnectionError as e:
             logger.error(f"Failed to connect to Postgres: {e}")

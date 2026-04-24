@@ -106,7 +106,7 @@ class Billing:
         }
 
     @staticmethod
-    def compute_ppa_on_grid_line_items(usage: dict[str, Any]):
+    def compute_ppa_off_grid_line_items(usage: dict[str, Any]):
         on_solar_energy_kwh = usage.get("site_meter_day_usage", 0) - usage.get("gen_meter_day_usage", 0)
         off_solar_energy_kwh = usage.get("site_meter_night_usage", 0) - usage.get("gen_meter_night_usage", 0)
 
