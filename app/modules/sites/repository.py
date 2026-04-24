@@ -1,13 +1,16 @@
+import json
 from uuid import UUID
 
 from fastapi import Depends
-from sqlalchemy.orm import joinedload, selectinload
+from sqlalchemy.orm import selectinload
 from sqlmodel import func, select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.core.logger import setup_logger
 from app.database.postgres import get_session
+from app.database.redis import async_redis_client
 from app.modules.clients.model import Client
+from app.modules.contracts.model import Contract
 from app.modules.devices.model import Device
 from app.modules.sites.model import Site
 from app.modules.sites.schema import (
@@ -24,10 +27,25 @@ class SiteRepository:
     def __init__(self, session: AsyncSession):
         self.session = session
 
+    async def get_client_exists(self, client_uid: UUID) -> bool:
+        cache_key = f"client:exists:{client_uid}"
+        cached = await async_redis_client.client.get(cache_key)
+
+        if cached:
+            return True
+
+        client = await self.session.get(Client, client_uid)
+        if client:
+            await async_redis_client.client.set(cache_key, "1", ex=300)
+
+        return client is not None
+
     async def get_sites_by_client_uid(self, client_uid: UUID):
-        client_exists = await self.session.get(Client, client_uid)
-        if not client_exists:
-            return None
+        cached = await async_redis_client.set_client_sites(str(client_uid))
+        if cached:
+            return [SiteRespModel.model_validate(item) for item in json.loads(cached)]
+
+        await self.get_client_exists(client_uid=client_uid)
 
         device_count_subq = (
             select(Device.site_uid, func.count(Device.id).label("device_count")).group_by(Device.site_uid).subquery()
@@ -36,18 +54,36 @@ class SiteRepository:
         statement = (
             select(
                 Site,
+                Contract,
                 func.coalesce(device_count_subq.c.device_count, 0).label("device_count"),
             )
+            .outerjoin(Contract, Contract.site_uid == Site.uid)
             .outerjoin(device_count_subq, device_count_subq.c.site_uid == Site.uid)
-            .options(joinedload(Site.contract))
             .where(Site.client_uid == client_uid)
+            .where(Site.deleted_at.is_(None))
             .order_by(Site.created_at.desc())
         )
 
-        result = await self.session.execute(statement)
+        result = await self.session.exec(statement)
         rows = result.all()
 
-        return [SiteRespModel.model_validate({**row.Site.__dict__, "device_count": row.device_count}) for row in rows]
+        sites = [
+            SiteRespModel.model_validate(
+                {
+                    **row.Site.__dict__,
+                    "device_count": row.device_count,
+                    "contract": row.Contract,
+                }
+            )
+            for row in rows
+        ]
+
+        await async_redis_client.set_client_sites(
+            data=json.dumps([s.model_dump(mode="json") for s in sites]),
+            client_uid=str(client_uid),
+        )
+
+        return sites
 
     async def get_site_by_uid(self, site_uid: UUID):
         statement = select(Site).where(Site.uid == site_uid)
@@ -82,6 +118,7 @@ class SiteRepository:
             self.session.add(new_site)
             await self.session.commit()
             await self.session.refresh(new_site)
+            await async_redis_client.invalidate_client_sites_cache(str(data.client_uid))
 
             return new_site
         except Exception as e:
@@ -96,6 +133,7 @@ class SiteRepository:
 
         await self.session.commit()
         await self.session.refresh(site)
+        await async_redis_client.invalidate_client_sites_cache(str(site.client_uid))
         return site
 
 

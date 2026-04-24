@@ -18,6 +18,7 @@ class AsyncRedisClient:
     _instance: Optional["AsyncRedisClient"] = None
     _client: Optional[aioredis.Redis] = None
     BLOCKLIST_PREFIX = "blocked:"
+    SITES_CACHE_TTL = 60
 
     def __new__(cls):
         if cls._instance is None:
@@ -61,6 +62,29 @@ class AsyncRedisClient:
         except Exception as e:
             logger.error(f"Error getting site stats for {site_uid}: {e}")
             return None
+
+    async def get_client_sites(self, client_uid: str):
+        if not self._client:
+            return None
+
+        try:
+            return await self._client.get(f"sites:client:{client_uid}")
+        except Exception as e:
+            logger.error(f"Error getting sites for client {client_uid}: {e}")
+            return None
+
+    async def set_client_sites(self, data: str, client_uid: str):
+        if not self._client:
+            return None
+
+        try:
+            await self._client.set(f"sites:client:{client_uid}", data, ex=self.SITES_CACHE_TTL)
+        except Exception as e:
+            logger.error(f"Error setting sites for client {client_uid}: {e}")
+            return None
+
+    async def invalidate_client_sites_cache(self, client_uid: str):
+        await self._client.delete(f"sites:client:{client_uid}")
 
     @backoff.on_exception(backoff.expo, (ConnectionError, RedisError), max_tries=3, max_time=30)
     async def add_to_blocklist(self, key: str, expiry: int = 86400) -> bool:

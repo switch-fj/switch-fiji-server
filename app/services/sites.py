@@ -18,12 +18,8 @@ class SiteService:
         self.client_repo = client_repo
 
     async def get_sites_by_client_uid(self, client_uid: UUID):
-        client = await self.client_repo.get_client_by_uid(client_uid=client_uid)
-
-        if not client:
-            raise NotFound("Client with uid not found")
-
         sites_by_client = await self.site_repo.get_sites_by_client_uid(client_uid=client_uid)
+
         return sites_by_client
 
     async def get_detailed_sites_by_client_uid(self, client_uid: UUID):
