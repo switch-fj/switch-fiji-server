@@ -83,44 +83,56 @@ class InvoiceHistoryRespModel(DBModel):
 class InvoiceLineItemRespModel(DBModel):
     invoice_uid: UUID
     description: str
-    energy_kwh: Optional[FourDP]
-    tariff_rate: Optional[FourDP]
+    energy_kwh: Optional[Decimal]
+    tariff_rate: Optional[Decimal]
     tariff_period: Optional[int]
     tariff_slot: Optional[str]
-    amount: FourDP
+    amount: Decimal
 
     @field_serializer("invoice_uid")
     def serialize_invoice_uuid(self, value: UUID):
         return uuid_serializer(value)
 
+    @field_serializer("amount", "tariff_rate", "energy_kwh")
+    def serialize_decimals(self, value: Decimal):
+        if value:
+            return f"{value:.2f}"
+
 
 class InvoiceMeterDataRespModel(DBModel):
-    invoice_uid: UUID = Field(...)
-    device_uid: Optional[UUID] = Field(default=None)
-    label: str = Field(...)
-    period_start_reading: FourDP = Field(...)
-    period_end_reading: FourDP = Field(...)
-    vat_amount: FourDP = Field(...)
-    total: FourDP = Field(...)
+    invoice_uid: UUID
+    device_uid: Optional[UUID]
+    label: str
+    period_start_reading: Decimal
+    period_end_reading: Decimal
 
     @field_serializer("invoice_uid", "device_uid")
     def serialize_invoice_uuid(self, value: UUID):
         return uuid_serializer(value)
 
     @field_serializer("period_start_reading", "period_end_reading")
-    def serialize_period_dt(self, value: datetime):
+    def serialize_decimals(self, value: Decimal):
         if value:
-            return value.isoformat()
+            return f"{value:.2f}"
 
 
 class InvoiceRespModel(DBModel):
     invoice_ref: str
-    period_start_at: datetime = Field(...)
-    period_end_at: datetime = Field(...)
-    subtotal: FourDP
-    vat_rate: FourDP
+    period_start_at: datetime
+    period_end_at: datetime
+    subtotal: Decimal
+    vat_rate: Decimal
     energy_mix: Optional[str]
     contract: ContractRespModel
     line_items: list[InvoiceLineItemRespModel]
     meter_data: list[InvoiceMeterDataRespModel]
-    history: list[InvoiceHistoryRespModel]
+
+    @field_serializer("period_start_at", "period_end_at")
+    def serialize_period_dt(self, value: datetime):
+        if value:
+            return value.isoformat()
+
+    @field_serializer("subtotal", "vat_rate")
+    def serialize_decimals(self, value: Decimal):
+        if value:
+            return f"{value:.2f}"

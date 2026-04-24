@@ -3,11 +3,14 @@ from uuid import UUID
 from fastapi import Depends
 
 from app.core.exceptions import NotFound
+from app.core.logger import setup_logger
 from app.modules.contracts.repository import ContractRepository, get_contract_repo
 from app.modules.invoices.repository import InvoiceRepository, get_invoice_repo
 from app.modules.invoices.schema import InvoiceHistoryRespModel, InvoiceRespModel
 from app.shared.schema import OffsetPaginationModel, PaginatedRespModel
 from app.utils.pagination import Pagination
+
+logger = setup_logger(__name__)
 
 
 class InvoiceService:
