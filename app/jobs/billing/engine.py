@@ -37,14 +37,14 @@ class BillingEngine:
 
         diff = relativedelta(as_of, commissioned_at)
         match freq:
-            case ContractBillingFrequencyEnum.WEEKLY:
-                total_seconds = (as_of - commissioned_at).total_seconds()
-                n = int(total_seconds // (5 * 60))
-                delta = relativedelta(minutes=5)
             # case ContractBillingFrequencyEnum.WEEKLY:
-            #     total_days = (as_of - commissioned_at).days
-            #     n = total_days // 7
-            #     delta = relativedelta(weeks=1)
+            #     total_seconds = (as_of - commissioned_at).total_seconds()
+            #     n = int(total_seconds // (5 * 60))
+            #     delta = relativedelta(minutes=5)
+            case ContractBillingFrequencyEnum.WEEKLY:
+                total_days = (as_of - commissioned_at).days
+                n = total_days // 7
+                delta = relativedelta(weeks=1)
             case ContractBillingFrequencyEnum.BI_WEEKLY:
                 total_days = (as_of - commissioned_at).days
                 n = total_days // 14
