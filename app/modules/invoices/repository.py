@@ -99,7 +99,7 @@ class InvoiceRepository:
         offset: int = Config.DEFAULT_PAGE_OFFSET,
     ):
         statement = (
-            select(InvoiceHistory)
+            select(InvoiceHistory, Invoice)
             .join(Invoice, Invoice.uid == InvoiceHistory.invoice_uid)
             .where(Invoice.contract_uid == contract_uid)
             .order_by(InvoiceHistory.sent_at.desc())
@@ -112,7 +112,7 @@ class InvoiceRepository:
         result = await self.session.exec(statement)
         total = await self.session.scalar(count_statement)
 
-        return result.all(), total
+        return result, total
 
     async def get_invoice_by_uid(self, invoice_uid: UUID):
         statement = select(Invoice).where(Invoice.uid == invoice_uid)

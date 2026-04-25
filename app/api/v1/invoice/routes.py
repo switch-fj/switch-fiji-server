@@ -6,7 +6,10 @@ from fastapi import APIRouter, Depends, Query, Response, status
 from app.core.config import Config
 from app.core.security import AccessTokenBearer
 from app.modules.invoices.pdf import InvoicePDF
-from app.modules.invoices.schema import InvoiceHistoryRespModel, InvoiceRespModel
+from app.modules.invoices.schema import (
+    InvoiceDetailedRespModel,
+    InvoiceHistoryRespModel,
+)
 from app.services.contract import ContractService, get_contract_service
 from app.services.invoice import InvoiceService, get_invoice_service
 from app.services.settings import SettingsService, get_settings_service
@@ -22,7 +25,7 @@ invoice_router = APIRouter(prefix="/invoice", tags=["invoice"])
 @invoice_router.get(
     "/{invoice_uid}",
     status_code=status.HTTP_200_OK,
-    response_model=ServerRespModel[InvoiceRespModel],
+    response_model=ServerRespModel[InvoiceDetailedRespModel],
 )
 async def get_invoice_by_uid(
     invoice_uid: UUID,
@@ -32,7 +35,7 @@ async def get_invoice_by_uid(
     resp = await invoice_service.get_invoice_by_uid(invoice_uid=invoice_uid, token_payload=token_payload)
 
     invoice, contract, line_items, meter_data = resp
-    invoice_resp = InvoiceRespModel.model_validate(
+    invoice_resp = InvoiceDetailedRespModel.model_validate(
         {
             **invoice.__dict__,
             "contract": contract,
@@ -41,7 +44,7 @@ async def get_invoice_by_uid(
         }
     )
 
-    return ServerRespModel[InvoiceRespModel](
+    return ServerRespModel[InvoiceDetailedRespModel](
         data=invoice_resp,
         message="Invoice retrieved!.",
     )

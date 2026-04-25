@@ -39,7 +39,7 @@ class InvoiceService:
         if not contract:
             raise NotFound("Contract not found!")
 
-        invoice_histories, total = await self.invoice_repo.get_invoice_history_by_contract_uid(
+        resp, total = await self.invoice_repo.get_invoice_history_by_contract_uid(
             contract_uid=contract_uid,
             limit=limit,
             offset=offset,
@@ -49,7 +49,10 @@ class InvoiceService:
 
         return PaginatedRespModel.model_validate(
             {
-                "items": [InvoiceHistoryRespModel.model_validate(h) for h in invoice_histories],
+                "items": [
+                    InvoiceHistoryRespModel.model_validate({**invoice_history.__dict__, "invoice": invoice})
+                    for invoice_history, invoice in resp
+                ],
                 "pagination": OffsetPaginationModel(
                     total=total,
                     current_page=current_page,
