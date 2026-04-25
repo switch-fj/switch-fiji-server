@@ -99,7 +99,6 @@ async def get_client_sites_by_uid(
 )
 async def stream_site_stats(
     site_uid: UUID,
-    _: dict = Depends(AdminAccessBearer()),
 ):
     async def event_generator():
         while True:

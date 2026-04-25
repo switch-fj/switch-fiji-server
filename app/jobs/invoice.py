@@ -2,7 +2,7 @@ import json
 from datetime import datetime, timezone
 from decimal import Decimal
 
-# from celery.schedules import crontab
+from celery.schedules import crontab
 from sqlalchemy import text
 from sqlalchemy.orm import joinedload
 from sqlmodel import Session, select
@@ -38,8 +38,7 @@ logger = setup_logger(__name__)
 celery_app.conf.beat_schedule = {
     "compute-contract-bill-every-day-at_midnight": {
         "task": "compute_all_contracts_bill",
-        # "schedule": crontab(minute=0, hour=0),
-        "schedule": 30,
+        "schedule": crontab(minute=0, hour=0),
     }
 }
 
@@ -95,7 +94,6 @@ def compute_all_contracts_bill(self):
 def compute_single_contract_bill(self, contract_uid, gateway_id, site_uid, site_id):
     try:
         celery_dynamo_client.init()
-
         with get_celery_db_session() as session:
             contract = session.execute(
                 select(Contract)

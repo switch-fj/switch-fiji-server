@@ -2,11 +2,17 @@ import json
 from datetime import datetime, timezone
 
 from sqlalchemy import text
+from sqlalchemy.orm import joinedload
+from sqlmodel import select
 
+from app.core.logger import setup_logger
 from app.database.celery import celery_dynamo_client, get_celery_db_session
 from app.database.redis import sync_redis_client
 from app.jobs.billing.engine import BillingEngine
 from app.jobs.celery import celery_app
+from app.modules.contracts.model import Contract
+
+logger = setup_logger(__name__)
 
 celery_app.conf.beat_schedule = {
     "compute-site-stats-every-5-mins": {
@@ -59,28 +65,13 @@ def compute_single_site_stats(self, site_uid: str, gateway_id: str):
     and writes the result to Redis.
     """
     try:
+        celery_dynamo_client.init()
         with get_celery_db_session() as session:
-            result = session.execute(
-                text(
-                    """
-                    SELECT
-                        cd.system_size_kwp,
-                        cd.guaranteed_production_kwh_per_kwp,
-                        cd.commissioned_at,
-                        cd.billing_frequency,
-                        cd.grid_meter_reading_at_commissioning
-                    FROM contracts c
-                    JOIN contract_details cd ON cd.contract_uid = c.uid
-                    WHERE c.site_uid = :site_uid
-                        AND cd.commissioned_at IS NOT NULL
-                        AND NOW() > cd.commissioned_at
-                        AND NOW() < cd.end_at
-                    LIMIT 1
-                    """
-                ),
-                {"site_uid": site_uid},
-            )
-            contract = result.fetchone()
+            contract = session.execute(
+                select(Contract)
+                .options(joinedload(Contract.details), joinedload(Contract.client))
+                .where(Contract.site_uid == site_uid)
+            ).scalar_one_or_none()
 
         if not contract:
             return
@@ -89,22 +80,26 @@ def compute_single_site_stats(self, site_uid: str, gateway_id: str):
 
         # 1. billing period (contract math only)
         period_start, period_end = BillingEngine.get_current_billing_period(
-            commissioned_at=contract.commissioned_at,
-            billing_frequency=contract.billing_frequency,
+            commissioned_at=contract.details.commissioned_at,
+            billing_frequency=contract.details.billing_frequency,
             as_of=now,
         )
 
         # 2. expected generation (contract math only)
-        days_elapsed = (now - contract.commissioned_at).days
+        days_elapsed = (now - contract.details.commissioned_at).days
         expected_generation_kwh = round(
-            (contract.system_size_kwp or 0) * (contract.guaranteed_production_kwh_per_kwp or 0) * (days_elapsed / 365),
+            (contract.details.system_size_kwp or 0)
+            * (contract.details.guaranteed_production_kwh_per_kwp or 0)
+            * (days_elapsed / 365),
             2,
         )
 
-        # 3. billing progress (date math only)
-        total_secs = (period_end - period_start).total_seconds()
-        elapsed_secs = (now - period_start).total_seconds()
-        billing_progress_pct = round((elapsed_secs / total_secs) * 100, 2)
+        # 3. billing progress (contract lifespan: commissioned_at to end_at)
+        contract_start = contract.details.commissioned_at
+        contract_end = contract.details.end_at
+        total_secs = (contract_end - contract_start).total_seconds()
+        elapsed_secs = (now - contract_start).total_seconds()
+        billing_progress_pct = round(max(0.0, min((elapsed_secs / total_secs) * 100, 100.0)), 2)
 
         # 4. actual generation (DynamoDB only — sync boto3)
         billing_data = celery_dynamo_client.get_readings_for_billing_period(
@@ -112,7 +107,14 @@ def compute_single_site_stats(self, site_uid: str, gateway_id: str):
             period_start=period_start,
             period_end=period_end,
         )
-        actual_generation_kwh = billing_data["actual_generation_kwh"]
+
+        actual_generation_kwh = 0.0
+        if billing_data:
+            start_reading, end_reading = billing_data
+            start_meter = BillingEngine._extract_meter_by_description(start_reading, "gen_meter")
+            end_meter = BillingEngine._extract_meter_by_description(end_reading, "gen_meter")
+            if start_meter and end_meter:
+                actual_generation_kwh = round(float(end_meter["kwh_total"]) - float(start_meter["kwh_total"]), 2)
 
         # 5. deviation (derived)
         deviation_pct = 0.0
@@ -129,12 +131,9 @@ def compute_single_site_stats(self, site_uid: str, gateway_id: str):
             "actual_generation_kwh": actual_generation_kwh,
             "billing_progress_pct": billing_progress_pct,
             "deviation_pct": deviation_pct,
-            "period_start": period_start.isoformat(),
-            "period_end": period_end.isoformat(),
-            "computed_at": now.isoformat(),
         }
 
-        sync_redis_client.setex(
+        sync_redis_client._client.setex(
             f"site_stats:{site_uid}",
             600,
             json.dumps(stats),
