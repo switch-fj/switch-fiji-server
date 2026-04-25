@@ -35,12 +35,14 @@ from app.modules.settings.model import ContractSettings
 logger = setup_logger(__name__)
 
 # Beat triggers at billing date (actually every day at midnight)
-celery_app.conf.beat_schedule = {
-    "compute-contract-bill-every-day-at_midnight": {
-        "task": "compute_all_contracts_bill",
-        "schedule": crontab(minute=0, hour=0),
+celery_app.conf.beat_schedule.update(
+    {
+        "compute-contract-bill-every-day-at_midnight": {
+            "task": "compute_all_contracts_bill",
+            "schedule": crontab(minute=0, hour=0),
+        }
     }
-}
+)
 
 
 @celery_app.task(

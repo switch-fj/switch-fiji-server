@@ -14,12 +14,14 @@ from app.modules.contracts.model import Contract
 
 logger = setup_logger(__name__)
 
-celery_app.conf.beat_schedule = {
-    "compute-site-stats-every-5-mins": {
-        "task": "compute_all_site_stats",
-        "schedule": 300,
-    },
-}
+celery_app.conf.beat_schedule.update(
+    {
+        "compute-site-stats-every-5-mins": {
+            "task": "compute_all_site_stats",
+            "schedule": 300,
+        },
+    }
+)
 
 
 @celery_app.task(name="compute_all_site_stats", bind=True, max_retries=3, default_retry_delay=5)
