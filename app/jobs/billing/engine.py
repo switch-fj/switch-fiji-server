@@ -13,7 +13,7 @@ from app.modules.devices.schema import MeterRoleEnum
 logger = setup_logger(__name__)
 
 
-class Billing:
+class BillingEngine:
     @staticmethod
     def _extract_meter_by_description(reading: dict, description: str) -> dict | None:
         for meter in reading.get("meters", []):
@@ -74,8 +74,12 @@ class Billing:
     def get_ppa_off_grid_meter_data(
         periodic_energy_data: dict | Any,
     ):
-        load_meter = Billing._extract_meter_by_description(periodic_energy_data, description=MeterRoleEnum.LOAD_METER)
-        gen_meter = Billing._extract_meter_by_description(periodic_energy_data, description=MeterRoleEnum.GEN_METER)
+        load_meter = BillingEngine._extract_meter_by_description(
+            periodic_energy_data, description=MeterRoleEnum.LOAD_METER
+        )
+        gen_meter = BillingEngine._extract_meter_by_description(
+            periodic_energy_data, description=MeterRoleEnum.GEN_METER
+        )
 
         site_meter_tariff = [
             load_meter.get("tariff", 0)["kwh_t1"],
@@ -106,7 +110,7 @@ class Billing:
             "site_meter_day_usage": site_meter_day_usage,
             "site_meter_night_usage": site_meter_night_usage,
             "gen_meter_day_usage": gen_meter_day_usage,
-            "gen_meter_night_usgae": gen_meter_night_usage,
+            "gen_meter_night_usage": gen_meter_night_usage,
         }
 
     @staticmethod

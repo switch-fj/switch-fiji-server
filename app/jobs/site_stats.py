@@ -5,7 +5,7 @@ from sqlalchemy import text
 
 from app.database.celery import celery_dynamo_client, get_celery_db_session
 from app.database.redis import sync_redis_client
-from app.jobs.billing.engine import Billing
+from app.jobs.billing.engine import BillingEngine
 from app.jobs.celery import celery_app
 
 celery_app.conf.beat_schedule = {
@@ -88,7 +88,7 @@ def compute_single_site_stats(self, site_uid: str, gateway_id: str):
         now = datetime.now(timezone.utc)
 
         # 1. billing period (contract math only)
-        period_start, period_end = Billing.get_current_billing_period(
+        period_start, period_end = BillingEngine.get_current_billing_period(
             commissioned_at=contract.commissioned_at,
             billing_frequency=contract.billing_frequency,
             as_of=now,

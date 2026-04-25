@@ -9,7 +9,7 @@ from sqlmodel import Session, select
 
 from app.core.logger import setup_logger
 from app.database.celery import celery_dynamo_client, get_celery_db_session
-from app.jobs.billing.engine import Billing
+from app.jobs.billing.engine import BillingEngine
 from app.jobs.celery import celery_app
 from app.modules.contracts.model import Contract
 from app.modules.contracts.schema import ContractSystemModeEnum, ContractTypeEnum
@@ -147,7 +147,7 @@ def _compute_ppa_off_grid(
     gateway_id: str,
 ):
     active_tariff_slots = contract.details.active_tariff_slots
-    period_start, period_end = Billing.get_current_billing_period(
+    period_start, period_end = BillingEngine.get_current_billing_period(
         commissioned_at=contract.details.commissioned_at,
         billing_frequency=contract.details.billing_frequency,
     )
@@ -163,20 +163,20 @@ def _compute_ppa_off_grid(
 
     period_start_data, period_end_data = readings
 
-    period_start_meter = Billing.get_ppa_off_grid_meter_data(period_start_data)
-    period_end_meter = Billing.get_ppa_off_grid_meter_data(period_end_data)
+    period_start_meter = BillingEngine.get_ppa_off_grid_meter_data(period_start_data)
+    period_end_meter = BillingEngine.get_ppa_off_grid_meter_data(period_end_data)
 
-    load_meter = Billing._extract_meter_by_description(period_start_data, MeterRoleEnum.LOAD_METER)
-    gen_meter = Billing._extract_meter_by_description(period_start_data, MeterRoleEnum.GEN_METER)
+    load_meter = BillingEngine._extract_meter_by_description(period_start_data, MeterRoleEnum.LOAD_METER)
+    gen_meter = BillingEngine._extract_meter_by_description(period_start_data, MeterRoleEnum.GEN_METER)
 
-    usage = Billing.compute_ppa_off_grid_day_night_usage(
+    usage = BillingEngine.compute_ppa_off_grid_day_night_usage(
         period_start_meter_tariff_reading=period_start_meter,
         period_end_meter_tariff_reading=period_end_meter,
     )
-    on_solar_energy_kwh, off_solar_energy_kwh = Billing.compute_ppa_off_grid_line_items(usage=usage)
-    solar_energy_kwh, gen_energy_kwh = Billing.compute_ppa_off_grid_energy_mix(usage=usage)
+    on_solar_energy_kwh, off_solar_energy_kwh = BillingEngine.compute_ppa_off_grid_line_items(usage=usage)
+    solar_energy_kwh, gen_energy_kwh = BillingEngine.compute_ppa_off_grid_energy_mix(usage=usage)
     subtotal, vat_rate, on_solar_energy_amount, off_solar_energy_amount = (
-        Billing.compute_ppa_off_grid_subtotal_and_vat_rate(
+        BillingEngine.compute_ppa_off_grid_subtotal_and_vat_rate(
             on_solar_energy_kwh=on_solar_energy_kwh,
             off_solar_energy_kwh=off_solar_energy_kwh,
             efl_rate_kwh=contract_settings.efl_standard_rate_kwh,
