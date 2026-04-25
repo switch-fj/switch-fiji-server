@@ -536,6 +536,21 @@ wheels = [
 ]
 
 [[package]]
+name = "celery-redbeat"
+version = "2.3.3"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "celery" },
+    { name = "python-dateutil" },
+    { name = "redis" },
+    { name = "tenacity" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/7d/d5/cebf6a03a4716ae33315ce1dad68f2465ea30491a560293ecd2a4ad3148a/celery_redbeat-2.3.3.tar.gz", hash = "sha256:f52664b490b2923a787d9f348f291243601430bf8ec383b6e79870a1731ee92a", size = 34429, upload-time = "2025-07-02T13:08:55.251Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/26/c1/ea03e5c737b4b0f4054001d8db64bec693b1506cbb68f93ebecd710b2785/celery_redbeat-2.3.3-py2.py3-none-any.whl", hash = "sha256:0d6da101c46c0147b88f3ae2bfaed42548545934263a31d325a8b0e6585c3fb1", size = 14674, upload-time = "2025-07-02T13:08:54.062Z" },
+]
+
+[[package]]
 name = "certifi"
 version = "2026.2.25"
 source = { registry = "https://pypi.org/simple" }
@@ -2319,6 +2334,18 @@ wheels = [
 ]
 
 [[package]]
+name = "redbeat"
+version = "0.0.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "celery-redbeat" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/90/c4/4cdf963fbf240c146e363dbbb0b6b7fea6b838556736c0668bf9733c1e28/redbeat-0.0.1.tar.gz", hash = "sha256:4bb6493dce0e68dcd1e83b15c96271137391073134ac7f775fc1fca2a12951e7", size = 1608, upload-time = "2026-04-22T02:36:38.514Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/5b/7e/4a6bbb218c2868b0d963573733fc489517c57e608d15b67c2a97a0abb87c/redbeat-0.0.1-py3-none-any.whl", hash = "sha256:3e0d4cf52e6f105018a038b0edba317cf69bfa110a2676e03a4ea0fbef07246f", size = 1963, upload-time = "2026-04-22T02:36:37.076Z" },
+]
+
+[[package]]
 name = "redis"
 version = "7.3.0"
 source = { registry = "https://pypi.org/simple" }
@@ -2766,6 +2793,7 @@ dependencies = [
     { name = "pydantic" },
     { name = "pydantic-settings" },
     { name = "pyjwt" },
+    { name = "redbeat" },
     { name = "redis" },
     { name = "resend" },
     { name = "sqlmodel" },
@@ -2803,6 +2831,7 @@ requires-dist = [
     { name = "pydantic", specifier = ">=2.12.5" },
     { name = "pydantic-settings", specifier = ">=2.13.1" },
     { name = "pyjwt", specifier = ">=2.12.1" },
+    { name = "redbeat", specifier = ">=0.0.1" },
     { name = "redis", specifier = ">=7.3.0" },
     { name = "resend", specifier = ">=2.26.0" },
     { name = "sqlmodel", specifier = ">=0.0.37" },
@@ -2814,6 +2843,15 @@ requires-dist = [
 
 [package.metadata.requires-dev]
 dev = [{ name = "ruff", specifier = ">=0.15.5" }]
+
+[[package]]
+name = "tenacity"
+version = "9.1.4"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/47/c6/ee486fd809e357697ee8a44d3d69222b344920433d3b6666ccd9b374630c/tenacity-9.1.4.tar.gz", hash = "sha256:adb31d4c263f2bd041081ab33b498309a57c77f9acf2db65aadf0898179cf93a", size = 49413, upload-time = "2026-02-07T10:45:33.841Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/d7/c1/eb8f9debc45d3b7918a32ab756658a0904732f75e555402972246b0b8e71/tenacity-9.1.4-py3-none-any.whl", hash = "sha256:6095a360c919085f28c6527de529e76a06ad89b23659fa881ae0649b867a9d55", size = 28926, upload-time = "2026-02-07T10:45:32.24Z" },
+]
 
 [[package]]
 name = "tinycss2"
