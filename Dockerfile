@@ -8,6 +8,10 @@ RUN apt-get update && apt-get install -y \
     libpq-dev \
     curl \
     make \
+    libpango-1.0-0 \
+    libpangoft2-1.0-0 \
+    libharfbuzz0b \
+    libfontconfig1 \
     && rm -rf /var/lib/apt/lists/*
 
 # Install uv system wide

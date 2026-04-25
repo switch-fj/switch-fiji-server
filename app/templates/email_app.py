@@ -1,5 +1,3 @@
-from pathlib import Path
-
 import fastapi
 import fastapi.responses
 import fastapi.templating
@@ -7,8 +5,6 @@ import fastapi.templating
 from app.core.template_registry import TemplateRegistry
 from app.shared.mail import EmailTemplates
 from app.templates.libs.context import get_template_context
-
-ROOT_DIR = Path(__file__).resolve().parent.parent
 
 email_app = fastapi.FastAPI(title="Email Template Preview")
 template_registry = TemplateRegistry()

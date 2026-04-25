@@ -1,0 +1,28 @@
+<div class="meter-section">
+    <table class="meter-table">
+        <thead>
+            <tr>
+                <th>Meter Data</th>
+                <th>Period Start</th>
+                <th>Period End</th>
+                <th>Usage</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr class="period-row">
+                <td></td>
+                <td>{{ period_start_at }}</td>
+                <td>{{ period_end_at }}</td>
+                <td></td>
+            </tr>
+            {% for meter in meter_data %}
+            <tr>
+                <td>{{ meter.label }}</td>
+                <td>{{ meter.period_start_reading }}</td>
+                <td>{{ meter.period_end_reading }}</td>
+                <td>{{ meter.usage }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>

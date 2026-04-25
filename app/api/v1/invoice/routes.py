@@ -1,13 +1,15 @@
 from typing import Optional
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Query, status
+from fastapi import APIRouter, Depends, Query, Response, status
 
 from app.core.config import Config
 from app.core.security import AccessTokenBearer
+from app.modules.invoices.pdf import InvoicePDF
 from app.modules.invoices.schema import InvoiceHistoryRespModel, InvoiceRespModel
 from app.services.contract import ContractService, get_contract_service
 from app.services.invoice import InvoiceService, get_invoice_service
+from app.services.settings import SettingsService, get_settings_service
 from app.shared.schema import (
     OffsetPaginationModel,
     PaginatedRespModel,
@@ -27,9 +29,20 @@ async def get_invoice_by_uid(
     invoice_service: InvoiceService = Depends(get_invoice_service),
     token_payload: dict = Depends(AccessTokenBearer()),
 ):
-    invoice = await invoice_service.get_invoice_by_uid(invoice_uid=invoice_uid, token_payload=token_payload)
+    resp = await invoice_service.get_invoice_by_uid(invoice_uid=invoice_uid, token_payload=token_payload)
+
+    invoice, contract, line_items, meter_data = resp
+    invoice_resp = InvoiceRespModel.model_validate(
+        {
+            **invoice.__dict__,
+            "contract": contract,
+            "line_items": line_items,
+            "meter_data": meter_data,
+        }
+    )
+
     return ServerRespModel[InvoiceRespModel](
-        data=invoice,
+        data=invoice_resp,
         message="Invoice retrieved!.",
     )
 
@@ -59,4 +72,30 @@ async def get_invoice_history_by_contract_uid(
     return ServerRespModel[PaginatedRespModel[InvoiceHistoryRespModel, OffsetPaginationModel]](
         data=resp,
         message="Invoice history retrieved!.",
+    )
+
+
+@invoice_router.get("/{invoice_uid}/pdf")
+async def download_invoice_pdf(
+    invoice_uid: UUID,
+    invoice_service: InvoiceService = Depends(get_invoice_service),
+    contract_settings_service: SettingsService = Depends(get_settings_service),
+):
+    invoice, contract, line_items, meter_data = await invoice_service.get_invoice_by_uid(
+        invoice_uid=invoice_uid, token_payload=None, secure=False
+    )
+    contract_settings = await contract_settings_service.get_contract_general_settings()
+
+    pdf_bytes = InvoicePDF.render_invoice_pdf(
+        invoice=invoice,
+        contract=contract,
+        line_items=line_items,
+        meter_data=meter_data,
+        contract_settings=contract_settings,
+    )
+
+    return Response(
+        content=pdf_bytes,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f"attachment; filename={invoice.invoice_ref}.pdf"},
     )

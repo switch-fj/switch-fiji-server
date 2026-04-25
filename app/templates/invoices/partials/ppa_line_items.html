@@ -1,0 +1,39 @@
+<table class="items-table">
+    <thead>
+        <tr>
+            <th>Item</th>
+            <th>Energy (kWh)</th>
+            <th>Tariff</th>
+            <th>Amount</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for item in line_items %}
+        <tr>
+            <td>{{ item.description }}</td>
+            <td>{{ item.energy_kwh }}</td>
+            <td>${{ item.tariff_rate }}</td>
+            <td>${{ item.amount }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<hr class="divider" />
+
+<div class="totals-block">
+    <table class="totals-table">
+        <tr>
+            <td>Sub Total</td>
+            <td>${{ subtotal }}</td>
+        </tr>
+        <tr>
+            <td>VAT</td>
+            <td>${{ vat_amount }}</td>
+        </tr>
+        <tr class="total-row">
+            <td>Total</td>
+            <td>${{ total }}</td>
+        </tr>
+    </table>
+</div>

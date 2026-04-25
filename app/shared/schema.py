@@ -186,7 +186,7 @@ class TimeFormatEnum(StrEnum):
 
 class DateFormatEnum(StrEnum):
     DMY = "dmy"
-    mdy = "mdy"
+    MDY = "mdy"
 
 
 class CurrencyEnum(StrEnum):

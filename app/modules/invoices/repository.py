@@ -2,6 +2,7 @@ from datetime import datetime
 from uuid import UUID
 
 from fastapi import Depends
+from sqlalchemy.orm import selectinload
 from sqlmodel import func, select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
@@ -114,18 +115,19 @@ class InvoiceRepository:
         return result.all(), total
 
     async def get_invoice_by_uid(self, invoice_uid: UUID):
-        statement = (
-            select(Invoice, Contract)
-            .outerjoin(Contract, Contract.uid == Invoice.contract_uid)
-            .where(Invoice.uid == invoice_uid)
-        )
+        statement = select(Invoice).where(Invoice.uid == invoice_uid)
         result = await self.session.exec(statement)
-        row = result.first()
+        invoice = result.first()
 
-        if not row:
+        if not invoice:
             return None
 
-        invoice, contract = row
+        contract_result = await self.session.exec(
+            select(Contract)
+            .options(selectinload(Contract.client), selectinload(Contract.site))
+            .where(Contract.uid == invoice.contract_uid)
+        )
+        contract = contract_result.first()
 
         line_items_result = await self.session.exec(
             select(InvoiceLineItem).where(InvoiceLineItem.invoice_uid == invoice_uid)
