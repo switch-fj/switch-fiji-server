@@ -17,7 +17,7 @@ logger = setup_logger(__name__)
 celery_app.conf.beat_schedule = {
     "compute-site-stats-every-5-mins": {
         "task": "compute_all_site_stats",
-        "schedule": 40,
+        "schedule": 300,
     },
 }
 
