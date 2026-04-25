@@ -81,6 +81,7 @@ class BillingEngine:
             periodic_energy_data, description=MeterRoleEnum.GEN_METER
         )
 
+        # take t2 as night and t1 as day
         site_meter_tariff = [
             load_meter.get("tariff", 0)["kwh_t1"],
             load_meter.get("tariff", 0)["kwh_t2"],
