@@ -1,18 +1,18 @@
 from typing import Optional
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Query, Response, status
+from fastapi import APIRouter, Depends, Query, status
 
 from app.core.config import Config
+from app.core.logger import setup_logger
 from app.core.security import AccessTokenBearer
-from app.modules.invoices.pdf import InvoicePDF
 from app.modules.invoices.schema import (
     InvoiceDetailedRespModel,
     InvoiceHistoryRespModel,
 )
 from app.services.contract import ContractService, get_contract_service
 from app.services.invoice import InvoiceService, get_invoice_service
-from app.services.settings import SettingsService, get_settings_service
+from app.services.s3 import S3Service
 from app.shared.schema import (
     OffsetPaginationModel,
     PaginatedRespModel,
@@ -21,18 +21,20 @@ from app.shared.schema import (
 
 invoice_router = APIRouter(prefix="/invoice", tags=["invoice"])
 
+logger = setup_logger(__name__)
+
 
 @invoice_router.get(
     "/{invoice_uid}",
     status_code=status.HTTP_200_OK,
     response_model=ServerRespModel[InvoiceDetailedRespModel],
 )
-async def get_invoice_by_uid(
+async def get_invoice_details_by_uid(
     invoice_uid: UUID,
     invoice_service: InvoiceService = Depends(get_invoice_service),
     token_payload: dict = Depends(AccessTokenBearer()),
 ):
-    resp = await invoice_service.get_invoice_by_uid(invoice_uid=invoice_uid, token_payload=token_payload)
+    resp = await invoice_service.get_invoice_details_by_uid(invoice_uid=invoice_uid, token_payload=token_payload)
 
     invoice, contract, line_items, meter_data = resp
     invoice_resp = InvoiceDetailedRespModel.model_validate(
@@ -78,27 +80,17 @@ async def get_invoice_history_by_contract_uid(
     )
 
 
-@invoice_router.get("/{invoice_uid}/pdf")
+@invoice_router.get(
+    "/{invoice_uid}/pdf",
+    status_code=status.HTTP_200_OK,
+    response_model=ServerRespModel[str],
+)
 async def download_invoice_pdf(
     invoice_uid: UUID,
     invoice_service: InvoiceService = Depends(get_invoice_service),
-    contract_settings_service: SettingsService = Depends(get_settings_service),
+    token_payload: dict = Depends(AccessTokenBearer()),
 ):
-    (invoice, contract, line_items, meter_data) = await invoice_service.get_invoice_by_uid(
-        invoice_uid=invoice_uid, token_payload=None, secure=False
-    )
-    contract_settings = await contract_settings_service.get_contract_general_settings()
+    invoice = await invoice_service.get_invoice_by_uid(invoice_uid=invoice_uid, token_payload=token_payload)
 
-    pdf_bytes = InvoicePDF.render_invoice_pdf(
-        invoice=invoice,
-        contract=contract,
-        line_items=line_items,
-        meter_data=meter_data,
-        contract_settings=contract_settings,
-    )
-
-    return Response(
-        content=pdf_bytes,
-        media_type="application/pdf",
-        headers={"Content-Disposition": f"attachment; filename={invoice.invoice_ref}.pdf"},
-    )
+    presigned_url = S3Service.generate_presigned_url(invoice.pdf_s3_key)
+    return ServerRespModel[str](data=presigned_url, message="invoice url retrieved")

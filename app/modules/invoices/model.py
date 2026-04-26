@@ -39,6 +39,8 @@ class Invoice(MyAbstractSQLModel, table=True):
     # energy mix snapshot (computed once at generation time)
     energy_mix: Optional[str] = Field(nullable=True)  # Json Data will be stored here.
 
+    pdf_s3_key: Optional[str] = Field(default=None)
+
     # relationships
     contract: "Contract" = Relationship(back_populates="invoices")
     line_items: list["InvoiceLineItem"] = Relationship(back_populates="invoice")

@@ -3,7 +3,7 @@ from uuid import UUID
 
 from fastapi import Depends
 from sqlalchemy.orm import joinedload
-from sqlmodel import func, select
+from sqlmodel import func, select, update
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.core.auth import Authentication
@@ -115,6 +115,16 @@ class InvoiceRepository:
         return result, total
 
     async def get_invoice_by_uid(self, invoice_uid: UUID):
+        statement = select(Invoice).where(Invoice.uid == invoice_uid)
+        result = await self.session.exec(statement)
+        invoice = result.first()
+
+        if not invoice:
+            return None
+
+        return invoice
+
+    async def get_invoice_details_by_uid(self, invoice_uid: UUID):
         statement = (
             select(Invoice)
             .options(
@@ -140,6 +150,11 @@ class InvoiceRepository:
             invoice.line_items,
             invoice.meter_data,
         )
+
+    async def update_pdf_s3_key(self, invoice_uid: UUID, key: str) -> None:
+        statement = update(Invoice).where(Invoice.uid == invoice_uid).values(pdf_s3_key=key)
+        await self.session.exec(statement)
+        await self.session.commit()
 
 
 def get_invoice_repo(session: AsyncSession = Depends(get_session)):

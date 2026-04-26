@@ -63,7 +63,14 @@ class InvoiceService:
         )
 
     async def get_invoice_by_uid(self, invoice_uid: UUID, token_payload: Optional[dict], secure: bool = True):
-        resp = await self.invoice_repo.get_invoice_by_uid(invoice_uid=invoice_uid)
+        invoice = await self.invoice_repo.get_invoice_by_uid(invoice_uid=invoice_uid)
+        if not invoice:
+            raise NotFound("Invoice not found")
+
+        return invoice
+
+    async def get_invoice_details_by_uid(self, invoice_uid: UUID, token_payload: Optional[dict], secure: bool = True):
+        resp = await self.invoice_repo.get_invoice_details_by_uid(invoice_uid=invoice_uid)
         (invoice, _, _, _) = resp
         if not invoice:
             raise NotFound("Invoice not found")
@@ -81,6 +88,9 @@ class InvoiceService:
                 raise InsufficientPermissions("Access denied")
 
         return resp
+
+    async def save_pdf_s3_key(self, invoice_uid: UUID, key: str) -> None:
+        await self.invoice_repo.update_pdf_s3_key(invoice_uid=invoice_uid, key=key)
 
 
 def get_invoice_service(

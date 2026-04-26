@@ -4,7 +4,7 @@ from decimal import Decimal
 
 from sqlalchemy import text
 from sqlalchemy.orm import joinedload
-from sqlmodel import Session, select
+from sqlmodel import Session, select, update
 
 from app.core.logger import setup_logger
 from app.database.celery import celery_dynamo_client, get_celery_db_session
@@ -20,6 +20,7 @@ from app.modules.invoices.model import (
     InvoiceLineItem,
     InvoiceMeterData,
 )
+from app.modules.invoices.pdf import InvoicePDF
 from app.modules.invoices.repository import InvoiceRepository
 from app.modules.invoices.schema import (
     CreateInvoiceHistoryModel,
@@ -30,6 +31,7 @@ from app.modules.invoices.schema import (
     InvoiceMeterLabelEnum,
 )
 from app.modules.settings.model import ContractSettings
+from app.services.s3 import S3Service
 
 logger = setup_logger(__name__)
 
@@ -108,6 +110,8 @@ def compute_single_contract_bill(self, contract_uid, gateway_id, site_uid, site_
             if not contract or not devices:
                 return
 
+            result = None
+
             # route to the correct billing function
             if contract.contract_type == ContractTypeEnum.PPA.value:
                 if contract.system_mode == ContractSystemModeEnum.OFF_GRID.value:
@@ -123,6 +127,30 @@ def compute_single_contract_bill(self, contract_uid, gateway_id, site_uid, site_
                 # _compute_lease(
                 #     session, contract, devices, contract_settings, gateway_id
                 # )
+
+            # generate pdf here
+            if result is None:
+                return
+
+            invoice, meter_data, line_items = result
+
+            pdf_bytes = InvoicePDF.render_invoice_pdf(
+                invoice=invoice,
+                contract=contract,
+                line_items=line_items,
+                meter_data=meter_data,
+                contract_settings=contract_settings,
+            )
+
+            key = f"invoices/{invoice.uid}.pdf"
+            try:
+                S3Service.upload_pdf(key=key, pdf_bytes=pdf_bytes)
+            except Exception as e:
+                logger.error(f"Failed to upload PDF to S3 for invoice {invoice.uid}: {e}")
+                return
+
+            session.execute(update(Invoice).where(Invoice.uid == invoice.uid).values(pdf_s3_key=key))
+            session.commit()
 
     except Exception as exc:
         raise self.retry(exc=exc)
@@ -250,8 +278,11 @@ def _compute_ppa_off_grid(
         ),
     ]
 
-    session.add_all([InvoiceMeterData(**d.model_dump()) for d in create_meter_data])
-    session.add_all([InvoiceLineItem(**d.model_dump()) for d in create_line_items])
+    invoice_meter_data_list = [InvoiceMeterData(**d.model_dump()) for d in create_meter_data]
+    invoice_line_items_list = [InvoiceLineItem(**d.model_dump()) for d in create_line_items]
+
+    session.add_all(invoice_meter_data_list)
+    session.add_all(invoice_line_items_list)
     session.add(
         InvoiceHistory(
             **CreateInvoiceHistoryModel(
@@ -263,6 +294,12 @@ def _compute_ppa_off_grid(
         )
     )
     session.commit()
+
+    return (
+        new_invoice,
+        invoice_meter_data_list,
+        invoice_line_items_list,
+    )
 
 
 # def _compute_lease(

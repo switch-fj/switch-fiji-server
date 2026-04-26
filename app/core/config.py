@@ -57,11 +57,16 @@ class Settings(BaseSettings):
 
     USE_REMOTE_DB: bool = False
 
-    # aws
+    # aws - access
     AWS_REGION: str = ""
     AWS_ACCESS_KEY_ID: str = ""
     AWS_SECRET_ACCESS_KEY: str = ""
+
+    # aws - dynamoDB
     AWS_TIME_SERIES_TABLE: str = ""
+
+    # aws - s3
+    AWS_S3_BUCKET: str = ""
 
     PUBLIC_BASE_URL: str = "http://127.0.0.1:8000"
 
