@@ -35,7 +35,10 @@ RUN uv sync --frozen --no-dev
 COPY . /app
 RUN chown -R celeryuser:celerygroup /app
 
+# Set venv env path
+ENV PATH="/app/.venv/bin:$PATH"
+
 # Switch to non-root user
 USER celeryuser
 
-CMD ["sh", "-c", "uvicorn app:app --host 0.0.0.0 --port ${PORT:-8000} --proxy-headers"]
+CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8000", "--proxy-headers"]
