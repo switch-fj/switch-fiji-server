@@ -61,8 +61,8 @@ class InvoicePDF:
         Renders the invoice as PDF bytes.
 
         Args:
-            invoice:    Invoice ORM object
-            contract:   Contract ORM object (with .client and .site loaded)
+            invoice: Invoice ORM object
+            contract: Contract ORM object (with .client and .site loaded)
             line_items: list of InvoiceLineItem ORM objects
             meter_data: list of InvoiceMeterData ORM objects
             contract_settings: contract general settings ORM objects

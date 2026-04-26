@@ -64,8 +64,7 @@ class InvoiceService:
 
     async def get_invoice_by_uid(self, invoice_uid: UUID, token_payload: Optional[dict], secure: bool = True):
         resp = await self.invoice_repo.get_invoice_by_uid(invoice_uid=invoice_uid)
-        invoice = resp[0]
-
+        (invoice,) = resp
         if not invoice:
             raise NotFound("Invoice not found")
 

@@ -1,3 +1,4 @@
+import asyncio
 from typing import Optional
 from uuid import UUID
 
@@ -84,11 +85,10 @@ async def download_invoice_pdf(
     invoice_service: InvoiceService = Depends(get_invoice_service),
     contract_settings_service: SettingsService = Depends(get_settings_service),
 ):
-    invoice, contract, line_items, meter_data = await invoice_service.get_invoice_by_uid(
-        invoice_uid=invoice_uid, token_payload=None, secure=False
-    )
-    contract_settings = await contract_settings_service.get_contract_general_settings()
+    invoice_task = invoice_service.get_invoice_by_uid(invoice_uid=invoice_uid, token_payload=None, secure=False)
+    settings_task = contract_settings_service.get_contract_general_settings()
 
+    (invoice, contract, line_items, meter_data), contract_settings = await asyncio.gather(invoice_task, settings_task)
     pdf_bytes = InvoicePDF.render_invoice_pdf(
         invoice=invoice,
         contract=contract,
