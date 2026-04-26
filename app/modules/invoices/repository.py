@@ -2,7 +2,7 @@ from datetime import datetime
 from uuid import UUID
 
 from fastapi import Depends
-from sqlalchemy.orm import selectinload
+from sqlalchemy.orm import joinedload
 from sqlmodel import func, select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
@@ -115,35 +115,30 @@ class InvoiceRepository:
         return result, total
 
     async def get_invoice_by_uid(self, invoice_uid: UUID):
-        statement = select(Invoice).where(Invoice.uid == invoice_uid)
+        statement = (
+            select(Invoice)
+            .options(
+                joinedload(Invoice.contract).options(
+                    joinedload(Contract.client),
+                    joinedload(Contract.site),
+                ),
+                joinedload(Invoice.line_items),
+                joinedload(Invoice.meter_data),
+            )
+            .where(Invoice.uid == invoice_uid)
+            .execution_options(populate_existing=True)
+        )
         result = await self.session.exec(statement)
-        invoice = result.first()
+        invoice = result.unique().first()
 
         if not invoice:
             return None
 
-        contract_result = await self.session.exec(
-            select(Contract)
-            .options(selectinload(Contract.client), selectinload(Contract.site))
-            .where(Contract.uid == invoice.contract_uid)
-        )
-        contract = contract_result.first()
-
-        line_items_result = await self.session.exec(
-            select(InvoiceLineItem).where(InvoiceLineItem.invoice_uid == invoice_uid)
-        )
-        line_items = line_items_result.all()
-
-        meter_data_result = await self.session.exec(
-            select(InvoiceMeterData).where(InvoiceMeterData.invoice_uid == invoice_uid)
-        )
-        meter_data = meter_data_result.all()
-
         return (
             invoice,
-            contract,
-            line_items,
-            meter_data,
+            invoice.contract,
+            invoice.line_items,
+            invoice.meter_data,
         )
 
 

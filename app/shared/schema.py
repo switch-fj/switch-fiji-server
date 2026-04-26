@@ -170,7 +170,8 @@ class MailModel(BaseModel):
     attachments: list[UploadFile] = ([],)
 
 
-class UserResponseModel(DBModel):
+class UserResponseModel(BaseModel):
+    uid: str
     email: str
     role: Optional[int]
     identity: int

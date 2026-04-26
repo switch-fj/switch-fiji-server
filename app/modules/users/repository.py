@@ -52,7 +52,7 @@ class UserRepository:
             await self.session.rollback()
 
     async def update_pwd(self, user: User, data: UpdateIdentityPwdModel):
-        user.password_hash = Authentication.generate_password_hash(data.password)
+        user.password_hash = await Authentication.generate_password_hash(data.password)
 
         self.session.add(user)
         await self.session.commit()

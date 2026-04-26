@@ -1,3 +1,4 @@
+import asyncio
 from uuid import UUID
 
 from fastapi import Depends
@@ -53,15 +54,7 @@ class UserService:
         )
 
     async def get_current_user(self, token_payload: dict):
-        user_email = token_payload["user"]["email"]
-        user = await self.user_repo.get_user_by_mail(
-            email=user_email,
-        )
-
-        if not user:
-            raise NotFound("Client doesn't exist.")
-
-        return UserResponseModel.model_validate(user)
+        return UserResponseModel.model_validate(token_payload["user"])
 
     async def login(self, data: IdentityLoginModel):
         user = await self.user_repo.get_user_by_mail(email=data.email)
@@ -95,17 +88,17 @@ class UserService:
                 ),
             )
 
-        if not Authentication.verify_password(data.password, user.password_hash):
+        if not await Authentication.verify_password(data.password, user.password_hash):
             raise WrongCredentials()
 
         token_identity_model = generate_token_identity_model(user)
-        access_token = await Authentication.create_token(user_data=token_identity_model)
-        refresh_token = await Authentication.create_token(user_data=token_identity_model, refresh=True)
-        refresh_token_payload = await Authentication.decode_token(refresh_token)
-        refresh_jti = refresh_token_payload["jti"]
+        (access_token, _), (_, jti) = await asyncio.gather(
+            Authentication.create_token(user_data=token_identity_model),
+            Authentication.create_token(user_data=token_identity_model, refresh=True),
+        )
 
         return (
-            refresh_jti,
+            jti,
             TokenModel(
                 access_token=access_token,
                 is_email_verified=user.is_email_verified,
@@ -241,7 +234,7 @@ class UserService:
 
             auth_type = AuthType.PWD.value if user.password_hash else AuthType.OTP.value
             token_identity = generate_token_identity_model(user)
-            new_access_token = await Authentication.create_token(user_data=token_identity)
+            new_access_token, _ = await Authentication.create_token(user_data=token_identity)
             return (new_access_token, user.is_email_verified, auth_type)
 
         except (RefreshTokenRequired, RefreshTokenExpired, InvalidToken, TokenExpired):

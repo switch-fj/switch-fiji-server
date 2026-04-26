@@ -131,7 +131,7 @@ class ClientRepository:
             logger.error(f"Error creating client {e}")
 
     async def update_pwd(self, client: Client, data: UpdateIdentityPwdModel):
-        client.password_hash = Authentication.generate_password_hash(data.password)
+        client.password_hash = await Authentication.generate_password_hash(data.password)
 
         self.session.add(client)
         await self.session.commit()

@@ -4,8 +4,6 @@ from decimal import Decimal
 from functools import lru_cache
 
 from jinja2 import Environment, FileSystemLoader
-from weasyprint import HTML
-from weasyprint.text.fonts import FontConfiguration
 
 from app.core.template_registry import TemplateRegistry
 from app.modules.contracts.model import Contract
@@ -14,7 +12,6 @@ from app.modules.settings.model import ContractSettings
 from app.shared.schema import DateFormatEnum, TimeFormatEnum
 from app.templates.libs.context import get_template_context
 
-font_config = FontConfiguration()
 _registry = TemplateRegistry()
 _env = Environment(
     loader=FileSystemLoader(str(_registry.TEMPLATES_DIR / "invoices")),
@@ -73,6 +70,8 @@ class InvoicePDF:
         Returns:
             PDF as bytes — ready for FastAPI Response or email attachment
         """
+        from weasyprint import HTML
+
         subtotal = invoice.subtotal
         vat_rate = invoice.vat_rate
         vat_amount = subtotal * vat_rate

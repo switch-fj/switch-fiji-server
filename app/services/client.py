@@ -53,15 +53,7 @@ class ClientService:
         )
 
     async def get_current_client(self, token_payload: dict):
-        client_email = token_payload["user"]["email"]
-        client = await self.client_repo.get_client_by_mail(
-            email=client_email,
-        )
-
-        if not client:
-            raise NotFound("Client doesn't exist.")
-
-        return UserResponseModel.model_validate(client)
+        return UserResponseModel.model_validate(token_payload["user"])
 
     async def login(self, data: IdentityLoginModel):
         client = await self.client_repo.get_client_by_mail(email=data.email)
@@ -91,7 +83,7 @@ class ClientService:
                 ),
             )
 
-        if not Authentication.verify_password(data.password, client.password_hash):
+        if not await Authentication.verify_password(data.password, client.password_hash):
             raise WrongCredentials()
 
         token_identity_model = generate_token_identity_model(client)

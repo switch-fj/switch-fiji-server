@@ -1,3 +1,4 @@
+import asyncio
 import hashlib
 import logging
 import secrets
@@ -10,7 +11,7 @@ import bcrypt
 import jwt
 from fastapi import Response
 from itsdangerous import BadSignature, SignatureExpired, URLSafeTimedSerializer
-from jwt import ExpiredSignatureError, PyJWTError
+from jwt import PyJWTError
 
 from app.database.redis import async_redis_client
 from app.shared.schema import PasscodeEnum, TokenIdentityModel
@@ -50,12 +51,14 @@ class Authentication:
         return "".join(secrets.choice(alphabet) for _ in range(length))
 
     @staticmethod
-    def generate_password_hash(password: str) -> str:
-        return bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
+    async def generate_password_hash(password: str) -> str:
+        return await asyncio.to_thread(
+            lambda: bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
+        )
 
     @staticmethod
-    def verify_password(password: str, hash: str) -> bool:
-        return bcrypt.checkpw(password.encode("utf-8"), hash.encode("utf-8"))
+    async def verify_password(password: str, hash: str) -> bool:
+        return await asyncio.to_thread(bcrypt.checkpw, password.encode("utf-8"), hash.encode("utf-8"))
 
     @staticmethod
     async def create_token(
@@ -63,7 +66,7 @@ class Authentication:
         response: Optional[Response] = None,
         expiry: timedelta = None,
         refresh: bool = False,
-    ) -> str:
+    ):
         payload = {}
 
         if refresh:
@@ -103,7 +106,7 @@ class Authentication:
                 logging.error(f"Failed to initialize Redis client: {e}")
                 pass
 
-        return token
+        return (token, payload["jti"])
 
     @staticmethod
     def set_refresh_token_cookie(response: Response, jti: str) -> None:
@@ -124,41 +127,22 @@ class Authentication:
     @staticmethod
     async def decode_token(token: str):
         try:
-            token_payload = jwt.decode(
+            payload = jwt.decode(
                 jwt=token,
                 key=Config.JWT_SECRET,
                 algorithms=[Config.JWT_ALGORITHM],
-                verify=True,
+                options={"verify_exp": False},
             )
-            return token_payload
-        except ExpiredSignatureError:
-            try:
-                unverified_payload = jwt.decode(
-                    jwt=token,
-                    key=Config.JWT_SECRET,
-                    algorithms=[Config.JWT_ALGORITHM],
-                    options={"verify_exp": False},
-                )
-                is_refresh = unverified_payload.get("refresh", False)
-                logging.warning(f"Token expired. Is refresh: {is_refresh}")
-
-                if is_refresh:
-                    logging.warning("Raising RefreshTokenExpired")
-                    raise RefreshTokenExpired()
-                else:
-                    logging.warning("Raising TokenExpired")
-                    raise TokenExpired()
-
-            except (KeyError, ValueError, TypeError) as decode_error:
-                logging.warning(f"Could not decode expired token payload: {decode_error}")
-                raise TokenExpired()
-            except RefreshTokenExpired:
-                raise
-            except TokenExpired:
-                raise
         except PyJWTError:
-            logging.exception("JWT decoding failed.")
             raise InvalidToken()
+
+        exp = payload.get("exp")
+        if exp is not None and exp < int(datetime.now().timestamp()):
+            if payload.get("refresh", False):
+                raise RefreshTokenExpired()
+            raise TokenExpired()
+
+        return payload
 
     @staticmethod
     async def create_url_safe_token(data: dict, exp: Optional[int] = None, url_type: str = "verify") -> str:
@@ -183,12 +167,6 @@ class Authentication:
             )
             if not success:
                 raise ValueError("Failed to store token in Redis")
-
-            stored_token = await async_redis_client.client.get(redis_name)
-            if stored_token != token:
-                raise ValueError(f"Token verification failed for {redis_name}")
-
-            logger.info(f"Successfully stored token in Redis for {redis_name}")
 
             return token
         except Exception as e:
@@ -238,25 +216,17 @@ class Authentication:
 
         ex = exp if exp else Authentication.VERIFY_LOGIN_PASSCODE_EXPIRY_IN_SECONDS
         hashed_otp = hashlib.sha256(otp.encode()).hexdigest()
+        attempts_key = f"{redis_name}:attempts"
 
         try:
-            resp = await async_redis_client.client.set(
-                name=redis_name,
-                value=hashed_otp,
-                ex=ex,
-            )
+            async with async_redis_client.client.pipeline(transaction=True) as pipe:
+                pipe.set(redis_name, hashed_otp, ex=ex)
+                pipe.set(cooldown_key, "1", ex=Authentication.RESEND_COOLDOWN)
+                pipe.delete(attempts_key)
+                results = await pipe.execute()
 
-            if not resp:
-                raise ValueError("Failed to store token in Redis")
-
-            await async_redis_client.client.set(
-                name=cooldown_key,
-                value="1",
-                ex=Authentication.RESEND_COOLDOWN,
-            )
-
-            attempts_key = f"{redis_name}:attempts"
-            await async_redis_client.client.delete(attempts_key)
+            if not results[0]:
+                raise ValueError("Failed to store OTP in Redis")
 
             return otp
         except Exception as e:
@@ -277,8 +247,10 @@ class Authentication:
         if not stored_otp:
             raise InvalidOTP()
 
-        attempts = await async_redis_client.client.incr(attempts_key)
-        await async_redis_client.client.expire(attempts_key, 300)
+        async with async_redis_client.client.pipeline(transaction=False) as pipe:
+            pipe.incr(attempts_key)
+            pipe.expire(attempts_key, 300)
+            attempts, _ = await pipe.execute()
 
         if attempts > Authentication.MAX_ATTEMPTS:
             await async_redis_client.client.delete(redis_name)
@@ -289,7 +261,9 @@ class Authentication:
         if stored_otp != hashed_input:
             raise InvalidOTP()
 
-        await async_redis_client.client.delete(redis_name)
-        await async_redis_client.client.delete(attempts_key)
+        async with async_redis_client.client.pipeline(transaction=False) as pipe:
+            pipe.delete(redis_name)
+            pipe.delete(attempts_key)
+            await pipe.execute()
 
         return True
