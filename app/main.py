@@ -22,7 +22,7 @@ from app.scripts.seed import seed_admin
 app_logger = setup_logger(__name__)
 
 
-def main(*, use_lifespan: bool = True, enable_middlewares: bool = True):
+def create_app(*, use_lifespan: bool = True, enable_middlewares: bool = True):
     lifespan_context = None
 
     if use_lifespan:
@@ -76,11 +76,3 @@ def main(*, use_lifespan: bool = True, enable_middlewares: bool = True):
     app.include_router(invoice_router, prefix=f"{api_version}")
 
     return app
-
-
-app = main()
-
-if __name__ == "__main__":
-    import uvicorn
-
-    uvicorn.run("app.main:app", reload=True)

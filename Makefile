@@ -1,8 +1,8 @@
 dev:
-	uv run fastapi dev app/main.py
+	uv run fastapi dev app
 
 prod:
-	uv run fastapi run app/main.py
+	uv run fastapi run app
 
 lint:
 	uv run ruff check . --fix

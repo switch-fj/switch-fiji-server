@@ -18,7 +18,7 @@ async_engine: AsyncEngine = create_async_engine(
     pool_recycle=1800,
     echo=False,
 )
-AsyncSessionMaker = async_sessionmaker(bind=async_engine, class_=AsyncSession, expire_on_commit=False, autoflush=False)
+AsyncSessionMaker = async_sessionmaker(bind=async_engine, class_=AsyncSession, expire_on_commit=False)
 
 
 async def init_db():
