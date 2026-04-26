@@ -2,6 +2,7 @@ from typing import Optional
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, Query, status
+from fastapi.responses import RedirectResponse
 
 from app.core.config import Config
 from app.core.logger import setup_logger
@@ -83,7 +84,6 @@ async def get_invoice_history_by_contract_uid(
 @invoice_router.get(
     "/{invoice_uid}/pdf",
     status_code=status.HTTP_200_OK,
-    response_model=ServerRespModel[str],
 )
 async def download_invoice_pdf(
     invoice_uid: UUID,
@@ -93,4 +93,4 @@ async def download_invoice_pdf(
     invoice = await invoice_service.get_invoice_by_uid(invoice_uid=invoice_uid, token_payload=token_payload)
 
     presigned_url = S3Service.generate_presigned_url(invoice.pdf_s3_key)
-    return ServerRespModel[str](data=presigned_url, message="invoice url retrieved")
+    return RedirectResponse(url=presigned_url, status_code=status.HTTP_200_OK)
