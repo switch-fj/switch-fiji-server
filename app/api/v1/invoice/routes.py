@@ -83,7 +83,7 @@ async def get_invoice_history_by_contract_uid(
 
 @invoice_router.get(
     "/{invoice_uid}/pdf",
-    status_code=status.HTTP_200_OK,
+    status_code=status.HTTP_307_TEMPORARY_REDIRECT,
 )
 async def download_invoice_pdf(
     invoice_uid: UUID,
@@ -93,4 +93,4 @@ async def download_invoice_pdf(
     invoice = await invoice_service.get_invoice_by_uid(invoice_uid=invoice_uid, token_payload=token_payload)
 
     presigned_url = S3Service.generate_presigned_url(invoice.pdf_s3_key)
-    return RedirectResponse(url=presigned_url, status_code=status.HTTP_200_OK)
+    return RedirectResponse(url=presigned_url, status_code=status.HTTP_307_TEMPORARY_REDIRECT)
