@@ -38,4 +38,4 @@ RUN chown -R celeryuser:celerygroup /app
 # Switch to non-root user
 USER celeryuser
 
-CMD ["make", "app:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "2"]
+CMD ["sh", "-c", "uvicorn app:app --host 0.0.0.0 --port ${PORT:-8000} --proxy-headers"]
