@@ -1,41 +1,49 @@
 FROM python:3.13-slim
 
-# Install system dependencies
+# -------------------------
+# System dependencies
+# -------------------------
 RUN apt-get update && apt-get install -y \
     build-essential \
     gcc \
     libffi-dev \
     libpq-dev \
     curl \
-    make \
-    libpango-1.0-0 \
-    libpangoft2-1.0-0 \
-    libharfbuzz0b \
-    libfontconfig1 \
     && rm -rf /var/lib/apt/lists/*
 
-# Install uv system wide
+# -------------------------
+# Install uv
+# -------------------------
 RUN curl -LsSf https://astral.sh/uv/install.sh | UV_INSTALL_DIR=/usr/local/bin sh
 
-# Create non-root user
-RUN groupadd -g 1000 celerygroup \
-    && useradd -u 1000 -g celerygroup -m celeryuser \
+# -------------------------
+# Create user
+# -------------------------
+RUN groupadd -g 1000 appgroup \
+    && useradd -u 1000 -g appgroup -m appuser \
     && mkdir /app \
-    && chown -R celeryuser:celerygroup /app
+    && chown -R appuser:appgroup /app
 
 WORKDIR /app
 
-# Copy dependency files
+# =========================================================
+# 1. COPY ONLY DEPENDENCY FILES (CACHE LAYER OPTIMIZATION)
+# =========================================================
 COPY pyproject.toml uv.lock /app/
 
-# Install dependencies using uv
+# Install dependencies (this layer is cached unless lockfile changes)
 RUN uv sync --frozen --no-dev
 
-# Copy source code
+# =========================================================
+# 2. COPY SOURCE CODE (SEPARATE LAYER)
+# =========================================================
 COPY . /app
-RUN chown -R celeryuser:celerygroup /app
 
-# Switch to non-root user
-USER celeryuser
+RUN chown -R appuser:appgroup /app
 
-CMD ["sh", "-c", "uvicorn app:app --host 0.0.0.0 --port ${PORT:-8000} --proxy-headers"]
+USER appuser
+
+# -------------------------
+# Runtime command
+# -------------------------
+CMD ["sh", "-c", "uvicorn src:app --host 0.0.0.0 --port ${PORT:-8000} --proxy-headers"]
