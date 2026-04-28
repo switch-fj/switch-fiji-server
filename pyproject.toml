@@ -3,7 +3,7 @@ name = "switch-fiji-server"
 version = "0.1.0"
 description = "The backend microservice server for switch fiji IoT project"
 readme = "README.md"
-requires-python = ">=3.13"
+requires-python = ">=3.14"
 dependencies = [
     "aioboto3>=15.5.0",
     "alembic>=1.18.4",
@@ -31,6 +31,7 @@ dependencies = [
     "sqlmodel>=0.0.37",
     "starlette-context>=0.5.1",
     "structlog>=25.5.0",
+    "tzdata>=2026.2",
     "ulid-py>=1.1.0",
     "uvicorn>=0.42.0",
     "weasyprint>=68.1",
@@ -46,7 +47,7 @@ dev = [
 [tool.ruff]
 src = ["app"]
 line-length = 120
-target-version = "py311"
+target-version = "py314"
 exclude = [".git", "__pycache__", ".venv", ".env"]
 
 [tool.ruff.format]

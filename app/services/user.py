@@ -237,7 +237,7 @@ class UserService:
             new_access_token, _ = await Authentication.create_token(user_data=token_identity)
             return (new_access_token, user.is_email_verified, auth_type)
 
-        except (RefreshTokenRequired, RefreshTokenExpired, InvalidToken, TokenExpired):
+        except RefreshTokenRequired, RefreshTokenExpired, InvalidToken, TokenExpired:
             raise
         except Exception as e:
             logger.error(f"Error generating new access token: {e}")
