@@ -34,6 +34,8 @@ logger = setup_logger(__name__)
 
 
 class Authentication:
+    """Handles all authentication operations including JWT tokens, OTP passcodes, and URL-safe tokens."""
+
     ACCESS_TOKEN_EXPIRY_IN_SECONDS = 900  # 15 mins
     REFRESH_TOKEN_EXPIRY_IN_SECONDS = 604800  # 7 days
 
@@ -47,17 +49,42 @@ class Authentication:
 
     @staticmethod
     def generate_otp(length: int = 6) -> str:
+        """Generate a random OTP string of uppercase letters and digits.
+
+        Args:
+            length: Number of characters in the generated OTP. Defaults to 6.
+
+        Returns:
+            A random alphanumeric OTP string.
+        """
         alphabet = string.ascii_uppercase + string.digits
         return "".join(secrets.choice(alphabet) for _ in range(length))
 
     @staticmethod
     async def generate_password_hash(password: str) -> str:
+        """Hash a plain-text password using bcrypt in a thread pool.
+
+        Args:
+            password: The plain-text password to hash.
+
+        Returns:
+            The bcrypt-hashed password as a UTF-8 string.
+        """
         return await asyncio.to_thread(
             lambda: bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
         )
 
     @staticmethod
     async def verify_password(password: str, hash: str) -> bool:
+        """Verify a plain-text password against a stored bcrypt hash.
+
+        Args:
+            password: The plain-text password to check.
+            hash: The bcrypt hash to compare against.
+
+        Returns:
+            True if the password matches the hash, False otherwise.
+        """
         return await asyncio.to_thread(bcrypt.checkpw, password.encode("utf-8"), hash.encode("utf-8"))
 
     @staticmethod
@@ -67,6 +94,19 @@ class Authentication:
         expiry: timedelta = None,
         refresh: bool = False,
     ):
+        """Create a signed JWT access or refresh token.
+
+        For refresh tokens the JTI is also stored in Redis with the configured TTL.
+
+        Args:
+            user_data: Identity data to embed in the token payload.
+            response: Optional FastAPI response object (kept for signature compatibility).
+            expiry: Custom expiry duration. Defaults to class-level constants.
+            refresh: If True, creates a refresh token with a reduced payload and persists the JTI in Redis.
+
+        Returns:
+            A tuple of (token_string, jti_string).
+        """
         payload = {}
 
         if refresh:
@@ -110,7 +150,15 @@ class Authentication:
 
     @staticmethod
     def set_refresh_token_cookie(response: Response, jti: str) -> None:
-        """Set refresh token JTI as HTTP-only cookie"""
+        """Set the refresh token JTI as an HTTP-only cookie on the response.
+
+        Args:
+            response: The FastAPI response object on which the cookie is set.
+            jti: The JWT ID (JTI) of the refresh token to store in the cookie.
+
+        Returns:
+            None
+        """
         is_relaxed = Config.is_relaxed_cookie_env
 
         response.set_cookie(
@@ -126,6 +174,19 @@ class Authentication:
 
     @staticmethod
     async def decode_token(token: str):
+        """Decode and validate a JWT, raising typed exceptions for expired or invalid tokens.
+
+        Args:
+            token: The JWT string to decode.
+
+        Returns:
+            The decoded payload dictionary.
+
+        Raises:
+            InvalidToken: If the token cannot be decoded.
+            RefreshTokenExpired: If the token is a refresh token that has expired.
+            TokenExpired: If the access token has expired.
+        """
         try:
             payload = jwt.decode(
                 jwt=token,
@@ -146,6 +207,19 @@ class Authentication:
 
     @staticmethod
     async def create_url_safe_token(data: dict, exp: Optional[int] = None, url_type: str = "verify") -> str:
+        """Generate a URL-safe signed token and persist it in Redis with an expiry.
+
+        Args:
+            data: Dictionary of data to encode. Must include an 'email' key.
+            exp: Custom expiry in seconds. Defaults to the TTL matching url_type.
+            url_type: Token purpose — "verify" for account verification or any other value for password reset.
+
+        Returns:
+            The serialised URL-safe token string.
+
+        Raises:
+            BadRequest: If the token cannot be stored in Redis.
+        """
         try:
             token = Authentication.serializer.dumps(data)
             redis_name = f"{url_type}:{data['email']}"
@@ -175,6 +249,20 @@ class Authentication:
 
     @staticmethod
     async def decode_url_safe_token(token: str, url_type: str = "verify", expiry: Optional[int] = None) -> dict:
+        """Decode and verify a URL-safe token, raising typed exceptions on failure.
+
+        Args:
+            token: The URL-safe token string to decode.
+            url_type: Token purpose — "verify" for account verification or any other value for password reset.
+            expiry: Custom max age in seconds. Defaults to the TTL matching url_type.
+
+        Returns:
+            The decoded data dictionary.
+
+        Raises:
+            ExpiredLink: If the token has expired.
+            InvalidLink: If the token signature is invalid or any other error occurs.
+        """
         try:
             max_age = (
                 expiry
@@ -207,6 +295,20 @@ class Authentication:
         exp: Optional[int] = None,
         type: PasscodeEnum = PasscodeEnum.LOGIN.value,
     ):
+        """Generate a hashed OTP for an email, enforcing a resend cooldown and resetting attempt counters.
+
+        Args:
+            email: The recipient email address used as part of the Redis key namespace.
+            exp: Custom expiry in seconds for the OTP. Defaults to VERIFY_LOGIN_PASSCODE_EXPIRY_IN_SECONDS.
+            type: Passcode type used to namespace the Redis key (e.g. PasscodeEnum.LOGIN).
+
+        Returns:
+            The plain-text OTP string to be delivered to the user.
+
+        Raises:
+            TooManyRequest: If a resend cooldown is currently active for this email.
+            BadRequest: If storing the OTP in Redis fails.
+        """
         otp = Authentication.generate_otp()
         redis_name = f"{type}:{email}"
         cooldown_key = f"{redis_name}:cooldown"
@@ -239,6 +341,22 @@ class Authentication:
         email: str,
         type: PasscodeEnum = PasscodeEnum.LOGIN.value,
     ):
+        """Validate a submitted OTP against the stored hash, tracking failed attempts.
+
+        The OTP and its attempt counter are removed from Redis upon successful validation.
+
+        Args:
+            otp: The plain-text OTP submitted by the user.
+            email: The email address whose OTP is being validated.
+            type: Passcode type namespace used to locate the correct Redis key.
+
+        Returns:
+            True if the OTP is valid and has been consumed.
+
+        Raises:
+            InvalidOTP: If no stored OTP exists or the provided OTP does not match.
+            TooManyAttempts: If the maximum number of failed attempts has been exceeded.
+        """
         redis_name = f"{type}:{email}"
         attempts_key = f"{redis_name}:attempts"
 

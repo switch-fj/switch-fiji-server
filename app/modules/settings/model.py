@@ -9,6 +9,8 @@ from app.shared.schema import CurrencyEnum, DateFormatEnum, TimeFormatEnum
 
 
 class ContractSettings(MyAbstractSQLModel, table=True):
+    """ORM model representing global configuration settings for contract management."""
+
     __tablename__ = "contract_settings"
 
     # general

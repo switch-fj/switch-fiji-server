@@ -23,6 +23,8 @@ if TYPE_CHECKING:
 
 
 class Contract(MyAbstractSQLModel, table=True):
+    """ORM model representing a billing contract between the platform and a client site."""
+
     __tablename__ = "contracts"
 
     user_uid: UUID = Field(foreign_key="users.uid", index=True, nullable=False)
@@ -45,6 +47,8 @@ class Contract(MyAbstractSQLModel, table=True):
 
 
 class ContractDetails(MyAbstractSQLModel, table=True):
+    """ORM model storing the financial and scheduling details of a contract."""
+
     __tablename__ = "contract_details"
 
     contract_uid: UUID = Field(foreign_key="contracts.uid", index=True, nullable=False)
@@ -91,7 +95,7 @@ class ContractDetails(MyAbstractSQLModel, table=True):
     guaranteed_production_kwh_per_kwp: Optional[float] = Field(nullable=True)
     grid_meter_reading_at_commissioning: Optional[float] = Field(nullable=True)
 
-    # Lease (off-grid) specific
+    # Lease (on-grid) specific
     equipment_lease_amount: Optional[Decimal] = Field(default=None, nullable=True)
     maintenance_amount: Optional[Decimal] = Field(default=None, nullable=True)
     total: Optional[Decimal] = Field(default=None, nullable=True)
@@ -103,18 +107,33 @@ class ContractDetails(MyAbstractSQLModel, table=True):
 
     @property
     def term_months(self):
+        """Convert the contract term from years to months.
+
+        Returns:
+            Total contract duration in months, or None if term_years is not set.
+        """
         if not self.term_years:
             return None
         return self.term_years * 12
 
     @property
     def months_per_period(self) -> Optional[int]:
+        """Calculate the number of months in each tariff period.
+
+        Returns:
+            Months per tariff period, or None if tariff_periods is not set.
+        """
         if not self.tariff_periods:
             return None
         return self.term_months // self.tariff_periods
 
     @property
     def active_tariff_slots(self) -> Optional[list[dict]]:
+        """Determine the currently active tariff slots based on the elapsed contract time.
+
+        Returns:
+            A list of tariff slot dicts for the current period, or None if the required fields are missing.
+        """
         if not self.tariff_slots or not self.commissioned_at or not self.months_per_period:
             return None
 
@@ -130,6 +149,11 @@ class ContractDetails(MyAbstractSQLModel, table=True):
 
     @property
     def status(self) -> ContractDetailsStatus:
+        """Derive the current status of the contract based on dates relative to now.
+
+        Returns:
+            A ContractDetailsStatus value: DRAFT, PENDING, ACTIVE, or EXPIRED.
+        """
         now = datetime.now(timezone.utc)
 
         if not self.commissioned_at:

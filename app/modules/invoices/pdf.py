@@ -21,14 +21,32 @@ _env = Environment(
 
 @lru_cache(maxsize=1)
 def fetch_logo_base64() -> str:
+    """Read the company logo from disk and encode it as a base64 data URI (cached).
+
+    Returns:
+        A data URI string suitable for embedding directly in HTML.
+    """
     logo_path = _registry.STATIC_DIR / "images" / "logo-blue.png"
     b64 = base64.b64encode(logo_path.read_bytes()).decode()
     return f"data:image/png;base64,{b64}"
 
 
 class InvoicePDF:
+    """Utility class for rendering invoice data into a PDF via Jinja2 and WeasyPrint."""
+
     @staticmethod
     def _fmt_date(dt: datetime, date_fmt: str, time_fmt: str, show_time: bool = False) -> str:
+        """Format a datetime object according to the configured date and time format settings.
+
+        Args:
+            dt: The datetime to format.
+            date_fmt: A DateFormatEnum value controlling day/month order.
+            time_fmt: A TimeFormatEnum value controlling 12h vs 24h time display.
+            show_time: If True, appends the time to the formatted date string.
+
+        Returns:
+            A formatted date (and optionally time) string.
+        """
         date_formats = {
             DateFormatEnum.DMY: "%-d %b %Y",
             DateFormatEnum.MDY: "%b %-d %Y",
@@ -47,6 +65,14 @@ class InvoicePDF:
 
     @staticmethod
     def _fmt_decimal(value) -> str:
+        """Format a numeric value as a trimmed decimal string (trailing zeros removed).
+
+        Args:
+            value: A numeric value (int, float, or Decimal) to format.
+
+        Returns:
+            A string with up to four decimal places and trailing zeros stripped.
+        """
         return f"{Decimal(str(value)):.4f}".rstrip("0").rstrip(".")
 
     @staticmethod

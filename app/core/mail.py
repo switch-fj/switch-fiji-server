@@ -35,16 +35,38 @@ mail_config = ConnectionConfig(
 
 
 class Mailer:
+    """Provides static methods for sending transactional emails via FastMail or Resend."""
+
     mail = FastMail(config=mail_config)
     use_resend = Config.USE_RESEND in [True, "True", "true", 1, "1"]
 
     @staticmethod
     def _render_template(template_name: str, context: dict) -> str:
+        """Render a Jinja2 HTML email template with the given context.
+
+        Args:
+            template_name: The filename of the template relative to the templates directory.
+            context: Dictionary of variables to inject into the template.
+
+        Returns:
+            The rendered HTML string.
+        """
         template = templates_env.get_template(template_name)
         return template.render(**context)
 
     @staticmethod
     def _send_via_resend(to: str, subject: str, template_name: str, context: dict):
+        """Send an HTML email using the Resend API.
+
+        Args:
+            to: Recipient email address.
+            subject: Email subject line.
+            template_name: The filename of the Jinja2 template to render.
+            context: Dictionary of template variables.
+
+        Returns:
+            None
+        """
         html = Mailer._render_template(template_name, context)
         resend.Emails.send(
             {
@@ -63,6 +85,18 @@ class Mailer:
         body: Optional[Union[List, str]] = None,
         template_body: Optional[Union[List, str]] = None,
     ) -> MessageSchema:
+        """Build a FastMail MessageSchema for HTML email delivery.
+
+        Args:
+            recipients: List of recipient email addresses.
+            attachments: Optional list of file attachments.
+            subject: Email subject line.
+            body: Optional raw email body content.
+            template_body: Optional template context data for Jinja2 template rendering.
+
+        Returns:
+            A configured MessageSchema instance ready to be sent.
+        """
         return MessageSchema(
             recipients=recipients,
             attachments=attachments,
@@ -74,6 +108,15 @@ class Mailer:
 
     @staticmethod
     async def send_email_verification(email: str, verification_url: str):
+        """Send an account email-verification message to the given address.
+
+        Args:
+            email: Recipient email address.
+            verification_url: The URL the user must visit to verify their account.
+
+        Returns:
+            None
+        """
         context = get_template_context(verification_url=verification_url)
 
         if Mailer.use_resend:
@@ -94,6 +137,15 @@ class Mailer:
 
     @staticmethod
     async def send_password_reset(email: str, reset_url: str):
+        """Send a password-reset email to the given address.
+
+        Args:
+            email: Recipient email address.
+            reset_url: The URL the user must visit to reset their password.
+
+        Returns:
+            None
+        """
         context = get_template_context(reset_url=reset_url)
 
         if Mailer.use_resend:
@@ -114,6 +166,15 @@ class Mailer:
 
     @staticmethod
     async def send_verify_login(email: str, text: str):
+        """Send a login-verification OTP email to the given address.
+
+        Args:
+            email: Recipient email address.
+            text: The OTP or verification code to include in the email body.
+
+        Returns:
+            None
+        """
         context = get_template_context(email=email, text=text)
 
         if Mailer.use_resend:

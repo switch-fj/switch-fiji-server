@@ -1,6 +1,5 @@
-# app/shared/s3_service.py
 from app.core.config import Config
-from app.core.s3 import s3_client
+from app.database.s3 import s3_client
 
 
 class S3Service:

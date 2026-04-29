@@ -7,6 +7,8 @@ from sqlmodel import Field, SQLModel
 
 
 class MyAbstractSQLModel(SQLModel):
+    """Abstract base ORM model providing uid, created_at, updated_at, and deleted_at fields for all tables."""
+
     __abstract__ = True
 
     uid: UUID = Field(

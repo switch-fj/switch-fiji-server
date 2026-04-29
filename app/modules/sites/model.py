@@ -13,6 +13,8 @@ if TYPE_CHECKING:
 
 
 class Site(MyAbstractSQLModel, table=True):
+    """ORM model representing a physical installation site belonging to a client."""
+
     __tablename__ = "sites"
     __table_args__ = (UniqueConstraint("client_uid", "site_id", name="uq_client_site"),)
 

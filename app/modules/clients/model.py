@@ -14,6 +14,8 @@ if TYPE_CHECKING:
 
 
 class Client(MyAbstractSQLModel, table=True):
+    """ORM model representing a client account that owns one or more sites."""
+
     __tablename__ = "clients"
 
     __table_args__ = (Index("ix_clients_created_at", text("created_at DESC")),)
@@ -55,6 +57,11 @@ class Client(MyAbstractSQLModel, table=True):
 
     @property
     def identity(self) -> int:
+        """Return the identity type enum value for JWT claims.
+
+        Returns:
+            The integer value of IdentityTypeEnum.CLIENT.
+        """
         return IdentityTypeEnum.CLIENT.value
 
     sites: list["Site"] = Relationship(back_populates="client")

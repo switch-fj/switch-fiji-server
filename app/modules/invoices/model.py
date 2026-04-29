@@ -13,6 +13,8 @@ if TYPE_CHECKING:
 
 
 class Invoice(MyAbstractSQLModel, table=True):
+    """ORM model representing a billing invoice generated for a contract period."""
+
     __tablename__ = "invoices"
 
     __table_args__ = (
@@ -49,14 +51,26 @@ class Invoice(MyAbstractSQLModel, table=True):
 
     @property
     def vat_amount(self) -> Decimal:
+        """Calculate the VAT amount as a fraction of the subtotal.
+
+        Returns:
+            The VAT amount derived from subtotal * (vat_rate / 100).
+        """
         return self.subtotal * (self.vat_rate / Decimal(100))
 
     @property
     def total(self) -> Decimal:
+        """Calculate the invoice total including VAT.
+
+        Returns:
+            The sum of the subtotal and the calculated VAT amount.
+        """
         return self.subtotal + self.vat_amount
 
 
 class InvoiceLineItem(MyAbstractSQLModel, table=True):
+    """ORM model representing a single line item on an invoice."""
+
     __tablename__ = "invoice_line_items"
 
     invoice_uid: UUID = Field(foreign_key="invoices.uid", index=True, nullable=False)
@@ -75,6 +89,8 @@ class InvoiceLineItem(MyAbstractSQLModel, table=True):
 
 
 class InvoiceMeterData(MyAbstractSQLModel, table=True):
+    """ORM model capturing meter readings at the start and end of a billing period."""
+
     __tablename__ = "invoice_meter_data"
 
     invoice_uid: UUID = Field(foreign_key="invoices.uid", index=True, nullable=False)
@@ -90,10 +106,17 @@ class InvoiceMeterData(MyAbstractSQLModel, table=True):
 
     @property
     def usage(self):
+        """Calculate the energy consumed over the billing period.
+
+        Returns:
+            The difference between the period end reading and the period start reading.
+        """
         return self.period_end_reading - self.period_start_reading
 
 
 class InvoiceHistory(MyAbstractSQLModel, table=True):
+    """ORM model tracking each delivery attempt for an invoice."""
+
     __tablename__ = "invoice_history"
 
     invoice_uid: UUID = Field(foreign_key="invoices.uid", index=True, nullable=False)

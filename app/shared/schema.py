@@ -20,6 +20,14 @@ T = TypeVar("T")
 
 
 def to_4dp(value) -> Decimal:
+    """Coerce a value to a Decimal quantised to four decimal places.
+
+    Args:
+        value: A numeric value (int, float, string, or Decimal) to convert, or None.
+
+    Returns:
+        A Decimal rounded to four decimal places, or None if value is None.
+    """
     if value is None:
         return value
     return Decimal(str(value)).quantize(Decimal("0.0001"), rounding=ROUND_HALF_UP)
@@ -46,32 +54,56 @@ class IdentityTypeEnum(IntEnum):
 
 
 class PasscodeEnum(StrEnum):
+    """Enumeration of passcode-based authentication flows."""
+
     LOGIN = "login"
 
 
 class AuthType(StrEnum):
+    """Enumeration of authentication methods supported at login."""
+
     OTP = "otp"
     PWD = "pwd"
 
 
 class DBModel(BaseModel):
+    """Base response model providing common database record fields."""
+
     uid: UUID
     created_at: datetime
     updated_at: datetime
 
     @field_serializer("created_at", "updated_at")
     def serialize_dt(self, value: datetime):
+        """Serialise datetime fields to ISO-8601 strings.
+
+        Args:
+            value: The datetime value to serialise.
+
+        Returns:
+            ISO-8601 formatted string, or None if value is falsy.
+        """
         if value:
             return value.isoformat()
 
     @field_serializer("uid")
     def serialize_uuid(self, value: UUID):
+        """Serialise the uid UUID to a plain string.
+
+        Args:
+            value: The UUID value to serialise.
+
+        Returns:
+            A string representation of the UUID.
+        """
         return uuid_serializer(value)
 
     model_config = ConfigDict(from_attributes=True)
 
 
 class TokenIdentityModel(BaseModel):
+    """Model representing the identity claims embedded in a JWT token."""
+
     uid: str
     email: str
     identity: int
@@ -82,6 +114,8 @@ class TokenIdentityModel(BaseModel):
 
 
 class ServerRespModel(BaseModel, Generic[T]):
+    """Generic wrapper response model for all API responses."""
+
     data: T
     message: str
 
@@ -89,6 +123,8 @@ class ServerRespModel(BaseModel, Generic[T]):
 
 
 class OffsetPaginationModel(BaseModel):
+    """Pagination metadata for offset-based paginated responses."""
+
     total: int
     current_page: int
     limit: int
@@ -96,6 +132,8 @@ class OffsetPaginationModel(BaseModel):
 
 
 class CursorPaginationModel(BaseModel):
+    """Pagination metadata for cursor-based paginated responses."""
+
     limit: int
     next_cursor: Optional[str]
     prev_cursor: Optional[str]
