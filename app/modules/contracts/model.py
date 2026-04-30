@@ -1,4 +1,5 @@
 import json
+import zoneinfo
 from datetime import datetime, timezone
 from decimal import Decimal
 from typing import TYPE_CHECKING, Optional
@@ -36,6 +37,7 @@ class Contract(MyAbstractSQLModel, table=True):
         sa_type=Enum(ContractSystemModeEnum),
         nullable=False,
     )
+    timezone: str = Field(default=zoneinfo("Pacific/Fiji"))
     currency: CurrencyEnum = Field(sa_type=Enum(CurrencyEnum), nullable=False)
     client: "Client" = Relationship(sa_relationship_kwargs={"foreign_keys": "[Contract.client_uid]"})
     site: "Site" = Relationship(sa_relationship_kwargs={"foreign_keys": "[Contract.site_uid]"})

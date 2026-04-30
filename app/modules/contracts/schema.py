@@ -132,6 +132,7 @@ class CreateContractModel(BaseModel):
     contract_type: ContractTypeEnum = Field(...)
     system_mode: ContractSystemModeEnum = Field(...)
     currency: CurrencyEnum = Field(...)
+    timezone: str = Field(...)
 
     @model_validator(mode="after")
     def validate_contract(self):
