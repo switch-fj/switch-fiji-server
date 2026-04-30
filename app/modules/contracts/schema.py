@@ -159,8 +159,10 @@ class CreateContractDetailsModel(BaseModel):
     billing_frequency: ContractBillingFrequencyEnum = Field(...)
     implementation_period: int = Field(...)
     signed_at: datetime = Field(...)
-    commissioned_at: datetime = Field(..., title="Commission date")
-    end_at: datetime = Field(..., title="Contract end")
+    commissioned_at: datetime = Field(..., title="expected commission date")
+    end_at: datetime = Field(..., title="expected contract end date")
+    actual_commissioned_at: Optional[datetime] = Field(default=None, title="Actual contract commission date")
+    actual_end_at: Optional[datetime] = Field(..., title="Actual Contract end date")
     efl_rate: Optional[float] = Field(default=None, ge=0, le=1)
 
     # system mode (On-grid) specific

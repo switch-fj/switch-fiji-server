@@ -48,8 +48,8 @@ def create_app(*, use_lifespan: bool = True, enable_middlewares: bool = True):
 
     app = FastAPI(
         swagger="2.0",
-        title="switch Fiji IoT",
-        description="Switch Fiji IoT Backend server",
+        title="switch Network",
+        description="Switch Network Backend server",
         version=version,
         license_info={"name": "MIT", "url": "https://opensource.org/licenses/mit"},
         docs_url=f"{api_version}/docs",
@@ -66,7 +66,7 @@ def create_app(*, use_lifespan: bool = True, enable_middlewares: bool = True):
 
     @app.get("/")
     async def root():
-        return {"message": "Switch IoT Network backend is running 🚀"}
+        return {"message": "Switch Network backend is running 🚀"}
 
     app.include_router(auth_router, prefix=f"{api_version}")
     app.include_router(admin_router, prefix=f"{api_version}")

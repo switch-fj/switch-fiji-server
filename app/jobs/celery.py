@@ -22,7 +22,7 @@ celery_app.conf.update(
 celery_app.conf.beat_schedule = {
     "compute-site-stats-every-5-minutes": {
         "task": "compute_all_site_stats",
-        "schedule": 300,
+        "schedule": 30,
     },
     "compute-contract-bill-every-day-at-midnight": {
         "task": "compute_all_contracts_bill",

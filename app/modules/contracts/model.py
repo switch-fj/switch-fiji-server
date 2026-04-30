@@ -52,6 +52,7 @@ class ContractDetails(MyAbstractSQLModel, table=True):
     __tablename__ = "contract_details"
 
     contract_uid: UUID = Field(foreign_key="contracts.uid", index=True, nullable=False)
+
     # applies to all contract types
     term_years: int = Field()
     billing_frequency: ContractBillingFrequencyEnum = Field(sa_type=Enum(ContractBillingFrequencyEnum))
@@ -62,19 +63,32 @@ class ContractDetails(MyAbstractSQLModel, table=True):
         sa_column_kwargs={"nullable": False},
     )
     commissioned_at: datetime = Field(
-        default=None,
         description="""
-        Date the system was commissioned.
-        This is also the contract start date.
+        Date the system is expected to get commissioned.
+        This is also the contract expected start date.
         All tariff periods run sequentially from this date.
         """,
         sa_type=DateTime(timezone=True),
         sa_column_kwargs={"nullable": False},
     )
     end_at: datetime = Field(
-        default=None,
         sa_type=DateTime(timezone=True),
         sa_column_kwargs={"nullable": False},
+    )
+    actual_commissioned_at: Optional[datetime] = Field(
+        default=None,
+        description="""
+        Date the contract is actually get's commissioned.
+        This is also the contract actual start date.
+        All tariff periods run sequentially from this date is it exists.
+        """,
+        sa_type=DateTime(timezone=True),
+        sa_column_kwargs={"nullable": True},
+    )
+    actual_end_at: Optional[datetime] = Field(
+        default=None,
+        sa_type=DateTime(timezone=True),
+        sa_column_kwargs={"nullable": True},
     )
 
     # EFL rate (global, entered once — variable tariffs are pegged to this)
