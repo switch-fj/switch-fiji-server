@@ -3,7 +3,7 @@ from zoneinfo import ZoneInfo
 
 from sqlalchemy import text
 from sqlalchemy.orm import joinedload
-from sqlmodel import select
+from sqlmodel import select, update
 
 from app.core.logger import setup_logger
 from app.database.celery import celery_dynamo_client, get_celery_db_session
@@ -129,12 +129,15 @@ def compute_single_contract_bill(self, contract_uid, gateway_id, site_uid):
                 return
 
             if is_billing_date:
-                BillingEngine.generate_pdf_in_background(
-                    session=session,
+                pdf_bytes, key = BillingEngine.generate_pdf(
                     contract=contract,
                     contract_settings=contract_settings,
                     result=result,
                 )
+                invoice = result[0]
+                BillingEngine.store_pdf_in_s3(pdf_bytes=pdf_bytes, key=key, invoice_ref=invoice.invoice_ref)
+                session.execute(update(Invoice).where(Invoice.uid == invoice.uid).values(pdf_s3_key=key))
+                session.commit()
 
     except Exception as exc:
         raise self.retry(exc=exc)

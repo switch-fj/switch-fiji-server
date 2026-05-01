@@ -1,7 +1,8 @@
 import base64
-from datetime import datetime, timezone
+from datetime import datetime
 from decimal import Decimal
 from functools import lru_cache
+from zoneinfo import ZoneInfo
 
 from jinja2 import Environment, FileSystemLoader
 
@@ -104,19 +105,32 @@ class InvoicePDF:
         total = subtotal + vat_amount
         date_fmt = contract_settings.date_format
         time_fmt = contract_settings.time_format
+        contract_timezone = contract.timezone
+        tz = ZoneInfo(contract_timezone)
+        currency = contract.currency
 
         context = {
             "base64_logo": fetch_logo_base64(),
             "invoice_ref": invoice.invoice_ref,
-            "period_start_at": InvoicePDF._fmt_date(dt=invoice.period_start_at, date_fmt=date_fmt, time_fmt=time_fmt),
-            "period_end_at": InvoicePDF._fmt_date(dt=invoice.period_end_at, date_fmt=date_fmt, time_fmt=time_fmt),
+            "timezone": contract.timezone,
+            "currency": currency,
+            "period_start_at": InvoicePDF._fmt_date(
+                dt=invoice.period_start_at.astimezone(tz=tz),
+                date_fmt=date_fmt,
+                time_fmt=time_fmt,
+            ),
+            "period_end_at": InvoicePDF._fmt_date(
+                dt=invoice.period_end_at.astimezone(tz=tz),
+                date_fmt=date_fmt,
+                time_fmt=time_fmt,
+            ),
             "client_name": contract.client.client_name if contract.client else "—",
             "site_name": (contract.site.site_name or contract.site.gateway_id if contract.site else "—"),
             "subtotal": InvoicePDF._fmt_decimal(subtotal),
             "vat_amount": InvoicePDF._fmt_decimal(vat_amount),
             "total": InvoicePDF._fmt_decimal(total),
             "generated_at": InvoicePDF._fmt_date(
-                dt=datetime.now(timezone.utc),
+                dt=datetime.now(tz=tz),
                 date_fmt=date_fmt,
                 time_fmt=time_fmt,
                 show_time=True,

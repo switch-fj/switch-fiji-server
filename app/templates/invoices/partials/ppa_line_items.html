@@ -12,8 +12,8 @@
         <tr>
             <td>{{ item.description }}</td>
             <td>{{ item.energy_kwh }}</td>
-            <td>$ {{ item.tariff_rate }}</td>
-            <td>$ {{ item.amount }}</td>
+            <td>{{ currency }} {{ item.tariff_rate }}</td>
+            <td>{{ currency }} {{ item.amount }}</td>
         </tr>
         {% endfor %}
     </tbody>
@@ -25,15 +25,15 @@
     <table class="totals-table">
         <tr>
             <td>Sub Total</td>
-            <td>$ {{ subtotal }}</td>
+            <td>{{ currency }} {{ subtotal }}</td>
         </tr>
         <tr>
             <td>VAT</td>
-            <td>$ {{ vat_amount }}</td>
+            <td>{{ currency }} {{ vat_amount }}</td>
         </tr>
         <tr class="total-row">
             <td>Total</td>
-            <td>$ {{ total }}</td>
+            <td>{{ currency }} {{ total }}</td>
         </tr>
     </table>
 </div>

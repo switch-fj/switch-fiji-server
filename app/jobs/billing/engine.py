@@ -5,7 +5,7 @@ from typing import Any
 from zoneinfo import ZoneInfo
 
 from dateutil.relativedelta import relativedelta
-from sqlmodel import Session, update
+from sqlmodel import Session
 
 from app.core.logger import setup_logger
 from app.database.celery import celery_dynamo_client
@@ -419,8 +419,7 @@ class BillingEngine:
         return invoice, meter_data_items, line_items_data
 
     @staticmethod
-    def generate_pdf_in_background(
-        session: Session,
+    def generate_pdf(
         contract: Contract,
         result: tuple[Invoice, list[InvoiceMeterData], list[InvoiceLineItem]],
         contract_settings: ContractSettings,
@@ -435,12 +434,14 @@ class BillingEngine:
             contract_settings=contract_settings,
         )
 
-        key = f"invoices/{invoice.uid}.pdf"
+        key = f"invoices/{invoice.invoice_ref}.pdf"
+
+        return pdf_bytes, key
+
+    @staticmethod
+    def store_pdf_in_s3(pdf_bytes: bytes, key: str, invoice_ref: str):
         try:
             S3Service.upload_pdf(key=key, pdf_bytes=pdf_bytes)
         except Exception as e:
-            logger.error(f"Failed to upload PDF to S3 for invoice {invoice.uid}: {e}")
+            logger.error(f"Failed to upload PDF to S3 for invoice {invoice_ref}: {e}")
             return
-
-        session.execute(update(Invoice).where(Invoice.uid == invoice.uid).values(pdf_s3_key=key))
-        session.commit()

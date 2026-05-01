@@ -7,6 +7,7 @@ from fastapi.responses import RedirectResponse
 from app.core.config import Config
 from app.core.logger import setup_logger
 from app.core.security import AccessTokenBearer
+from app.jobs.billing.engine import BillingEngine
 from app.modules.invoices.schema import (
     InvoiceDetailedRespModel,
     InvoiceHistoryRespModel,
@@ -14,6 +15,7 @@ from app.modules.invoices.schema import (
 from app.services.contract import ContractService, get_contract_service
 from app.services.invoice import InvoiceService, get_invoice_service
 from app.services.s3 import S3Service
+from app.services.settings import SettingsService, get_settings_service
 from app.shared.schema import (
     OffsetPaginationModel,
     PaginatedRespModel,
@@ -88,9 +90,24 @@ async def get_invoice_history_by_contract_uid(
 async def download_invoice_pdf(
     invoice_uid: UUID,
     invoice_service: InvoiceService = Depends(get_invoice_service),
+    settings_service: SettingsService = Depends(get_settings_service),
     token_payload: dict = Depends(AccessTokenBearer()),
 ):
-    invoice = await invoice_service.get_invoice_by_uid(invoice_uid=invoice_uid, token_payload=token_payload)
+    resp = await invoice_service.get_invoice_details_by_uid(invoice_uid=invoice_uid, token_payload=token_payload)
+    invoice, contract, line_items, meter_data = resp
+    presigned_url = ""
 
-    presigned_url = S3Service.generate_presigned_url(invoice.pdf_s3_key)
+    if not invoice.pdf_s3_key:
+        contract_settings = await settings_service.get_contract_general_settings()
+        pdf_bytes, key = BillingEngine.generate_pdf(
+            contract=contract,
+            result=(invoice, meter_data, line_items),
+            contract_settings=contract_settings,
+        )
+        BillingEngine.store_pdf_in_s3(pdf_bytes=pdf_bytes, key=key, invoice_ref=invoice.invoice_ref)
+        await invoice_service.save_pdf_s3_key(invoice_uid=invoice.uid, key=key)
+        presigned_url = S3Service.generate_presigned_url(key=key)
+    else:
+        presigned_url = S3Service.generate_presigned_url(key=invoice.pdf_s3_key)
+
     return RedirectResponse(url=presigned_url, status_code=status.HTTP_307_TEMPORARY_REDIRECT)
