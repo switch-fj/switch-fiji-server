@@ -14,6 +14,10 @@ from pydantic import (
     field_validator,
 )
 
+from app.modules.invoices.schema import (
+    CreateInvoiceLineItemModel,
+    CreateInvoiceMeterDataModel,
+)
 from app.utils import email_validator, uuid_serializer
 
 T = TypeVar("T")
@@ -226,6 +230,16 @@ class TimeFormatEnum(StrEnum):
 class DateFormatEnum(StrEnum):
     DMY = "dmy"
     MDY = "mdy"
+
+
+class InvoiceDetailsDict(BaseModel):
+    subtotal: Decimal
+    vat_rate: Decimal
+    invoice_line_items: list[CreateInvoiceLineItemModel]
+    invoice_meter_data: list[CreateInvoiceMeterDataModel]
+    energy_mix: str
+
+    model_config = ConfigDict(from_attributes=True)
 
 
 class CurrencyEnum(StrEnum):

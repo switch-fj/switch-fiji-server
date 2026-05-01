@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from zoneinfo import ZoneInfo
 
 from sqlalchemy import text
@@ -7,7 +7,7 @@ from sqlmodel import select, update
 
 from app.core.logger import setup_logger
 from app.database.celery import celery_dynamo_client, get_celery_db_session
-from app.jobs.billing.engine import BillingEngine
+from app.jobs.billing.engine import BillingEngine, InvoiceDetailsDict
 from app.jobs.celery import celery_app
 from app.modules.contracts.model import Contract
 from app.modules.contracts.schema import ContractSystemModeEnum, ContractTypeEnum
@@ -15,7 +15,15 @@ from app.modules.devices.model import Device
 from app.modules.devices.schema import DeviceType
 from app.modules.invoices.model import (
     Invoice,
+    InvoiceHistory,
+    InvoiceLineItem,
+    InvoiceMeterData,
+    InvoiceSnapshot,
+    InvoiceSnapshotLineItem,
+    InvoiceSnapshotMeterData,
 )
+from app.modules.invoices.repository import InvoiceRepository
+from app.modules.invoices.schema import CreateInvoiceHistoryModel
 from app.modules.settings.model import ContractSettings
 
 logger = setup_logger(__name__)
@@ -114,7 +122,7 @@ def compute_single_contract_bill(self, contract_uid, gateway_id, site_uid):
 
             if contract.contract_type == ContractTypeEnum.PPA.value:
                 if contract.system_mode == ContractSystemModeEnum.OFF_GRID.value:
-                    result = BillingEngine.compute_ppa_off_grid_invoice(
+                    create_invoice_dict, readings = BillingEngine.compute_ppa_off_grid_invoice(
                         session=session,
                         contract=contract,
                         devices=devices,
@@ -124,6 +132,78 @@ def compute_single_contract_bill(self, contract_uid, gateway_id, site_uid):
                         period_end=period_end,
                         is_billing_date=is_billing_date,
                     )
+
+                    new_invoice = Invoice(**create_invoice_dict)
+                    session.add(new_invoice)
+                    session.flush()
+
+                    invoice_details_dict: InvoiceDetailsDict = BillingEngine.build_invoice_details(
+                        devices=devices,
+                        contract_settings=contract_settings,
+                        active_tariff_slots=contract.details.active_tariff_slots,
+                        readings=readings,
+                    )
+
+                    subtotal = invoice_details_dict.subtotal
+                    vat_rate = invoice_details_dict.vat_rate
+                    energy_mix = invoice_details_dict.energy_mix
+                    invoice_meter_data = invoice_details_dict.invoice_meter_data
+                    invoice_line_items = invoice_details_dict.invoice_line_items
+
+                    if is_billing_date:
+                        invoice = Invoice(
+                            contract_uid=contract.uid,
+                            invoice_ref=InvoiceRepository._build_invoice_ref(),
+                            period_start_at=period_start,
+                            period_end_at=period_end,
+                            subtotal=subtotal,
+                            vat_rate=vat_rate,
+                            energy_mix=energy_mix,
+                        )
+                        session.add(invoice)
+                        session.flush()
+
+                        invoice_meter_data_list = [InvoiceMeterData(**d.model_dump()) for d in invoice_meter_data]
+                        invoice_line_items_list = [InvoiceLineItem(**d.model_dump()) for d in invoice_line_items]
+
+                        session.add_all(invoice_meter_data_list)
+                        session.add_all(invoice_line_items_list)
+                        session.add(
+                            InvoiceHistory(
+                                **CreateInvoiceHistoryModel(
+                                    invoice_uid=invoice.uid,
+                                    sent_to=contract.client.client_email,
+                                    sent_at=datetime.now(timezone.utc),
+                                    was_successful=True,
+                                ).model_dump()
+                            )
+                        )
+                        session.commit()
+
+                        result = (invoice, invoice_meter_data, invoice_line_items)
+
+                    else:
+                        snapshot = InvoiceSnapshot(
+                            contract_uid=contract.uid,
+                            period_start_at=period_start,
+                            period_end_at=period_end,
+                            subtotal=subtotal,
+                            vat_rate=vat_rate,
+                            energy_mix=energy_mix,
+                        )
+                        session.add(snapshot)
+                        session.flush()
+
+                        invoice_meter_data_list = [
+                            InvoiceSnapshotMeterData(**d.model_dump()) for d in invoice_meter_data
+                        ]
+                        invoice_line_items_list = [
+                            InvoiceSnapshotLineItem(**d.model_dump()) for d in invoice_line_items
+                        ]
+
+                        session.add_all(invoice_meter_data_list)
+                        session.add_all(invoice_line_items_list)
+                        session.commit()
 
             if result is None:
                 return

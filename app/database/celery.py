@@ -110,6 +110,7 @@ class CeleryDynamoClient:
         Queries for the earliest reading on period_start day and the latest on period_end day.
 
         Args:
+            timezone_key: The timezone string for the contract.
             gateway_id: The gateway identifier used as the DynamoDB partition key.
             period_start: The start date of the billing period.
             period_end: The end date of the billing period.
@@ -147,7 +148,7 @@ class CeleryDynamoClient:
             return start_items[0], end_items[0]
 
         except Exception as e:
-            logger.error(f"❌ Error fetching billing period readings for gateway {gateway_id}: {e}")
+            logger.error(f"Error fetching billing period readings for gateway {gateway_id}: {e}")
             return None
 
 
