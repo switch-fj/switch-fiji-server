@@ -1,5 +1,6 @@
 import json
-from datetime import datetime, timezone
+from datetime import datetime
+from zoneinfo import ZoneInfo
 
 from sqlalchemy import text
 from sqlalchemy.orm import joinedload
@@ -32,9 +33,9 @@ def compute_all_site_stats(self):
                     FROM sites s
                     JOIN contracts c ON c.site_uid = s.uid
                     JOIN contract_details cd ON cd.contract_uid = c.uid
-                    WHERE cd.commissioned_at IS NOT NULL
-                        AND NOW() > cd.commissioned_at
-                        AND NOW() < cd.end_at
+                    WHERE COALESCE(cd.actual_commissioned_at, cd.commissioned_at) IS NOT NULL
+                        AND NOW() > COALESCE(cd.actual_commissioned_at, cd.commissioned_at)
+                        AND NOW() < COALESCE(cd.actual_end_at, cd.end_at)
                     """)
             )
             sites = result.fetchall()
@@ -67,17 +68,22 @@ def compute_single_site_stats(self, site_uid: str, gateway_id: str):
         if not contract:
             return
 
-        now = datetime.now(timezone.utc)
+        tz = ZoneInfo(contract.timezone)
+        now = datetime.now(tz=tz)
+
+        commissioned_at = contract.details.actual_commissioned_at or contract.details.commissioned_at
+        end_at = contract.details.actual_end_at or contract.details.end_at
 
         # 1. billing period (contract math only)
         period_start, period_end = BillingEngine.get_current_billing_period(
-            commissioned_at=contract.details.commissioned_at,
+            timezone_key=contract.timezone,
+            commissioned_at=commissioned_at,
             billing_frequency=contract.details.billing_frequency,
             as_of=now,
         )
 
         # 2. expected generation (contract math only)
-        days_elapsed = (now - contract.details.commissioned_at).days
+        days_elapsed = (now - commissioned_at).days
         expected_generation_kwh = round(
             (contract.details.system_size_kwp or 0)
             * (contract.details.guaranteed_production_kwh_per_kwp or 0)
@@ -86,10 +92,8 @@ def compute_single_site_stats(self, site_uid: str, gateway_id: str):
         )
 
         # 3. billing progress (contract lifespan: commissioned_at to end_at)
-        contract_start = contract.details.commissioned_at
-        contract_end = contract.details.end_at
-        total_secs = (contract_end - contract_start).total_seconds()
-        elapsed_secs = (now - contract_start).total_seconds()
+        total_secs = (end_at - commissioned_at).total_seconds()
+        elapsed_secs = (now - commissioned_at).total_seconds()
         billing_progress_pct = round(max(0.0, min((elapsed_secs / total_secs) * 100, 100.0)), 2)
 
         # 4. actual generation (DynamoDB only — sync boto3)

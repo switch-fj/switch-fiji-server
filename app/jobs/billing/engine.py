@@ -54,11 +54,9 @@ class BillingEngine:
         timezone_key: str,
         commissioned_at: datetime,
         billing_frequency: str,
-        as_of: datetime = None,
+        as_of: datetime,
     ):
         tz = ZoneInfo(timezone_key)
-        if as_of is None:
-            as_of = datetime.now(tz=tz)
 
         try:
             freq = ContractBillingFrequencyEnum(billing_frequency.lower())

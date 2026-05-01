@@ -37,17 +37,15 @@ def compute_all_contracts_bill(self):
         with get_celery_db_session() as session:
             result = session.execute(
                 text("""
-                SELECT
-                    c.uid AS contract_uid,
-                    s.gateway_id AS gateway_id,
-                    s.site_id AS site_id,
-                    s.uid as site_uid
-                FROM contracts c
-                JOIN sites s ON s.uid = c.site_uid
+                SELECT DISTINCT
+                    s.uid::text  AS site_uid,
+                    s.gateway_id AS gateway_id
+                FROM sites s
+                JOIN contracts c ON c.site_uid = s.uid
                 JOIN contract_details cd ON cd.contract_uid = c.uid
-                WHERE cd.commissioned_at IS NOT NULL
-                    AND NOW() > cd.commissioned_at
-                    AND NOW() < cd.end_at
+                WHERE COALESCE(cd.actual_commissioned_at, cd.commissioned_at) IS NOT NULL
+                    AND NOW() > COALESCE(cd.actual_commissioned_at, cd.commissioned_at)
+                    AND NOW() < COALESCE(cd.actual_end_at, cd.end_at)
                 """)
             )
             contract_data = result.fetchall()
