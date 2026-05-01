@@ -26,12 +26,12 @@ from app.modules.invoices.schema import (
     CreateInvoiceLineItemModel,
     CreateInvoiceMeterDataModel,
     CreateInvoiceModel,
+    InvoiceDetailsDict,
     InvoiceLineItemEnum,
     InvoiceMeterLabelEnum,
 )
 from app.modules.settings.model import ContractSettings
 from app.services.s3 import S3Service
-from app.shared.schema import InvoiceDetailsDict
 
 logger = setup_logger(__name__)
 
@@ -155,9 +155,11 @@ class BillingEngine:
     def compute_ppa_off_grid_subtotal_and_vat_rate(
         on_solar_energy_kwh,
         off_solar_energy_kwh,
-        efl_rate_kwh: int,
+        efl_rate_kwh: Decimal,
+        vat_rate: int,
         active_tariff: list[dict],
     ):
+        efl_rate_kwh = int(efl_rate_kwh)
         on_solar_energy_kwh = float(on_solar_energy_kwh)
         off_solar_energy_kwh = float(off_solar_energy_kwh)
 
@@ -182,7 +184,6 @@ class BillingEngine:
         off_solar_energy_amount = off_solar_energy_kwh * night_rate
 
         subtotal = on_solar_energy_amount + off_solar_energy_amount
-        vat_rate = 0.125
 
         return (subtotal, vat_rate, on_solar_energy_amount, off_solar_energy_amount)
 
@@ -213,6 +214,7 @@ class BillingEngine:
                 on_solar_energy_kwh=on_solar_energy_kwh,
                 off_solar_energy_kwh=off_solar_energy_kwh,
                 efl_rate_kwh=contract_settings.efl_standard_rate_kwh,
+                vat_rate=contract_settings.vat_rate,
                 active_tariff=active_tariff_slots,
             )
         )
@@ -324,6 +326,7 @@ class BillingEngine:
             on_solar_energy_kwh=on_solar_energy_kwh,
             off_solar_energy_kwh=off_solar_energy_kwh,
             efl_rate_kwh=contract_settings.efl_standard_rate_kwh,
+            vat_rate=contract_settings.vat_rate,
             active_tariff=active_tariff_slots,
         )
         energy_mix = json.dumps({"solar": float(solar_energy_kwh), "gen": float(gen_energy_kwh)})

@@ -2,7 +2,7 @@ from datetime import datetime, timezone
 from zoneinfo import ZoneInfo
 
 from sqlalchemy import text
-from sqlalchemy.orm import joinedload
+from sqlalchemy.orm import joinedload, selectinload
 from sqlmodel import select, update
 
 from app.core.logger import setup_logger
@@ -91,7 +91,12 @@ def compute_single_contract_bill(self, contract_uid, gateway_id, site_uid):
                 .all()
             )
 
-            contract_settings = session.execute(select(ContractSettings)).scalars().first()
+            contract_settings = (
+                session.execute(select(ContractSettings).options(selectinload(ContractSettings.rate_history)))
+                .scalars()
+                .first()
+            )
+            contract_settings
 
             if not contract or not devices:
                 return

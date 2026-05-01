@@ -1,18 +1,18 @@
+from datetime import datetime
 from decimal import Decimal
 from typing import Optional
+from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field, field_serializer
 
-from app.shared.schema import CurrencyEnum, DateFormatEnum, TimeFormatEnum
+from app.shared.schema import CurrencyEnum, DateFormatEnum, DBModel, TimeFormatEnum
+from app.utils import uuid_serializer
 
 
 class UpdateContractSettingsModel(BaseModel):
     """Request model for partially updating contract settings fields."""
 
-    vat_rate: Optional[int] = Field(default=None)
-    efl_standard_rate_kwh: Optional[Decimal] = Field(default=None)
     primary_currency: Optional[CurrencyEnum] = Field(default=None)
-
     time_format: Optional[TimeFormatEnum] = Field(default=None)
     date_format: Optional[DateFormatEnum] = Field(default=None)
 
@@ -21,13 +21,18 @@ class UpdateContractSettingsModel(BaseModel):
     invoice_emailed: Optional[bool] = Field(default=None)
 
 
-class ContractSettingsModel(BaseModel):
+class CreateContractSettingsRateModel(BaseModel):
+    """Request model for setting a new EFL rate or VAT rate (time-series, never overwritten)."""
+
+    efl_standard_rate_kwh: Optional[Decimal] = Field(default=None)
+    vat_rate: Optional[int] = Field(default=None)
+    effective_from: datetime = Field(...)
+
+
+class ContractSettingsModel(DBModel):
     """Response model for the current contract settings configuration."""
 
-    vat_rate: int
-    efl_standard_rate_kwh: Decimal
     primary_currency: CurrencyEnum
-
     time_format: str
     date_format: str
 
@@ -35,17 +40,19 @@ class ContractSettingsModel(BaseModel):
     invoice_generated: bool
     invoice_emailed: bool
 
-    @field_serializer("efl_standard_rate_kwh")
-    def serialize_decimals(self, value: Decimal):
-        """Serialise the efl_standard_rate_kwh Decimal to a two-decimal-place string.
-
-        Args:
-            value: The Decimal value to serialise.
-
-        Returns:
-            A string formatted to two decimal places, or None if value is falsy.
-        """
-        if value:
-            return f"{value:.2f}"
-
     model_config = ConfigDict(from_attributes=True)
+
+
+class RateHistoryRespModel(DBModel):
+    """Response model for a single rate history entry."""
+
+    contract_settings_uid: UUID
+    efl_standard_rate_kwh: Optional[Decimal]
+    vat_rate: Optional[int]
+    effective_from: datetime
+    effective_to: Optional[datetime]
+    created_by_uid: Optional[UUID]
+
+    @field_serializer("contract_settings_uid", "created_by_uid")
+    def serialize_rate_uuid(self, value: UUID):
+        return uuid_serializer(value)

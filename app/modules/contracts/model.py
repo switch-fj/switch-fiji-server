@@ -102,7 +102,7 @@ class ContractDetails(MyAbstractSQLModel, table=True):
     )
 
     # EFL rate (global, entered once — variable tariffs are pegged to this)
-    efl_rate: Optional[float] = Field(nullable=True)
+    efl_standard_rate_kwh: Optional[Decimal] = Field(nullable=False)
 
     # ppa specific
     tariff_periods: Optional[int] = Field(nullable=True)  # 1, 2, 3, 4

@@ -37,6 +37,7 @@ class Invoice(MyAbstractSQLModel, table=True):
     # financials
     subtotal: Decimal = Field(nullable=False)
     vat_rate: Decimal = Field(nullable=False)
+    efl_standard_rate_kwh: Decimal = Field(nullable=False)
 
     # energy mix snapshot (computed once at generation time)
     energy_mix: Optional[str] = Field(nullable=True)  # Json Data will be stored here.
@@ -150,6 +151,7 @@ class InvoiceSnapshot(MyAbstractSQLModel, table=True):
 
     subtotal: Decimal = Field(nullable=False)
     vat_rate: Decimal = Field(nullable=False)
+    efl_standard_rate_kwh: Decimal = Field(nullable=False)
 
     energy_mix: Optional[str] = Field(nullable=True)
 

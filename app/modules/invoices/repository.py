@@ -1,4 +1,5 @@
 from datetime import datetime
+from decimal import Decimal
 from uuid import UUID
 
 from fastapi import Depends
@@ -23,6 +24,7 @@ from app.modules.invoices.schema import (
     CreateInvoiceMeterDataModel,
     CreateInvoiceModel,
 )
+from app.modules.settings.repository import SettingsRepository
 
 logger = setup_logger(__name__)
 
@@ -67,6 +69,13 @@ class InvoiceRepository:
         data_dict["invoice_ref"] = self._build_invoice_ref()
 
         try:
+            settings_repo = SettingsRepository(session=self.session)
+            current_rate = await settings_repo.get_current_rate()
+
+            if current_rate:
+                data_dict.__setattr__("efl_standard_rate_kwh", Decimal(current_rate.efl_standard_rate_kwh))
+                data_dict.__setattr__("vat_rate", Decimal(current_rate.vat_rate))
+
             new_invoice = Invoice(**data_dict)
             self.session.add(new_invoice)
             await self.session.commit()

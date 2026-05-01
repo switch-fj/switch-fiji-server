@@ -174,7 +174,6 @@ class CreateContractDetailsModel(BaseModel):
     end_at: datetime = Field(..., title="expected contract end date")
     actual_commissioned_at: Optional[datetime] = Field(default=None, title="Actual contract commission date")
     actual_end_at: Optional[datetime] = Field(..., title="Actual Contract end date")
-    efl_rate: Optional[float] = Field(default=None, ge=0, le=1, title="EFL Rate")
 
     # system mode (On-grid) specific
     system_size_kwp: Optional[float] = Field(default=None, title="System size kwp")
@@ -331,7 +330,7 @@ class ContractDetailsRespModel(DBModel):
     end_at: Optional[datetime] = None
     actual_commissioned_at: Optional[datetime] = None
     actual_end_at: Optional[datetime] = None
-    efl_rate: Optional[float] = None
+    efl_standard_rate_kwh: Optional[float] = None
 
     # On-grid specific
     system_size_kwp: Optional[float] = None

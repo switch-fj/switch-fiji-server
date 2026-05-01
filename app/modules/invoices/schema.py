@@ -4,7 +4,7 @@ from enum import StrEnum
 from typing import Optional
 from uuid import UUID
 
-from pydantic import BaseModel, Field, field_serializer
+from pydantic import BaseModel, ConfigDict, Field, field_serializer
 
 from app.modules.contracts.schema import ContractRespModel
 from app.shared.schema import DBModel, FourDP
@@ -83,6 +83,7 @@ class InvoiceRespModel(DBModel):
     period_end_at: datetime
     subtotal: Decimal
     vat_rate: Decimal
+    efl_standard_rate_kwh: Decimal
     energy_mix: Optional[str]
 
     @field_serializer("period_start_at", "period_end_at")
@@ -226,3 +227,13 @@ class InvoiceDetailedRespModel(InvoiceRespModel):
     contract: ContractRespModel
     line_items: list[InvoiceLineItemRespModel]
     meter_data: list[InvoiceMeterDataRespModel]
+
+
+class InvoiceDetailsDict(BaseModel):
+    subtotal: Decimal
+    vat_rate: Decimal
+    invoice_line_items: list[CreateInvoiceLineItemModel]
+    invoice_meter_data: list[CreateInvoiceMeterDataModel]
+    energy_mix: str
+
+    model_config = ConfigDict(from_attributes=True)
