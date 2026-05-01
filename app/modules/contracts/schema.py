@@ -23,16 +23,22 @@ from app.utils import uuid_serializer
 
 
 class ContractTypeEnum(StrEnum):
+    """Enumeration of supported contract billing types."""
+
     PPA = "PPA"
     LEASE = "Lease"
 
 
 class ContractSystemModeEnum(StrEnum):
+    """Enumeration of solar system grid connection modes."""
+
     ON_GRID = "On Grid"
     OFF_GRID = "Off Grid"
 
 
 class ContractDetailsStatus(StrEnum):
+    """Enumeration of contract lifecycle statuses."""
+
     DRAFT = "draft"
     PENDING = "pending"
     ACTIVE = "active"
@@ -40,6 +46,8 @@ class ContractDetailsStatus(StrEnum):
 
 
 class ContractBillingFrequencyEnum(StrEnum):
+    """Enumeration of supported billing frequencies for a contract."""
+
     WEEKLY = "weekly"
     BI_WEEKLY = "bi-weekly"
     MONTHLY = "monthly"
@@ -48,17 +56,33 @@ class ContractBillingFrequencyEnum(StrEnum):
     ANNUALLY = "annually"
 
 
+class TariffIndexedRuleTypeEnum(StrEnum):
+    """Enumeration of supported rule type for indexed periods"""
+
+    EFL_LINKED = "EFL_LINKED"
+    FIXED_ANNUAL_ESCALATOR = "FIXED_ANNUAL_ESCALATOR"
+
+
 class TariffSlotTypeEnum(StrEnum):
+    """
+    Enumeration indicating whether a tariff rate is fixed or indexed relative to the EFL rate.
+    tariff slot is also tariff period
+    """
+
     FIXED = "Fixed"
     VARIABLE = "Variable"
 
 
 class TariffSlotEnum(StrEnum):
+    """Enumeration of the two tariff time slots (A: on-solar and B: off-solar)."""
+
     A = "A"
     B = "B"
 
 
 class TariffSlotModel(BaseModel):
+    """Model representing a single tariff slot within a PPA contract period."""
+
     _start_time: str = PrivateAttr("")
     _end_time: str = PrivateAttr("")
 
@@ -69,6 +93,14 @@ class TariffSlotModel(BaseModel):
 
     @model_validator(mode="after")
     def validate(self):
+        """Validate that the rate is within the allowed range for its slot type.
+
+        Returns:
+            The validated TariffSlotModel instance.
+
+        Raises:
+            BadRequest: If the rate is outside the valid range for its slot type.
+        """
         if self.slot_type == TariffSlotTypeEnum.FIXED:
             if not (0 <= self.rate <= 1):
                 raise BadRequest(f"Slot {self.slot.value} (FIXED) rate must be between 0 and 1, got {self.rate}")
@@ -84,23 +116,44 @@ class TariffSlotModel(BaseModel):
     @computed_field
     @property
     def start_time(self) -> str:
+        """Return the start time for this tariff slot.
+
+        Returns:
+            "07:30" for slot A, "16:30" for slot B.
+        """
         return "07:30" if self.slot == TariffSlotEnum.A else "16:30"
 
     @computed_field
     @property
     def end_time(self) -> str:
+        """Return the end time for this tariff slot.
+
+        Returns:
+            "16:30" for slot A, "07:30" for slot B.
+        """
         return "16:30" if self.slot == TariffSlotEnum.A else "07:30"
 
 
 class CreateContractModel(BaseModel):
+    """Request model for creating a new contract."""
+
     client_uid: UUID = Field(...)
     site_uid: UUID = Field(...)
     contract_type: ContractTypeEnum = Field(...)
     system_mode: ContractSystemModeEnum = Field(...)
     currency: CurrencyEnum = Field(...)
+    timezone: str = Field(...)
 
     @model_validator(mode="after")
     def validate_contract(self):
+        """Ensure the contract type and system mode combination is valid.
+
+        Returns:
+            The validated CreateContractModel instance.
+
+        Raises:
+            BadRequest: If a Lease contract is paired with an Off Grid system mode.
+        """
         contract_type = self.contract_type
         system_mode = self.system_mode
 
@@ -111,46 +164,68 @@ class CreateContractModel(BaseModel):
 
 
 class CreateContractDetailsModel(BaseModel):
+    """Request model for creating or updating contract details."""
+
     term_years: int = Field(..., ge=0, le=10, title="Contract term years")
-    billing_frequency: ContractBillingFrequencyEnum = Field(...)
-    implementation_period: int = Field(...)
-    signed_at: datetime = Field(...)
-    commissioned_at: datetime = Field(..., title="Commission date")
-    end_at: datetime = Field(..., title="Contract end")
-    efl_rate: Optional[float] = Field(default=None, ge=0, le=1)
+    billing_frequency: ContractBillingFrequencyEnum = Field(..., title="Billing Frequency")
+    implementation_period: int = Field(..., title="Contract Implementation")
+    signed_at: datetime = Field(..., title="Contract signed at")
+    commissioned_at: datetime = Field(..., title="expected commission date")
+    end_at: datetime = Field(..., title="expected contract end date")
+    actual_commissioned_at: Optional[datetime] = Field(default=None, title="Actual contract commission date")
+    actual_end_at: Optional[datetime] = Field(..., title="Actual Contract end date")
+    efl_rate: Optional[float] = Field(default=None, ge=0, le=1, title="EFL Rate")
 
     # system mode (On-grid) specific
-    system_size_kwp: Optional[float] = Field(default=None)
-    guaranteed_production_kwh_per_kwp: Optional[float] = Field(default=None)
-    grid_meter_reading_at_commissioning: Optional[float] = Field(default=None)
+    system_size_kwp: Optional[float] = Field(default=None, title="System size kwp")
+    guaranteed_production_kwh_per_kwp: Optional[float] = Field(default=None, title="Guaranteed production kwh per kwp")
+    grid_meter_reading_at_commissioning: Optional[float] = Field(
+        default=None, title="Grid meter reading at commissioning"
+    )
 
     # On Grid Lease specific
-    equipment_lease_amount: Optional[Decimal] = Field(default=None)
-    maintenance_amount: Optional[Decimal] = Field(default=None)
-    total: Optional[Decimal] = Field(default=None)
+    equipment_lease_amount: Optional[Decimal] = Field(default=None, title="Equipment lease amount")
+    maintenance_amount: Optional[Decimal] = Field(default=None, title="Maintenance amount")
+    total: Optional[Decimal] = Field(default=None, title="Total")
 
     # PPA specific
-    monthly_baseline_consumption_kwh: Optional[float] = Field(default=None)
-    minimum_consumption_monthly_kwh: Optional[float] = Field(default=None)
-    minimum_spend: Optional[float] = Field(default=None)
-    tariff_periods: Optional[int] = Field(default=None, le=4, ge=2)
-    tariffs: Optional[list[TariffSlotModel]] = Field(default=None)
-    estimated_utility: Optional[int] = Field(default=None)
+    monthly_baseline_consumption_kwh: Optional[float] = Field(default=None, title="Monthly baseline consumption kwh")
+    minimum_consumption_monthly_kwh: Optional[float] = Field(default=None, title="Minimum consumptions monthly kwh")
+    minimum_spend: Optional[float] = Field(default=None, title="Minimum spend")
+    tariff_periods: Optional[int] = Field(default=None, le=4, ge=2, title="Tariff periods")
+    tariffs: Optional[list[TariffSlotModel]] = Field(default=None, title="Tariffs")
 
-    @field_validator("signed_at", "commissioned_at", "end_at", mode="before")
+    # PPA on-Grid
+    estimated_utility: Optional[int] = Field(default=None, title="Estimated utility pair")
+    grid_meter_offset_pair: Optional[list[tuple[float]]] = Field(default=None, title="Grid meter offset pair")
+
+    @field_validator(
+        "signed_at",
+        "commissioned_at",
+        "end_at",
+        "actual_commissioned_at",
+        "actual_end_at",
+        mode="before",
+    )
     @classmethod
     def parse_dates_as_utc(cls, value) -> Optional[datetime]:
-        """Ensure all datetimes are timezone-aware UTC."""
         if value is None:
             return None
         if isinstance(value, str):
             value = datetime.fromisoformat(value)
-        if isinstance(value, datetime) and value.tzinfo is None:
-            return value.replace(tzinfo=timezone.utc)
+        if isinstance(value, datetime):
+            if value.tzinfo is None:
+                raise ValueError("Datetime must be timezone-aware. Send UTC ISO strings e.g. '2024-01-01T00:00:00Z'")
+            return value.astimezone(timezone.utc)
         return value
 
     @model_validator(mode="after")
     def validate_contract_dates_and_tariffs(self) -> "CreateContractDetailsModel":
+        """Run date consistency and tariff alignment checks after all fields are populated.
+
+        Returns:
+            The validated CreateContractDetailsModel instance.
+        """
         self._validate_dates()
         self._validate_tariffs_align_with_periods()
         return self
@@ -159,12 +234,16 @@ class CreateContractDetailsModel(BaseModel):
         """
         Three rules:
         1. end_at must be after commissioned_at
-        2. If term_years and commissioned_at are both set,
-           end_at must equal commissioned_at + term_years (±1 day tolerance)
-        3. signed_at must be before or equal to commissioned_at
+        2. actual_end_at must be after actual_commissioned_at
+        2. If term_years, commissioned_at and actual_commissioned_at are all set,
+           end_at and actual_end_at must equal commissioned_at + term_years (±1 day tolerance)
+           and actual_commissioned_at + term_years
+        3. signed_at must be before or equal to commissioned_at or actual_end_date
         """
         commissioned = self.commissioned_at
         end = self.end_at
+        actual_commissioned = self.actual_commissioned_at
+        actual_end = self.actual_end_at
         signed = self.signed_at
 
         if commissioned and end:
@@ -181,9 +260,27 @@ class CreateContractDetailsModel(BaseModel):
                         f"(expected ~{expected_end.date()})"
                     )
 
+        if actual_commissioned and actual_end:
+            if actual_end <= actual_commissioned:
+                raise BadRequest("actual_end_at must be after actual_commissioned_at")
+
+            if self.term_years:
+                expected_end = actual_commissioned + relativedelta(years=self.term_years)
+                delta_days = abs((actual_end - expected_end).days)
+                if delta_days > 1:
+                    raise BadRequest(
+                        f"actual_end_at ({end.date()}) does not match "
+                        f"actual_commissioned_at + {self.term_years} years "
+                        f"(expected ~{expected_end.date()})"
+                    )
+
         if signed and commissioned:
             if signed > commissioned:
                 raise BadRequest("signed_at must be before or on commissioned_at")
+
+        if signed and actual_commissioned:
+            if signed > actual_commissioned:
+                raise BadRequest("signed_at must be before or on actual_commissioned_at")
 
     def _validate_tariffs_align_with_periods(self):
         """
@@ -219,11 +316,9 @@ class CreateContractDetailsModel(BaseModel):
                 )
 
 
-class UpdateDetailsRespModel:
-    pass
-
-
 class ContractDetailsRespModel(DBModel):
+    """Response model for contract details including all financial and scheduling fields."""
+
     contract_uid: UUID
     term_years: Optional[int] = None
     term_months: Optional[int] = None
@@ -234,6 +329,8 @@ class ContractDetailsRespModel(DBModel):
     signed_at: Optional[datetime] = None
     commissioned_at: Optional[datetime] = None
     end_at: Optional[datetime] = None
+    actual_commissioned_at: Optional[datetime] = None
+    actual_end_at: Optional[datetime] = None
     efl_rate: Optional[float] = None
 
     # On-grid specific
@@ -252,19 +349,54 @@ class ContractDetailsRespModel(DBModel):
     minimum_spend: Optional[float] = None
     tariff_periods: Optional[int] = None
     tariff_slots: Optional[str] = None
-    estimated_utility: Optional[int] = None
+    tariff_fixed_to_indexed_at: Optional[datetime] = None
 
-    @field_serializer("signed_at", "commissioned_at", "end_at")
+    # ppa (on-grid) specific
+    estimated_utility: Optional[int] = None
+    grid_meter_offset_pair: Optional[str] = None
+
+    @field_serializer(
+        "signed_at",
+        "commissioned_at",
+        "end_at",
+        "actual_commissioned_at",
+        "actual_end_at",
+        "tariff_fixed_to_indexed_at",
+    )
     def serialize_contract_dt(self, value: datetime):
+        """Serialise contract date fields to ISO-8601 strings.
+
+        Args:
+            value: The datetime value to serialise.
+
+        Returns:
+            ISO-8601 formatted string, or None if value is falsy.
+        """
         if value:
             return value.isoformat()
 
     @field_serializer("contract_uid")
     def serialize_other_uuid(self, value: UUID):
+        """Serialise the contract_uid UUID to a plain string.
+
+        Args:
+            value: The UUID value to serialise.
+
+        Returns:
+            A string representation of the UUID.
+        """
         return uuid_serializer(value)
 
     @field_serializer("equipment_lease_amount", "maintenance_amount", "total")
     def serialize_decimals(self, value: Decimal):
+        """Serialise Decimal financial fields to two-decimal-place strings.
+
+        Args:
+            value: The Decimal value to serialise.
+
+        Returns:
+            A string formatted to two decimal places, or None if value is falsy.
+        """
         if value:
             return f"{value:.2f}"
 
@@ -272,6 +404,8 @@ class ContractDetailsRespModel(DBModel):
 
 
 class ContractRespModel(DBModel):
+    """Response model for a contract's core fields."""
+
     user_uid: UUID
     client_uid: UUID
     site_uid: UUID
@@ -279,15 +413,26 @@ class ContractRespModel(DBModel):
     contract_type: ContractTypeEnum
     system_mode: ContractSystemModeEnum
     currency: CurrencyEnum
+    timezone: Optional[str]
 
     @field_serializer("user_uid", "client_uid", "site_uid")
     def serialize_contracts_uuid(self, value: UUID):
+        """Serialise contract UUID fields to plain strings.
+
+        Args:
+            value: The UUID value to serialise.
+
+        Returns:
+            A string representation of the UUID.
+        """
         return uuid_serializer(value)
 
     model_config = ConfigDict(from_attributes=True)
 
 
-class ContractSiteModel(DBModel):
+class ContractSiteRespModel(DBModel):
+    """Slim site model embedded within contract responses."""
+
     client_uid: UUID
     site_id: Optional[str]
     site_name: Optional[str]
@@ -296,6 +441,8 @@ class ContractSiteModel(DBModel):
 
 
 class ContractDetailedRespModel(ContractRespModel):
+    """Extended contract response model including the associated client, site, and details."""
+
     client: ClientRespWithoutSitesCountModel
-    site: ContractSiteModel
+    site: ContractSiteRespModel
     details: Optional[ContractDetailsRespModel]

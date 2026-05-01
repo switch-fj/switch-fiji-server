@@ -15,12 +15,19 @@ logger = setup_logger(__name__)
 
 
 class AsyncRedisClient:
+    """Singleton async Redis client used by FastAPI request handlers."""
+
     _instance: Optional["AsyncRedisClient"] = None
     _client: Optional[aioredis.Redis] = None
     BLOCKLIST_PREFIX = "blocked:"
     SITES_CACHE_TTL = 60
 
     def __new__(cls):
+        """Return the existing singleton instance or create one.
+
+        Returns:
+            The singleton AsyncRedisClient instance.
+        """
         if cls._instance is None:
             cls._instance = super().__new__(cls)
         return cls._instance
@@ -52,9 +59,22 @@ class AsyncRedisClient:
 
     @property
     def client(self) -> Optional[aioredis.Redis]:
+        """Return the underlying aioredis client instance.
+
+        Returns:
+            The aioredis.Redis client, or None if not yet initialised.
+        """
         return self._client
 
     async def get_site_stats(self, site_uid: str):
+        """Retrieve cached site stats JSON string from Redis.
+
+        Args:
+            site_uid: The unique identifier of the site.
+
+        Returns:
+            The cached JSON string for the site stats, or None if unavailable.
+        """
         if not self._client:
             return None
         try:
@@ -64,6 +84,14 @@ class AsyncRedisClient:
             return None
 
     async def get_client_sites(self, client_uid: str):
+        """Retrieve a cached list of sites for a client from Redis.
+
+        Args:
+            client_uid: The unique identifier of the client.
+
+        Returns:
+            The cached JSON string for the client's sites, or None if unavailable.
+        """
         if not self._client:
             return None
 
@@ -74,6 +102,15 @@ class AsyncRedisClient:
             return None
 
     async def set_client_sites(self, data: str, client_uid: str):
+        """Store a serialised list of sites for a client in Redis with a TTL.
+
+        Args:
+            data: JSON string of the client's sites to cache.
+            client_uid: The unique identifier of the client used as part of the cache key.
+
+        Returns:
+            None on success or if the client is not initialised.
+        """
         if not self._client:
             return None
 
@@ -84,6 +121,14 @@ class AsyncRedisClient:
             return None
 
     async def invalidate_client_sites_cache(self, client_uid: str):
+        """Remove the cached sites list for a client from Redis.
+
+        Args:
+            client_uid: The unique identifier of the client whose cache entry to delete.
+
+        Returns:
+            None
+        """
         await self._client.delete(f"sites:client:{client_uid}")
 
     @backoff.on_exception(backoff.expo, (ConnectionError, RedisError), max_tries=3, max_time=30)
@@ -121,15 +166,30 @@ class AsyncRedisClient:
 
 
 class SyncRedisClient:
+    """Singleton synchronous Redis client used by Celery workers."""
+
     _instance: Optional["SyncRedisClient"] = None
     _client: Optional[syncredis.Redis] = None
 
     def __new__(cls):
+        """Return the existing singleton instance or create one.
+
+        Returns:
+            The singleton SyncRedisClient instance.
+        """
         if cls._instance is None:
             cls._instance = super().__new__(cls)
         return cls._instance
 
     def init(self):
+        """Establish a synchronous Redis connection if one does not already exist.
+
+        Returns:
+            None
+
+        Raises:
+            Exception: If the connection attempt fails.
+        """
         if self._client is None:
             try:
                 self._client = syncredis.from_url(
@@ -167,6 +227,11 @@ class SyncRedisClient:
             return False
 
     def close(self):
+        """Close the synchronous Redis connection and reset the client to None.
+
+        Returns:
+            None
+        """
         if self._client:
             self._client.close()
             self._client = None

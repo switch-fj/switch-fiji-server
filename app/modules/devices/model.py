@@ -11,6 +11,8 @@ if TYPE_CHECKING:
 
 
 class Device(MyAbstractSQLModel, table=True):
+    """ORM model representing a physical device (meter, inverter, etc.) installed at a site."""
+
     __tablename__ = "devices"
     __table_args__ = (UniqueConstraint("site_uid", "slave_id", "device_type", name="uq_site_slave_device_type"),)
 

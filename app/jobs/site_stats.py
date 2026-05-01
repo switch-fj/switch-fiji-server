@@ -25,8 +25,7 @@ def compute_all_site_stats(self):
     try:
         with get_celery_db_session() as session:
             result = session.execute(
-                text(
-                    """
+                text("""
                     SELECT DISTINCT
                         s.uid::text  AS site_uid,
                         s.gateway_id AS gateway_id
@@ -36,8 +35,7 @@ def compute_all_site_stats(self):
                     WHERE cd.commissioned_at IS NOT NULL
                         AND NOW() > cd.commissioned_at
                         AND NOW() < cd.end_at
-                    """
-                )
+                    """)
             )
             sites = result.fetchall()
 
@@ -107,7 +105,22 @@ def compute_single_site_stats(self, site_uid: str, gateway_id: str):
             start_meter = BillingEngine._extract_meter_by_description(start_reading, "gen_meter")
             end_meter = BillingEngine._extract_meter_by_description(end_reading, "gen_meter")
             if start_meter and end_meter:
-                actual_generation_kwh = round(float(end_meter["kwh_total"]) - float(start_meter["kwh_total"]), 2)
+                end_meter_kwh_total = 0
+                start_meter_kwh_total = 0
+
+                if end_meter["kwh_total"]:
+                    end_meter_kwh_total = float(end_meter["kwh_total"])
+                else:
+                    end_meter_kwh_total = float(end_meter["tariff"]["kwh_t1"]) + float(end_meter["tariff"]["kwh_t2"])
+
+                if start_meter["kwh_total"]:
+                    start_meter_kwh_total = float(start_meter["kwh_total"])
+                else:
+                    start_meter_kwh_total = float(start_meter["tariff"]["kwh_t1"]) + float(
+                        start_meter["tariff"]["kwh_t2"]
+                    )
+
+                actual_generation_kwh = round(end_meter_kwh_total - start_meter_kwh_total, 2)
 
         # 5. deviation (derived)
         deviation_pct = 0.0

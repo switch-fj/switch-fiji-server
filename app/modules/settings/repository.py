@@ -15,10 +15,22 @@ logger = setup_logger(__name__)
 
 
 class SettingsRepository:
+    """Data-access layer for ContractSettings configuration."""
+
     def __init__(self, session: AsyncSession):
+        """Initialise the repository with a database session.
+
+        Args:
+            session: An async SQLAlchemy session used for all database operations.
+        """
         self.session = session
 
     async def get_contract_settings(self):
+        """Retrieve the single ContractSettings record.
+
+        Returns:
+            The ContractSettings ORM instance, or None if no record exists.
+        """
         statement = select(ContractSettings)
         result = await self.session.exec(statement)
         contract_settings = result.first()
@@ -26,6 +38,11 @@ class SettingsRepository:
         return contract_settings
 
     async def create_contract_settings(self):
+        """Create and persist the default ContractSettings record.
+
+        Returns:
+            The newly created ContractSettings ORM instance.
+        """
         new_contract_settings = ContractSettings(
             **{
                 "vat_rate": 15,
@@ -49,6 +66,16 @@ class SettingsRepository:
         contract_settings: ContractSettings,
         data: UpdateContractSettingsModel,
     ):
+        """Apply partial updates to the ContractSettings record and persist them.
+
+        Args:
+            user_uid: The UUID of the user performing the update, recorded as updated_by_uid.
+            contract_settings: The existing ContractSettings ORM instance to update.
+            data: The validated model containing fields to update (None fields are skipped).
+
+        Returns:
+            True once the update has been committed successfully.
+        """
         data_dict = data.model_dump(exclude_none=True)
 
         if len(list(data_dict.keys())) == 0:
@@ -66,4 +93,12 @@ class SettingsRepository:
 
 
 def get_settings_repo(session: AsyncSession = Depends(get_session)):
+    """FastAPI dependency that provides a SettingsRepository instance.
+
+    Args:
+        session: Injected async database session from get_session.
+
+    Returns:
+        A SettingsRepository bound to the provided session.
+    """
     return SettingsRepository(session=session)

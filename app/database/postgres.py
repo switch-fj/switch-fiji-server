@@ -22,6 +22,15 @@ AsyncSessionMaker = async_sessionmaker(bind=async_engine, class_=AsyncSession, e
 
 
 async def init_db():
+    """Test the database connection by executing a simple query on startup.
+
+    Returns:
+        None
+
+    Raises:
+        ConnectionError: If a connection error occurs when reaching Postgres.
+        Exception: For any other unexpected error during connection.
+    """
     async with async_engine.begin() as conn:
         try:
             logger.info("🔄 Connecting to Postgres...")
@@ -36,5 +45,10 @@ async def init_db():
 
 
 async def get_session() -> AsyncGenerator[AsyncSession, None]:
+    """FastAPI dependency that yields an async database session.
+
+    Yields:
+        An AsyncSession instance bound to the application's async engine.
+    """
     async with AsyncSessionMaker() as async_session_maker:
         yield async_session_maker

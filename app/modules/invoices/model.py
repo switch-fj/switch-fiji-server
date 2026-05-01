@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from decimal import Decimal
 from typing import TYPE_CHECKING, Optional
 from uuid import UUID
@@ -13,6 +13,8 @@ if TYPE_CHECKING:
 
 
 class Invoice(MyAbstractSQLModel, table=True):
+    """ORM model representing a billing invoice generated for a contract period."""
+
     __tablename__ = "invoices"
 
     __table_args__ = (
@@ -49,14 +51,26 @@ class Invoice(MyAbstractSQLModel, table=True):
 
     @property
     def vat_amount(self) -> Decimal:
+        """Calculate the VAT amount as a fraction of the subtotal.
+
+        Returns:
+            The VAT amount derived from subtotal * (vat_rate / 100).
+        """
         return self.subtotal * (self.vat_rate / Decimal(100))
 
     @property
     def total(self) -> Decimal:
+        """Calculate the invoice total including VAT.
+
+        Returns:
+            The sum of the subtotal and the calculated VAT amount.
+        """
         return self.subtotal + self.vat_amount
 
 
 class InvoiceLineItem(MyAbstractSQLModel, table=True):
+    """ORM model representing a single line item on an invoice."""
+
     __tablename__ = "invoice_line_items"
 
     invoice_uid: UUID = Field(foreign_key="invoices.uid", index=True, nullable=False)
@@ -75,6 +89,8 @@ class InvoiceLineItem(MyAbstractSQLModel, table=True):
 
 
 class InvoiceMeterData(MyAbstractSQLModel, table=True):
+    """ORM model capturing meter readings at the start and end of a billing period."""
+
     __tablename__ = "invoice_meter_data"
 
     invoice_uid: UUID = Field(foreign_key="invoices.uid", index=True, nullable=False)
@@ -90,10 +106,17 @@ class InvoiceMeterData(MyAbstractSQLModel, table=True):
 
     @property
     def usage(self):
+        """Calculate the energy consumed over the billing period.
+
+        Returns:
+            The difference between the period end reading and the period start reading.
+        """
         return self.period_end_reading - self.period_start_reading
 
 
 class InvoiceHistory(MyAbstractSQLModel, table=True):
+    """ORM model tracking each delivery attempt for an invoice."""
+
     __tablename__ = "invoice_history"
 
     invoice_uid: UUID = Field(foreign_key="invoices.uid", index=True, nullable=False)
@@ -105,3 +128,83 @@ class InvoiceHistory(MyAbstractSQLModel, table=True):
 
     # relationships
     invoice: "Invoice" = Relationship(back_populates="history")
+
+
+class InvoiceSnapshot(MyAbstractSQLModel, table=True):
+    """
+    An hourly snapshot of a contract's running invoice for a billing period.
+    Never exposed to the client directly.
+    """
+
+    __tablename__ = "invoice_snapshots"
+
+    __table_args__ = (
+        Index("ix_invoice_snapshots_contract_period", "contract_uid", "period_start_at"),
+        Index("ix_invoice_snapshots_snapshotted_at", text("snapshotted_at DESC")),
+    )
+
+    contract_uid: UUID = Field(foreign_key="contracts.uid", index=True, nullable=False)
+
+    period_start_at: datetime = Field(sa_type=DateTime(timezone=True), nullable=False)
+    period_end_at: datetime = Field(sa_type=DateTime(timezone=True), nullable=False)
+
+    subtotal: Decimal = Field(nullable=False)
+    vat_rate: Decimal = Field(nullable=False)
+
+    energy_mix: Optional[str] = Field(nullable=True)
+
+    snapshotted_at: datetime = Field(
+        sa_type=DateTime(timezone=True),
+        nullable=False,
+        default_factory=lambda: datetime.now(timezone.utc),
+    )
+
+    contract: "Contract" = Relationship(back_populates="snapshots")
+    line_items: list["InvoiceSnapshotLineItem"] = Relationship(back_populates="snapshot")
+    meter_data: list["InvoiceSnapshotMeterData"] = Relationship(back_populates="snapshot")
+
+    @property
+    def vat_amount(self) -> Decimal:
+        return self.subtotal * (self.vat_rate / Decimal(100))
+
+    @property
+    def total(self) -> Decimal:
+        return self.subtotal + self.vat_amount
+
+
+class InvoiceSnapshotLineItem(MyAbstractSQLModel, table=True):
+    """Line items for a snapshot — same structure as InvoiceLineItem."""
+
+    __tablename__ = "invoice_snapshot_line_items"
+
+    snapshot_uid: UUID = Field(foreign_key="invoice_snapshots.uid", index=True, nullable=False)
+    description: str = Field(nullable=False)
+
+    energy_kwh: Optional[Decimal] = Field(nullable=True)
+    tariff_rate: Optional[Decimal] = Field(nullable=True)
+    tariff_period: Optional[int] = Field(nullable=True)
+    tariff_slot: Optional[str] = Field(nullable=True)
+
+    amount: Decimal = Field(nullable=False)
+
+    snapshot: "InvoiceSnapshot" = Relationship(back_populates="line_items")
+
+
+class InvoiceSnapshotMeterData(MyAbstractSQLModel, table=True):
+    """Meter readings at time of snapshot — same structure as InvoiceMeterData."""
+
+    __tablename__ = "invoice_snapshot_meter_data"
+
+    snapshot_uid: UUID = Field(foreign_key="invoice_snapshots.uid", index=True, nullable=False)
+    device_uid: Optional[UUID] = Field(foreign_key="devices.uid", index=True, nullable=True, default=None)
+
+    label: str = Field(nullable=False)
+    period_start_reading: Decimal = Field(nullable=False)
+    period_end_reading: Decimal = Field(nullable=False)
+
+    snapshot: "InvoiceSnapshot" = Relationship(back_populates="meter_data")
+    device: Optional["Device"] = Relationship()
+
+    @property
+    def usage(self) -> Decimal:
+        return self.period_end_reading - self.period_start_reading

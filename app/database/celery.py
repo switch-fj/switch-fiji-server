@@ -25,6 +25,16 @@ _SessionLocal = sessionmaker(bind=_engine, expire_on_commit=False)
 
 @contextmanager
 def get_celery_db_session():
+    """Context manager that yields a synchronous SQLAlchemy session for Celery tasks.
+
+    Commits on success and rolls back on any exception, always closing the session.
+
+    Yields:
+        A SQLAlchemy Session bound to the sync database engine.
+
+    Raises:
+        Exception: Re-raises any exception after rolling back the session.
+    """
     session = _SessionLocal()
     try:
         yield session
@@ -37,15 +47,30 @@ def get_celery_db_session():
 
 
 class CeleryDynamoClient:
+    """Singleton synchronous DynamoDB client used by Celery billing and stats tasks."""
+
     _instance: Optional["CeleryDynamoClient"] = None
     _table = None
 
     def __new__(cls):
+        """Return the existing singleton instance or create one.
+
+        Returns:
+            The singleton CeleryDynamoClient instance.
+        """
         if cls._instance is None:
             cls._instance = super().__new__(cls)
         return cls._instance
 
     def init(self):
+        """Connect to DynamoDB using boto3 and bind the configured time-series table.
+
+        Returns:
+            None
+
+        Raises:
+            Exception: If the boto3 resource or table reference cannot be established.
+        """
         if self._table is None:
             try:
                 dynamodb = boto3.resource(
@@ -62,6 +87,14 @@ class CeleryDynamoClient:
 
     @staticmethod
     def _get_day_epoch_range(date: datetime) -> tuple[int, int]:
+        """Compute the millisecond epoch timestamps for the start and end of a given day.
+
+        Args:
+            date: A datetime object representing any moment within the target day.
+
+        Returns:
+            A tuple of (start_of_day_ms, end_of_day_ms) as integer millisecond timestamps.
+        """
         start_of_day = date.replace(hour=0, minute=0, second=0, microsecond=0)
         end_of_day = date.replace(hour=23, minute=59, second=59, microsecond=999999)
         return int(start_of_day.timestamp() * 1000), int(end_of_day.timestamp() * 1000)
@@ -72,6 +105,18 @@ class CeleryDynamoClient:
         period_start: datetime,
         period_end: datetime,
     ) -> tuple[dict, dict] | None:
+        """Fetch the boundary DynamoDB readings for a gateway over a billing period.
+
+        Queries for the earliest reading on period_start day and the latest on period_end day.
+
+        Args:
+            gateway_id: The gateway identifier used as the DynamoDB partition key.
+            period_start: The start date of the billing period.
+            period_end: The end date of the billing period.
+
+        Returns:
+            A tuple of (start_item, end_item) dicts from DynamoDB, or None if readings are missing.
+        """
         if not self._table:
             logger.warning("DynamoDB table not initialized")
             return None

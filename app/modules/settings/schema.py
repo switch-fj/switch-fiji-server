@@ -7,6 +7,8 @@ from app.shared.schema import CurrencyEnum, DateFormatEnum, TimeFormatEnum
 
 
 class UpdateContractSettingsModel(BaseModel):
+    """Request model for partially updating contract settings fields."""
+
     vat_rate: Optional[int] = Field(default=None)
     efl_standard_rate_kwh: Optional[Decimal] = Field(default=None)
     primary_currency: Optional[CurrencyEnum] = Field(default=None)
@@ -20,6 +22,8 @@ class UpdateContractSettingsModel(BaseModel):
 
 
 class ContractSettingsModel(BaseModel):
+    """Response model for the current contract settings configuration."""
+
     vat_rate: int
     efl_standard_rate_kwh: Decimal
     primary_currency: CurrencyEnum
@@ -33,6 +37,14 @@ class ContractSettingsModel(BaseModel):
 
     @field_serializer("efl_standard_rate_kwh")
     def serialize_decimals(self, value: Decimal):
+        """Serialise the efl_standard_rate_kwh Decimal to a two-decimal-place string.
+
+        Args:
+            value: The Decimal value to serialise.
+
+        Returns:
+            A string formatted to two decimal places, or None if value is falsy.
+        """
         if value:
             return f"{value:.2f}"
 

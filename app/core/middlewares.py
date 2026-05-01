@@ -10,12 +10,29 @@ from app.utils import set_origin_from_request
 
 
 async def custom_context_middleware(request, call_next):
+    """Store the request base URL and origin in the Starlette context for use downstream.
+
+    Args:
+        request: The incoming Starlette/FastAPI request object.
+        call_next: The next middleware or route handler in the chain.
+
+    Returns:
+        The response returned by the next handler.
+    """
     context["base_url"] = str(request.base_url)
     context["origin"] = set_origin_from_request(request)
     return await call_next(request)
 
 
 def register_middlewares(app: FastAPI):
+    """Attach CORS, trusted-host, context, and request-ID middlewares to the FastAPI app.
+
+    Args:
+        app: The FastAPI application instance to configure.
+
+    Returns:
+        None
+    """
     allow_origins = [
         "http://localhost:3000",
         "http://127.0.0.1:3000",

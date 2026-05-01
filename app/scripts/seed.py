@@ -12,16 +12,13 @@ logger = setup_logger(__name__)
 
 async def seed_admin():
     async with AsyncSessionMaker() as session:
-        admin_email = Config.DEFAULT_ADMIN_EMAIL
-        default_pass = Config.DEFAULT_ADMIN_PASS
-
-        result = await session.exec(select(User).where(User.email == admin_email))
+        result = await session.exec(select(User).where(User.email == Config.DEFAULT_ADMIN_EMAIL))
         admin = result.one_or_none()
 
         if not admin:
             new_admin = User(
-                email=admin_email,
-                password_hash=Authentication.generate_password_hash(default_pass),
+                email=Config.DEFAULT_ADMIN_EMAIL,
+                password_hash=Authentication.generate_password_hash(Config.DEFAULT_ADMIN_PASS),
                 is_email_verified=True,
                 role=UserRoleEnum.ADMIN.value,
             )

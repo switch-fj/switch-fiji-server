@@ -52,6 +52,17 @@ class ContractService:
             if not data.minimum_spend:
                 raise BadRequest("minimum consumption monthly (kwh) is required for all PPA contracts.")
 
+        # checks for ppa, on-grid contracts
+        if (
+            contract.contract_type == ContractTypeEnum.PPA.value
+            and contract.system_mode == ContractSystemModeEnum.ON_GRID
+        ):
+            if not data.estimated_utility:
+                raise BadRequest("Estimated utility is required for all PPA on grid contracts.")
+
+            if not data.grid_meter_offset_pair:
+                raise BadRequest("Grid meter offset pair is required for all PPA on grid contracts.")
+
     async def create_contract(self, token_payload: dict, data: CreateContractModel):
         data_dict = data.model_dump()
         token_user = token_payload.get("user")

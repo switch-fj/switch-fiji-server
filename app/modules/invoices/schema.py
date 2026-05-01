@@ -12,6 +12,8 @@ from app.utils import uuid_serializer
 
 
 class InvoiceMeterLabelEnum(StrEnum):
+    """Enumeration of standardised labels for invoice meter data records."""
+
     SITE_METER_1_DAY = "Site Meter 1 - Day"
     SITE_METER_1_NIGHT = "Site Meter 1 - Night"
     GEN_METER_1_DAY = "Generator Meter 1 - Day"
@@ -23,6 +25,8 @@ class InvoiceMeterLabelEnum(StrEnum):
 
 
 class InvoiceLineItemEnum(StrEnum):
+    """Enumeration of standardised descriptions for invoice line items."""
+
     ON_SOLAR_ENERGY_SUPPLIED = "On Solar Energy Supplied"
     OFF_SOLAR_ENERGY_SUPPLIED = "Off Solar Energy Supplied"
     FIXED_ASSET_LEASE = "Fixed Asset Lease"
@@ -30,6 +34,8 @@ class InvoiceLineItemEnum(StrEnum):
 
 
 class CreateInvoiceModel(BaseModel):
+    """Request model for creating a new invoice record."""
+
     period_start_at: datetime = Field(...)
     period_end_at: datetime = Field(...)
     subtotal: FourDP = Field(default=Decimal("0.0000"))
@@ -38,6 +44,8 @@ class CreateInvoiceModel(BaseModel):
 
 
 class CreateInvoiceLineItemModel(BaseModel):
+    """Request model for creating a single invoice line item."""
+
     invoice_uid: UUID = Field(...)
     description: str = Field(...)
     energy_kwh: Optional[FourDP] = Field(default=None)
@@ -48,6 +56,8 @@ class CreateInvoiceLineItemModel(BaseModel):
 
 
 class CreateInvoiceMeterDataModel(BaseModel):
+    """Request model for creating an invoice meter data record."""
+
     invoice_uid: UUID = Field(...)
     device_uid: Optional[UUID] = Field(default=None)
     label: str = Field(...)
@@ -56,6 +66,8 @@ class CreateInvoiceMeterDataModel(BaseModel):
 
 
 class CreateInvoiceHistoryModel(BaseModel):
+    """Request model for recording an invoice delivery attempt."""
+
     invoice_uid: UUID = Field(...)
     sent_to: str = Field(...)
     sent_at: datetime = Field(...)
@@ -64,6 +76,8 @@ class CreateInvoiceHistoryModel(BaseModel):
 
 
 class InvoiceRespModel(DBModel):
+    """Response model for a basic invoice record."""
+
     invoice_ref: str
     period_start_at: datetime
     period_end_at: datetime
@@ -73,16 +87,34 @@ class InvoiceRespModel(DBModel):
 
     @field_serializer("period_start_at", "period_end_at")
     def serialize_period_dt(self, value: datetime):
+        """Serialise billing period datetime fields to ISO-8601 strings.
+
+        Args:
+            value: The datetime value to serialise.
+
+        Returns:
+            ISO-8601 formatted string, or None if value is falsy.
+        """
         if value:
             return value.isoformat()
 
     @field_serializer("subtotal", "vat_rate")
     def serialize_decimals(self, value: Decimal):
+        """Serialise Decimal financial fields to two-decimal-place strings.
+
+        Args:
+            value: The Decimal value to serialise.
+
+        Returns:
+            A string formatted to two decimal places, or None if value is falsy.
+        """
         if value:
             return f"{value:.2f}"
 
 
 class InvoiceHistoryRespModel(DBModel):
+    """Response model for an invoice delivery history record."""
+
     invoice_uid: UUID
     sent_to: str
     sent_at: datetime
@@ -92,15 +124,33 @@ class InvoiceHistoryRespModel(DBModel):
 
     @field_serializer("sent_at")
     def serialize_sent_at_dt(self, value: datetime):
+        """Serialise the sent_at datetime to an ISO-8601 string.
+
+        Args:
+            value: The datetime value to serialise.
+
+        Returns:
+            ISO-8601 formatted string, or None if value is falsy.
+        """
         if value:
             return value.isoformat()
 
     @field_serializer("invoice_uid")
     def serialize_invoice_uuid(self, value: UUID):
+        """Serialise the invoice_uid UUID to a plain string.
+
+        Args:
+            value: The UUID value to serialise.
+
+        Returns:
+            A string representation of the UUID.
+        """
         return uuid_serializer(value)
 
 
 class InvoiceLineItemRespModel(DBModel):
+    """Response model for a single invoice line item."""
+
     invoice_uid: UUID
     description: str
     energy_kwh: Optional[Decimal]
@@ -111,15 +161,33 @@ class InvoiceLineItemRespModel(DBModel):
 
     @field_serializer("invoice_uid")
     def serialize_invoice_uuid(self, value: UUID):
+        """Serialise the invoice_uid UUID to a plain string.
+
+        Args:
+            value: The UUID value to serialise.
+
+        Returns:
+            A string representation of the UUID.
+        """
         return uuid_serializer(value)
 
     @field_serializer("amount", "tariff_rate", "energy_kwh")
     def serialize_decimals(self, value: Decimal):
+        """Serialise Decimal fields to two-decimal-place strings.
+
+        Args:
+            value: The Decimal value to serialise.
+
+        Returns:
+            A string formatted to two decimal places, or None if value is falsy.
+        """
         if value:
             return f"{value:.2f}"
 
 
 class InvoiceMeterDataRespModel(DBModel):
+    """Response model for an invoice meter data record."""
+
     invoice_uid: UUID
     device_uid: Optional[UUID]
     label: str
@@ -128,15 +196,33 @@ class InvoiceMeterDataRespModel(DBModel):
 
     @field_serializer("invoice_uid", "device_uid")
     def serialize_invoice_uuid(self, value: UUID):
+        """Serialise UUID fields to plain strings.
+
+        Args:
+            value: The UUID value to serialise.
+
+        Returns:
+            A string representation of the UUID.
+        """
         return uuid_serializer(value)
 
     @field_serializer("period_start_reading", "period_end_reading")
     def serialize_decimals(self, value: Decimal):
+        """Serialise Decimal meter reading fields to two-decimal-place strings.
+
+        Args:
+            value: The Decimal value to serialise.
+
+        Returns:
+            A string formatted to two decimal places, or None if value is falsy.
+        """
         if value:
             return f"{value:.2f}"
 
 
 class InvoiceDetailedRespModel(InvoiceRespModel):
+    """Extended invoice response model including the contract, line items, and meter data."""
+
     contract: ContractRespModel
     line_items: list[InvoiceLineItemRespModel]
     meter_data: list[InvoiceMeterDataRespModel]

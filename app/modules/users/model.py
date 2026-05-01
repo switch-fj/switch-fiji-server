@@ -13,6 +13,8 @@ if TYPE_CHECKING:
 
 
 class User(MyAbstractSQLModel, table=True):
+    """ORM model representing an internal platform user (admin or engineer)."""
+
     __tablename__ = "users"
     id: int = Field(
         sa_column=Column(
@@ -44,6 +46,11 @@ class User(MyAbstractSQLModel, table=True):
 
     @property
     def identity(self) -> int:
+        """Return the identity type enum value for JWT claims.
+
+        Returns:
+            The integer value of IdentityTypeEnum.USER.
+        """
         return IdentityTypeEnum.USER.value
 
     clients: list["Client"] = Relationship(back_populates="user")

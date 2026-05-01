@@ -24,9 +24,9 @@ celery_app.conf.beat_schedule = {
         "task": "compute_all_site_stats",
         "schedule": 300,
     },
-    "compute-contract-bill-every-day-at-midnight": {
+    "compute-contract-bill-every-hour": {
         "task": "compute_all_contracts_bill",
-        "schedule": crontab(minute=0, hour=0),
+        "schedule": crontab(minute=0),
     },
 }
 

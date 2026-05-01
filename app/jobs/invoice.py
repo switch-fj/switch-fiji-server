@@ -1,10 +1,9 @@
-import json
-from datetime import datetime, timezone
-from decimal import Decimal
+from datetime import datetime
+from zoneinfo import ZoneInfo
 
 from sqlalchemy import text
 from sqlalchemy.orm import joinedload
-from sqlmodel import Session, select, update
+from sqlmodel import select
 
 from app.core.logger import setup_logger
 from app.database.celery import celery_dynamo_client, get_celery_db_session
@@ -13,25 +12,11 @@ from app.jobs.celery import celery_app
 from app.modules.contracts.model import Contract
 from app.modules.contracts.schema import ContractSystemModeEnum, ContractTypeEnum
 from app.modules.devices.model import Device
-from app.modules.devices.schema import DeviceType, MeterRoleEnum
+from app.modules.devices.schema import DeviceType
 from app.modules.invoices.model import (
     Invoice,
-    InvoiceHistory,
-    InvoiceLineItem,
-    InvoiceMeterData,
-)
-from app.modules.invoices.pdf import InvoicePDF
-from app.modules.invoices.repository import InvoiceRepository
-from app.modules.invoices.schema import (
-    CreateInvoiceHistoryModel,
-    CreateInvoiceLineItemModel,
-    CreateInvoiceMeterDataModel,
-    CreateInvoiceModel,
-    InvoiceLineItemEnum,
-    InvoiceMeterLabelEnum,
 )
 from app.modules.settings.model import ContractSettings
-from app.services.s3 import S3Service
 
 logger = setup_logger(__name__)
 
@@ -44,17 +29,14 @@ logger = setup_logger(__name__)
 )
 def compute_all_contracts_bill(self):
     """
-    Beat triggers this every day at midnight.
+    Beat triggers this every hour.
     Fetches all active contracts and dispatches
     one compute task per contract to the worker pool.
     """
     try:
-        # Worker spins up its own session
         with get_celery_db_session() as session:
-            # fetch contract + site
             result = session.execute(
-                text(
-                    """
+                text("""
                 SELECT
                     c.uid AS contract_uid,
                     s.gateway_id AS gateway_id,
@@ -66,25 +48,22 @@ def compute_all_contracts_bill(self):
                 WHERE cd.commissioned_at IS NOT NULL
                     AND NOW() > cd.commissioned_at
                     AND NOW() < cd.end_at
-                """
-                )
+                """)
             )
             contract_data = result.fetchall()
 
         for datum in contract_data:
-            # Worker for individual active contracts
             compute_single_contract_bill.delay(
                 contract_uid=str(datum.contract_uid),
                 gateway_id=datum.gateway_id,
                 site_uid=str(datum.site_uid),
-                site_id=datum.site_id,
             )
     except Exception as exc:
         raise self.retry(exc=exc)
 
 
 @celery_app.task(name="compute_single_contract_bill", bind=True, max_retries=3, default_retry_delay=5)
-def compute_single_contract_bill(self, contract_uid, gateway_id, site_uid, site_id):
+def compute_single_contract_bill(self, contract_uid, gateway_id, site_uid):
     try:
         celery_dynamo_client.init()
         with get_celery_db_session() as session:
@@ -110,213 +89,54 @@ def compute_single_contract_bill(self, contract_uid, gateway_id, site_uid, site_
             if not contract or not devices:
                 return
 
+            tz = ZoneInfo(contract.timezone)
+            now_local = datetime.now(tz=tz)
+
+            period_start, period_end = BillingEngine.get_current_billing_period(
+                timezone_key=contract.timezone,
+                commissioned_at=contract.details.actual_commissioned_at or contract.details.commissioned_at,
+                billing_frequency=contract.details.billing_frequency,
+            )
+
+            is_billing_date = now_local >= period_end.astimezone(tz)
+
+            if is_billing_date:
+                already_invoiced = session.execute(
+                    select(Invoice).where(
+                        Invoice.contract_uid == contract.uid,
+                        Invoice.period_start_at == period_start,
+                        Invoice.period_end_at == period_end,
+                    )
+                ).scalar_one_or_none()
+
+                if already_invoiced:
+                    return
+
             result = None
 
-            # route to the correct billing function
             if contract.contract_type == ContractTypeEnum.PPA.value:
                 if contract.system_mode == ContractSystemModeEnum.OFF_GRID.value:
-                    _compute_ppa_off_grid(session, contract, devices, contract_settings, gateway_id)
-                elif contract.system_mode == ContractSystemModeEnum.ON_GRID.value:
-                    pass
-                    # _compute_ppa_on_grid(
-                    #     session, contract, devices, contract_settings, gateway_id
-                    # )
+                    result = BillingEngine.compute_ppa_off_grid_invoice(
+                        session=session,
+                        contract=contract,
+                        devices=devices,
+                        contract_settings=contract_settings,
+                        gateway_id=gateway_id,
+                        period_start=period_start,
+                        period_end=period_end,
+                        is_billing_date=is_billing_date,
+                    )
 
-            elif contract.contract_type == ContractTypeEnum.LEASE.value:
-                pass
-                # _compute_lease(
-                #     session, contract, devices, contract_settings, gateway_id
-                # )
-
-            # generate pdf here
             if result is None:
                 return
 
-            invoice, meter_data, line_items = result
-
-            pdf_bytes = InvoicePDF.render_invoice_pdf(
-                invoice=invoice,
-                contract=contract,
-                line_items=line_items,
-                meter_data=meter_data,
-                contract_settings=contract_settings,
-            )
-
-            key = f"invoices/{invoice.uid}.pdf"
-            try:
-                S3Service.upload_pdf(key=key, pdf_bytes=pdf_bytes)
-            except Exception as e:
-                logger.error(f"Failed to upload PDF to S3 for invoice {invoice.uid}: {e}")
-                return
-
-            session.execute(update(Invoice).where(Invoice.uid == invoice.uid).values(pdf_s3_key=key))
-            session.commit()
+            if is_billing_date:
+                BillingEngine.generate_pdf_in_background(
+                    session=session,
+                    contract=contract,
+                    contract_settings=contract_settings,
+                    result=result,
+                )
 
     except Exception as exc:
         raise self.retry(exc=exc)
-
-
-def _compute_ppa_off_grid(
-    session: Session,
-    contract: Contract,
-    devices: list[Device],
-    contract_settings: ContractSettings,
-    gateway_id: str,
-):
-    active_tariff_slots = contract.details.active_tariff_slots
-    period_start, period_end = BillingEngine.get_current_billing_period(
-        commissioned_at=contract.details.commissioned_at,
-        billing_frequency=contract.details.billing_frequency,
-    )
-
-    readings = celery_dynamo_client.get_readings_for_billing_period(
-        gateway_id=gateway_id,
-        period_start=period_start,
-        period_end=period_end,
-    )
-    if not readings:
-        logger.warning(f"No readings found for gateway {gateway_id}")
-        return
-
-    period_start_data, period_end_data = readings
-
-    period_start_meter = BillingEngine.get_ppa_off_grid_meter_data(period_start_data)
-    period_end_meter = BillingEngine.get_ppa_off_grid_meter_data(period_end_data)
-
-    load_meter = BillingEngine._extract_meter_by_description(period_start_data, MeterRoleEnum.LOAD_METER)
-    gen_meter = BillingEngine._extract_meter_by_description(period_start_data, MeterRoleEnum.GEN_METER)
-
-    usage = BillingEngine.compute_ppa_off_grid_day_night_usage(
-        period_start_meter_tariff_reading=period_start_meter,
-        period_end_meter_tariff_reading=period_end_meter,
-    )
-    on_solar_energy_kwh, off_solar_energy_kwh = BillingEngine.compute_ppa_off_grid_line_items(usage=usage)
-    solar_energy_kwh, gen_energy_kwh = BillingEngine.compute_ppa_off_grid_energy_mix(usage=usage)
-    subtotal, vat_rate, on_solar_energy_amount, off_solar_energy_amount = (
-        BillingEngine.compute_ppa_off_grid_subtotal_and_vat_rate(
-            on_solar_energy_kwh=on_solar_energy_kwh,
-            off_solar_energy_kwh=off_solar_energy_kwh,
-            efl_rate_kwh=contract_settings.efl_standard_rate_kwh,
-            active_tariff=active_tariff_slots,
-        )
-    )
-
-    create_invoice_dict = CreateInvoiceModel(
-        period_start_at=period_start,
-        period_end_at=period_end,
-        subtotal=subtotal,
-        vat_rate=vat_rate,
-        energy_mix=json.dumps({"solar": float(solar_energy_kwh), "gen": float(gen_energy_kwh)}),
-    ).model_dump()
-    create_invoice_dict["contract_uid"] = contract.uid
-    create_invoice_dict["invoice_ref"] = InvoiceRepository._build_invoice_ref()
-
-    new_invoice = Invoice(**create_invoice_dict)
-    session.add(new_invoice)
-    session.flush()
-
-    create_meter_data: list[CreateInvoiceMeterDataModel] = []
-    for device in devices:
-        if device.slave_id == load_meter.get("slave_id"):
-            create_meter_data.extend(
-                [
-                    CreateInvoiceMeterDataModel(
-                        invoice_uid=new_invoice.uid,
-                        device_uid=device.uid,
-                        label=InvoiceMeterLabelEnum.SITE_METER_1_DAY.value,
-                        period_start_reading=Decimal(period_start_meter[0][0]),
-                        period_end_reading=Decimal(period_end_meter[0][0]),
-                    ),
-                    CreateInvoiceMeterDataModel(
-                        invoice_uid=new_invoice.uid,
-                        device_uid=device.uid,
-                        label=InvoiceMeterLabelEnum.SITE_METER_1_NIGHT.value,
-                        period_start_reading=Decimal(period_start_meter[0][1]),
-                        period_end_reading=Decimal(period_end_meter[0][1]),
-                    ),
-                ]
-            )
-
-        if device.slave_id == gen_meter.get("slave_id"):
-            create_meter_data.extend(
-                [
-                    CreateInvoiceMeterDataModel(
-                        invoice_uid=new_invoice.uid,
-                        device_uid=device.uid,
-                        label=InvoiceMeterLabelEnum.GEN_METER_1_DAY.value,
-                        period_start_reading=Decimal(period_start_meter[1][0]),
-                        period_end_reading=Decimal(period_end_meter[1][0]),
-                    ),
-                    CreateInvoiceMeterDataModel(
-                        invoice_uid=new_invoice.uid,
-                        device_uid=device.uid,
-                        label=InvoiceMeterLabelEnum.GEN_METER_1_NIGHT.value,
-                        period_start_reading=Decimal(period_start_meter[1][1]),
-                        period_end_reading=Decimal(period_end_meter[1][1]),
-                    ),
-                ]
-            )
-
-    create_line_items = [
-        CreateInvoiceLineItemModel(
-            invoice_uid=new_invoice.uid,
-            description=InvoiceLineItemEnum.ON_SOLAR_ENERGY_SUPPLIED,
-            energy_kwh=Decimal(on_solar_energy_kwh),
-            tariff_rate=Decimal(active_tariff_slots[0]["rate"]),
-            tariff_slot=active_tariff_slots[0]["slot"],
-            tariff_period=int(active_tariff_slots[0]["period_number"]),
-            amount=Decimal(on_solar_energy_amount),
-        ),
-        CreateInvoiceLineItemModel(
-            invoice_uid=new_invoice.uid,
-            description=InvoiceLineItemEnum.OFF_SOLAR_ENERGY_SUPPLIED,
-            energy_kwh=Decimal(off_solar_energy_kwh),
-            tariff_rate=Decimal(active_tariff_slots[1]["rate"]),
-            tariff_slot=active_tariff_slots[1]["slot"],
-            tariff_period=int(active_tariff_slots[1]["period_number"]),
-            amount=Decimal(off_solar_energy_amount),
-        ),
-    ]
-
-    invoice_meter_data_list = [InvoiceMeterData(**d.model_dump()) for d in create_meter_data]
-    invoice_line_items_list = [InvoiceLineItem(**d.model_dump()) for d in create_line_items]
-
-    session.add_all(invoice_meter_data_list)
-    session.add_all(invoice_line_items_list)
-    session.add(
-        InvoiceHistory(
-            **CreateInvoiceHistoryModel(
-                invoice_uid=new_invoice.uid,
-                sent_to=contract.client.client_email,
-                sent_at=datetime.now(timezone.utc),
-                was_successful=True,
-            ).model_dump()
-        )
-    )
-    session.commit()
-
-    return (
-        new_invoice,
-        invoice_meter_data_list,
-        invoice_line_items_list,
-    )
-
-
-# def _compute_lease(
-#     session,
-#     contract,
-#     devices,
-#     contract_settings,
-#     gateway_id,
-# ):
-#     pass
-
-
-# def _compute_ppa_on_grid(
-#     session,
-#     contract,
-#     devices,
-#     contract_settings,
-#     gateway_id,
-# ):
-#     pass
