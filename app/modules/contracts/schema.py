@@ -56,15 +56,25 @@ class ContractBillingFrequencyEnum(StrEnum):
     ANNUALLY = "annually"
 
 
+class TariffIndexedRuleTypeEnum(StrEnum):
+    """Enumeration of supported rule type for indexed periods"""
+
+    EFL_LINKED = "EFL_LINKED"
+    FIXED_ANNUAL_ESCALATOR = "FIXED_ANNUAL_ESCALATOR"
+
+
 class TariffSlotTypeEnum(StrEnum):
-    """Enumeration indicating whether a tariff rate is fixed or variable relative to the EFL rate."""
+    """
+    Enumeration indicating whether a tariff rate is fixed or indexed relative to the EFL rate.
+    tariff slot is also tariff period
+    """
 
     FIXED = "Fixed"
     VARIABLE = "Variable"
 
 
 class TariffSlotEnum(StrEnum):
-    """Enumeration of the two tariff time slots (on-peak and off-peak)."""
+    """Enumeration of the two tariff time slots (A: on-solar and B: off-solar)."""
 
     A = "A"
     B = "B"
@@ -157,43 +167,56 @@ class CreateContractDetailsModel(BaseModel):
     """Request model for creating or updating contract details."""
 
     term_years: int = Field(..., ge=0, le=10, title="Contract term years")
-    billing_frequency: ContractBillingFrequencyEnum = Field(...)
-    implementation_period: int = Field(...)
-    signed_at: datetime = Field(...)
+    billing_frequency: ContractBillingFrequencyEnum = Field(..., title="Billing Frequency")
+    implementation_period: int = Field(..., title="Contract Implementation")
+    signed_at: datetime = Field(..., title="Contract signed at")
     commissioned_at: datetime = Field(..., title="expected commission date")
     end_at: datetime = Field(..., title="expected contract end date")
     actual_commissioned_at: Optional[datetime] = Field(default=None, title="Actual contract commission date")
     actual_end_at: Optional[datetime] = Field(..., title="Actual Contract end date")
-    efl_rate: Optional[float] = Field(default=None, ge=0, le=1)
+    efl_rate: Optional[float] = Field(default=None, ge=0, le=1, title="EFL Rate")
 
     # system mode (On-grid) specific
-    system_size_kwp: Optional[float] = Field(default=None)
-    guaranteed_production_kwh_per_kwp: Optional[float] = Field(default=None)
-    grid_meter_reading_at_commissioning: Optional[float] = Field(default=None)
+    system_size_kwp: Optional[float] = Field(default=None, title="System size kwp")
+    guaranteed_production_kwh_per_kwp: Optional[float] = Field(default=None, title="Guaranteed production kwh per kwp")
+    grid_meter_reading_at_commissioning: Optional[float] = Field(
+        default=None, title="Grid meter reading at commissioning"
+    )
 
     # On Grid Lease specific
-    equipment_lease_amount: Optional[Decimal] = Field(default=None)
-    maintenance_amount: Optional[Decimal] = Field(default=None)
-    total: Optional[Decimal] = Field(default=None)
+    equipment_lease_amount: Optional[Decimal] = Field(default=None, title="Equipment lease amount")
+    maintenance_amount: Optional[Decimal] = Field(default=None, title="Maintenance amount")
+    total: Optional[Decimal] = Field(default=None, title="Total")
 
     # PPA specific
-    monthly_baseline_consumption_kwh: Optional[float] = Field(default=None)
-    minimum_consumption_monthly_kwh: Optional[float] = Field(default=None)
-    minimum_spend: Optional[float] = Field(default=None)
-    tariff_periods: Optional[int] = Field(default=None, le=4, ge=2)
-    tariffs: Optional[list[TariffSlotModel]] = Field(default=None)
-    estimated_utility: Optional[int] = Field(default=None)
+    monthly_baseline_consumption_kwh: Optional[float] = Field(default=None, title="Monthly baseline consumption kwh")
+    minimum_consumption_monthly_kwh: Optional[float] = Field(default=None, title="Minimum consumptions monthly kwh")
+    minimum_spend: Optional[float] = Field(default=None, title="Minimum spend")
+    tariff_periods: Optional[int] = Field(default=None, le=4, ge=2, title="Tariff periods")
+    tariffs: Optional[list[TariffSlotModel]] = Field(default=None, title="Tariffs")
 
-    @field_validator("signed_at", "commissioned_at", "end_at", mode="before")
+    # PPA on-Grid
+    estimated_utility: Optional[int] = Field(default=None, title="Estimated utility pair")
+    grid_meter_offset_pair: Optional[list[tuple[float]]] = Field(default=None, title="Grid meter offset pair")
+
+    @field_validator(
+        "signed_at",
+        "commissioned_at",
+        "end_at",
+        "actual_commissioned_at",
+        "actual_end_at",
+        mode="before",
+    )
     @classmethod
     def parse_dates_as_utc(cls, value) -> Optional[datetime]:
-        """Ensure all datetimes are timezone-aware UTC."""
         if value is None:
             return None
         if isinstance(value, str):
             value = datetime.fromisoformat(value)
-        if isinstance(value, datetime) and value.tzinfo is None:
-            return value.replace(tzinfo=timezone.utc)
+        if isinstance(value, datetime):
+            if value.tzinfo is None:
+                raise ValueError("Datetime must be timezone-aware. Send UTC ISO strings e.g. '2024-01-01T00:00:00Z'")
+            return value.astimezone(timezone.utc)
         return value
 
     @model_validator(mode="after")
@@ -211,12 +234,16 @@ class CreateContractDetailsModel(BaseModel):
         """
         Three rules:
         1. end_at must be after commissioned_at
-        2. If term_years and commissioned_at are both set,
-           end_at must equal commissioned_at + term_years (±1 day tolerance)
-        3. signed_at must be before or equal to commissioned_at
+        2. actual_end_at must be after actual_commissioned_at
+        2. If term_years, commissioned_at and actual_commissioned_at are all set,
+           end_at and actual_end_at must equal commissioned_at + term_years (±1 day tolerance)
+           and actual_commissioned_at + term_years
+        3. signed_at must be before or equal to commissioned_at or actual_end_date
         """
         commissioned = self.commissioned_at
         end = self.end_at
+        actual_commissioned = self.actual_commissioned_at
+        actual_end = self.actual_end_at
         signed = self.signed_at
 
         if commissioned and end:
@@ -233,9 +260,27 @@ class CreateContractDetailsModel(BaseModel):
                         f"(expected ~{expected_end.date()})"
                     )
 
+        if actual_commissioned and actual_end:
+            if actual_end <= actual_commissioned:
+                raise BadRequest("actual_end_at must be after actual_commissioned_at")
+
+            if self.term_years:
+                expected_end = actual_commissioned + relativedelta(years=self.term_years)
+                delta_days = abs((actual_end - expected_end).days)
+                if delta_days > 1:
+                    raise BadRequest(
+                        f"actual_end_at ({end.date()}) does not match "
+                        f"actual_commissioned_at + {self.term_years} years "
+                        f"(expected ~{expected_end.date()})"
+                    )
+
         if signed and commissioned:
             if signed > commissioned:
                 raise BadRequest("signed_at must be before or on commissioned_at")
+
+        if signed and actual_commissioned:
+            if signed > actual_commissioned:
+                raise BadRequest("signed_at must be before or on actual_commissioned_at")
 
     def _validate_tariffs_align_with_periods(self):
         """
@@ -271,12 +316,6 @@ class CreateContractDetailsModel(BaseModel):
                 )
 
 
-class UpdateDetailsRespModel:
-    """Placeholder response model for contract details update operations."""
-
-    pass
-
-
 class ContractDetailsRespModel(DBModel):
     """Response model for contract details including all financial and scheduling fields."""
 
@@ -290,6 +329,8 @@ class ContractDetailsRespModel(DBModel):
     signed_at: Optional[datetime] = None
     commissioned_at: Optional[datetime] = None
     end_at: Optional[datetime] = None
+    actual_commissioned_at: Optional[datetime] = None
+    actual_end_at: Optional[datetime] = None
     efl_rate: Optional[float] = None
 
     # On-grid specific
@@ -308,9 +349,20 @@ class ContractDetailsRespModel(DBModel):
     minimum_spend: Optional[float] = None
     tariff_periods: Optional[int] = None
     tariff_slots: Optional[str] = None
-    estimated_utility: Optional[int] = None
+    tariff_fixed_to_indexed_at: Optional[datetime] = None
 
-    @field_serializer("signed_at", "commissioned_at", "end_at")
+    # ppa (on-grid) specific
+    estimated_utility: Optional[int] = None
+    grid_meter_offset_pair: Optional[str] = None
+
+    @field_serializer(
+        "signed_at",
+        "commissioned_at",
+        "end_at",
+        "actual_commissioned_at",
+        "actual_end_at",
+        "tariff_fixed_to_indexed_at",
+    )
     def serialize_contract_dt(self, value: datetime):
         """Serialise contract date fields to ISO-8601 strings.
 
@@ -361,6 +413,7 @@ class ContractRespModel(DBModel):
     contract_type: ContractTypeEnum
     system_mode: ContractSystemModeEnum
     currency: CurrencyEnum
+    timezone: Optional[str]
 
     @field_serializer("user_uid", "client_uid", "site_uid")
     def serialize_contracts_uuid(self, value: UUID):
@@ -377,7 +430,7 @@ class ContractRespModel(DBModel):
     model_config = ConfigDict(from_attributes=True)
 
 
-class ContractSiteModel(DBModel):
+class ContractSiteRespModel(DBModel):
     """Slim site model embedded within contract responses."""
 
     client_uid: UUID
@@ -391,5 +444,5 @@ class ContractDetailedRespModel(ContractRespModel):
     """Extended contract response model including the associated client, site, and details."""
 
     client: ClientRespWithoutSitesCountModel
-    site: ContractSiteModel
+    site: ContractSiteRespModel
     details: Optional[ContractDetailsRespModel]

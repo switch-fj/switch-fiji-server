@@ -55,15 +55,3 @@ class SiteDetailedRespModel(SiteRespModel):
     client: ClientRespModel
     contract: ContractRespModel
     details: ContractDetailsRespModel
-
-
-# class SiteStatsModel(BaseModel):
-#     site_uid: str
-#     expected_generation_kwh: float
-#     actual_generation_kwh: float
-#     billing_progress_pct: float
-#     deviation_pct: float
-#     period_start: datetime
-#     period_end: datetime
-#     computed_at: datetime
-#     status: Optional[str] = None

@@ -272,7 +272,7 @@ class CurrencyEnum(StrEnum):
     # ERN = "ERN"
     # ETB = "ETB"
     # EUR = "EUR"
-    # FJD = "FJD"
+    FJD = "FJD"
     # FKP = "FKP"
     # GBP = "GBP"
     # GEL = "GEL"
