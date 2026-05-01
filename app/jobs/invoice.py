@@ -46,6 +46,7 @@ def compute_all_contracts_bill(self):
             result = session.execute(
                 text("""
                 SELECT DISTINCT
+                    c.uid::text AS contract_uid, 
                     s.uid::text  AS site_uid,
                     s.gateway_id AS gateway_id
                 FROM sites s
