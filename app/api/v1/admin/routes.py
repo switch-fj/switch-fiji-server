@@ -191,18 +191,16 @@ async def get_rate_history(
 
 
 @admin_router.post(
-    "/create_rate/{contract_settings_uid}",
+    "/create_rate",
     status_code=status.HTTP_201_CREATED,
     response_model=ServerRespModel[RateHistoryRespModel],
 )
 async def create_rate(
-    contract_settings_uid: UUID,
     data: CreateContractSettingsRateModel,
     contract_settings_service: SettingsService = Depends(get_settings_service),
     token_payload: dict = Depends(AdminAccessBearer()),
 ):
     resp = await contract_settings_service.create_rate(
-        contract_settings_uid=contract_settings_uid,
         data=data,
         token_payload=token_payload,
     )

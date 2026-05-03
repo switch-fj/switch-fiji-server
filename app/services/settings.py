@@ -47,15 +47,12 @@ class SettingsService:
 
     async def create_rate(
         self,
-        contract_settings_uid: UUID,
         token_payload: dict,
         data: CreateContractSettingsRateModel,
     ):
         token_user = token_payload.get("user")
         user_uid = token_user.get("uid")
-        new_rate = await self.settings_repo.create_rate(
-            contract_settings_uid=contract_settings_uid, user_uid=user_uid, data=data
-        )
+        new_rate = await self.settings_repo.create_rate(user_uid=user_uid, data=data)
 
         return RateHistoryRespModel.model_validate(new_rate)
 

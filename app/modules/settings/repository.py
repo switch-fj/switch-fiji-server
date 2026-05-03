@@ -118,14 +118,12 @@ class SettingsRepository:
 
     async def create_rate(
         self,
-        contract_settings_uid: UUID,
         user_uid: UUID,
         data: CreateContractSettingsRateModel,
     ) -> ContractSettingsRateHistory:
         """Close off the current active rate and insert a new rate history entry.
 
         Args:
-            contract_settings_uid: The UUID of the ContractSettings record.
             user_uid: The UUID of the user creating the new rate.
             data: The validated model containing the new rate and effective_from date.
 
@@ -138,8 +136,10 @@ class SettingsRepository:
             current_rate.effective_to = data.effective_from
             self.session.add(current_rate)
 
+        contract_settings = await self.get_contract_settings()
+
         new_rate = ContractSettingsRateHistory(
-            contract_settings_uid=contract_settings_uid,
+            contract_settings_uid=contract_settings.uid,
             efl_standard_rate_kwh=data.efl_standard_rate_kwh,
             vat_rate=data.vat_rate,
             effective_from=data.effective_from,
