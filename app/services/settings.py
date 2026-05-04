@@ -1,12 +1,10 @@
-from uuid import UUID
-
 from fastapi import Depends
 
 from app.modules.settings.repository import SettingsRepository, get_settings_repo
 from app.modules.settings.schema import (
-    CreateContractSettingsRateModel,
-    RateHistoryRespModel,
+    EFLRateHistoryRespModel,
     UpdateContractSettingsModel,
+    VATRateHistoryRespModel,
 )
 
 
@@ -33,28 +31,29 @@ class SettingsService:
 
         return result
 
-    async def get_current_rate(self):
-        current_rate = await self.settings_repo.get_current_rate()
+    async def get_current_efl_rate(self):
+        current_efl_rate = await self.settings_repo.get_current_efl_rate()
 
-        return RateHistoryRespModel.model_validate(current_rate)
+        return EFLRateHistoryRespModel.model_validate(current_efl_rate)
 
-    async def get_rate_history(self, contract_settings_uid: UUID):
-        existing_rate_history = await self.settings_repo.get_rate_history(contract_settings_uid=contract_settings_uid)
+    async def get_current_vat_rate(self):
+        current_vat_rate = await self.settings_repo.get_current_vat_rate()
 
-        rate_history_list = [RateHistoryRespModel.model_validate(item) for item in existing_rate_history]
+        return VATRateHistoryRespModel.model_validate(current_vat_rate)
 
-        return rate_history_list
+    async def get_efl_rate_history(self):
+        existing_efl_rate_history = await self.settings_repo.get_efl_rate_history()
 
-    async def create_rate(
-        self,
-        token_payload: dict,
-        data: CreateContractSettingsRateModel,
-    ):
-        token_user = token_payload.get("user")
-        user_uid = token_user.get("uid")
-        new_rate = await self.settings_repo.create_rate(user_uid=user_uid, data=data)
+        efl_rate_history_list = [EFLRateHistoryRespModel.model_validate(item) for item in existing_efl_rate_history]
 
-        return RateHistoryRespModel.model_validate(new_rate)
+        return efl_rate_history_list
+
+    async def get_vat_rate_history(self):
+        existing_vat_rate_history = await self.settings_repo.get_vat_rate_history()
+
+        vat_rate_history_list = [VATRateHistoryRespModel.model_validate(item) for item in existing_vat_rate_history]
+
+        return vat_rate_history_list
 
 
 def get_settings_service(

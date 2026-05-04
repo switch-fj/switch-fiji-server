@@ -10,15 +10,8 @@ from app.core.config import Config
 from app.core.security import AdminAccessBearer
 from app.database.redis import async_redis_client
 from app.modules.clients.schema import ClientRespModel, CreateClientModel
-from app.modules.settings.schema import (
-    ContractSettingsModel,
-    CreateContractSettingsRateModel,
-    RateHistoryRespModel,
-    UpdateContractSettingsModel,
-)
 from app.modules.sites.schema import CreateSiteModel, SiteRespModel
 from app.services.client import ClientService, get_client_service
-from app.services.settings import SettingsService, get_settings_service
 from app.services.sites import SiteService, get_site_service
 from app.shared.schema import (
     CursorPaginationModel,
@@ -127,82 +120,3 @@ async def stream_site_stats(
             "Connection": "keep-alive",
         },
     )
-
-
-@admin_router.get(
-    "/contracts-settings",
-    status_code=status.HTTP_200_OK,
-    response_model=ServerRespModel[ContractSettingsModel],
-)
-async def get_contracts_general_settings(
-    contract_settings_service: SettingsService = Depends(get_settings_service),
-    _: dict = Depends(AdminAccessBearer()),
-):
-    contract_settings = await contract_settings_service.get_contract_general_settings()
-
-    return ServerRespModel[ContractSettingsModel](
-        data=ContractSettingsModel.model_validate(contract_settings),
-        message="contract general settings retrieved",
-    )
-
-
-@admin_router.patch(
-    "/contracts-settings",
-    status_code=status.HTTP_202_ACCEPTED,
-    response_model=ServerRespModel[bool],
-)
-async def update_contracts_generat_settings(
-    data: UpdateContractSettingsModel,
-    contract_settings_service: SettingsService = Depends(get_settings_service),
-    token_payload: dict = Depends(AdminAccessBearer()),
-):
-    resp = await contract_settings_service.update_contract_general_settings(data=data, token_payload=token_payload)
-
-    return ServerRespModel[bool](data=resp, message="contract general settings updated")
-
-
-@admin_router.get(
-    "/active-rate",
-    status_code=status.HTTP_201_CREATED,
-    response_model=ServerRespModel[RateHistoryRespModel],
-)
-async def get_current_rate(
-    contract_settings_service: SettingsService = Depends(get_settings_service),
-    _: dict = Depends(AdminAccessBearer()),
-):
-    resp = await contract_settings_service.get_current_rate()
-
-    return ServerRespModel[RateHistoryRespModel](data=resp, message="active rate retrieved!")
-
-
-@admin_router.get(
-    "/rate-history/{contract_settings_uid}",
-    status_code=status.HTTP_200_OK,
-    response_model=ServerRespModel[list[RateHistoryRespModel]],
-)
-async def get_rate_history(
-    contract_settings_uid: UUID,
-    contract_settings_service: SettingsService = Depends(get_settings_service),
-    _: dict = Depends(AdminAccessBearer()),
-):
-    resp = await contract_settings_service.get_rate_history(contract_settings_uid=contract_settings_uid)
-
-    return ServerRespModel[list[RateHistoryRespModel]](data=resp, message="rate history retrieved!")
-
-
-@admin_router.post(
-    "/create_rate",
-    status_code=status.HTTP_201_CREATED,
-    response_model=ServerRespModel[RateHistoryRespModel],
-)
-async def create_rate(
-    data: CreateContractSettingsRateModel,
-    contract_settings_service: SettingsService = Depends(get_settings_service),
-    token_payload: dict = Depends(AdminAccessBearer()),
-):
-    resp = await contract_settings_service.create_rate(
-        data=data,
-        token_payload=token_payload,
-    )
-
-    return ServerRespModel[RateHistoryRespModel](data=resp, message="rate settings added")

@@ -11,6 +11,7 @@ from app.api.v1.contract.routes import contract_router
 from app.api.v1.engineer.routes import engineer_router
 from app.api.v1.invoice.routes import invoice_router
 from app.api.v1.misc.routes import misc_router
+from app.api.v1.settings.routes import settings_router
 from app.core.exceptions import register_exceptions
 from app.core.logger import setup_logger
 from app.core.middlewares import register_middlewares
@@ -74,6 +75,7 @@ def create_app(*, use_lifespan: bool = True, enable_middlewares: bool = True):
     app.include_router(engineer_router, prefix=f"{api_version}")
     app.include_router(client_router, prefix=f"{api_version}")
     app.include_router(contract_router, prefix=f"{api_version}")
+    app.include_router(settings_router, prefix=f"{api_version}")
     app.include_router(invoice_router, prefix=f"{api_version}")
     app.include_router(misc_router, prefix=f"{api_version}")
 

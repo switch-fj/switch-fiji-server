@@ -1,14 +1,23 @@
+from datetime import datetime
+from decimal import ROUND_HALF_UP, Decimal
+from typing import Optional
 from uuid import UUID
 
 from fastapi import Depends
+from sqlalchemy.orm import selectinload
 from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.core.logger import setup_logger
 from app.database.postgres import get_session
-from app.modules.settings.model import ContractSettings, ContractSettingsRateHistory
+from app.modules.settings.model import (
+    ContractEFLRateHistory,
+    ContractSettings,
+    ContractVATRateHistory,
+)
 from app.modules.settings.schema import (
-    CreateContractSettingsRateModel,
+    CreateContractEFLRateModel,
+    CreateContractVATRateModel,
     UpdateContractSettingsModel,
 )
 from app.shared.schema import CurrencyEnum
@@ -33,18 +42,16 @@ class SettingsRepository:
         Returns:
             The ContractSettings ORM instance, or None if no record exists.
         """
-        statement = select(ContractSettings)
+        statement = select(ContractSettings).options(
+            selectinload(ContractSettings.efl_rate_history),
+            selectinload(ContractSettings.vat_rate_history),
+        )
         result = await self.session.exec(statement)
         contract_settings = result.first()
 
         return contract_settings
 
     async def create_contract_settings(self) -> ContractSettings:
-        """Create and persist the default ContractSettings record.
-
-        Returns:
-            The newly created ContractSettings ORM instance.
-        """
         new_contract_settings = ContractSettings(
             primary_currency=CurrencyEnum.FJD.value,
             asset_performance=False,
@@ -54,9 +61,23 @@ class SettingsRepository:
 
         self.session.add(new_contract_settings)
         await self.session.commit()
-        await self.session.refresh(new_contract_settings)
 
-        return new_contract_settings
+        await self.create_efl_rate(
+            contract_settings_uid=new_contract_settings.uid,
+            data=CreateContractEFLRateModel(
+                efl_standard_rate_kwh=Decimal("0.49").quantize(Decimal("0.01"), rounding=ROUND_HALF_UP),
+                effective_from=datetime.now(),
+            ),
+        )
+        await self.create_vat_rate(
+            contract_settings_uid=new_contract_settings.uid,
+            data=CreateContractVATRateModel(
+                vat_rate=15,
+                effective_from=datetime.now(),
+            ),
+        )
+
+        return await self.get_contract_settings()
 
     async def update_contract_settings(
         self,
@@ -80,7 +101,20 @@ class SettingsRepository:
             return True
 
         for key, value in data_dict.items():
-            setattr(contract_settings, key, value)
+            if key in ["efl_standard_rate_kwh", "vat_rate"]:
+                if key == "vat_rate":
+                    await self.create_vat_rate(
+                        user_uid=user_uid,
+                        data=CreateContractVATRateModel(vat_rate=value, effective_from=datetime.now()),
+                    )
+                else:
+                    await self.create_efl_rate(
+                        user_uid=user_uid,
+                        data=CreateContractEFLRateModel(efl_standard_rate_kwh=value, effective_from=datetime.now()),
+                    )
+
+            else:
+                setattr(contract_settings, key, value)
 
         setattr(contract_settings, "updated_by_uid", user_uid)
         self.session.add(contract_settings)
@@ -89,58 +123,113 @@ class SettingsRepository:
 
         return True
 
-    async def get_current_rate(self) -> ContractSettingsRateHistory | None:
-        """Retrieve the currently active rate (where effective_to is NULL).
+    async def get_current_efl_rate(self) -> ContractEFLRateHistory | None:
+        """Retrieve the currently active efl rate (where effective_to is NULL).
 
         Returns:
-            The active ContractSettingsRateHistory ORM instance, or None if not found.
+            The active ContractEFLRateHistory ORM instance, or None if not found.
         """
-        statement = select(ContractSettingsRateHistory).where(ContractSettingsRateHistory.effective_to.is_(None))
+        statement = select(ContractEFLRateHistory).where(ContractEFLRateHistory.effective_to.is_(None))
         result = await self.session.exec(statement)
         return result.first()
 
-    async def get_rate_history(self, contract_settings_uid: UUID) -> list[ContractSettingsRateHistory]:
-        """Retrieve all rate history entries for a ContractSettings record, newest first.
-
-        Args:
-            contract_settings_uid: The UUID of the ContractSettings record.
+    async def get_efl_rate_history(self) -> list[ContractEFLRateHistory]:
+        """Retrieve all efl rate history entries for a ContractSettings record, newest first.
 
         Returns:
-            A list of ContractSettingsRateHistory ORM instances.
+            A list of ContractEFLRateHistory ORM instances.
         """
-        statement = (
-            select(ContractSettingsRateHistory)
-            .where(ContractSettingsRateHistory.contract_settings_uid == contract_settings_uid)
-            .order_by(ContractSettingsRateHistory.effective_from.desc())
-        )
+        statement = select(ContractEFLRateHistory).order_by(ContractEFLRateHistory.effective_from.desc())
         result = await self.session.exec(statement)
         return result.all()
 
-    async def create_rate(
+    async def create_efl_rate(
         self,
-        user_uid: UUID,
-        data: CreateContractSettingsRateModel,
-    ) -> ContractSettingsRateHistory:
-        """Close off the current active rate and insert a new rate history entry.
+        data: CreateContractEFLRateModel,
+        contract_settings_uid: Optional[UUID] = None,
+        user_uid: Optional[UUID] = None,
+    ) -> ContractEFLRateHistory:
+        """Close off the current active efl rate and insert a new efl rate history entry.
 
         Args:
-            user_uid: The UUID of the user creating the new rate.
-            data: The validated model containing the new rate and effective_from date.
+            contract_settings_uid: optional contract settings uid,
+            user_uid: optional UUID of the user creating the new rate.
+            data: The validated model containing the new efl rate and effective_from date.
 
         Returns:
-            The newly created ContractSettingsRateHistory ORM instance.
+            The newly created ContractVATRateHistory ORM instance.
         """
-        # close off the current active rate
-        current_rate = await self.get_current_rate()
+        current_rate = await self.get_current_efl_rate()
         if current_rate:
             current_rate.effective_to = data.effective_from
             self.session.add(current_rate)
 
-        contract_settings = await self.get_contract_settings()
+        if not contract_settings_uid:
+            settings = await self.get_contract_settings()
+            contract_settings_uid = settings.uid
 
-        new_rate = ContractSettingsRateHistory(
-            contract_settings_uid=contract_settings.uid,
-            efl_standard_rate_kwh=data.efl_standard_rate_kwh,
+        new_rate = ContractEFLRateHistory(
+            contract_settings_uid=contract_settings_uid,
+            efl_standard_rate_kwh=data.efl_standard_rate_kwh.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP),
+            effective_from=data.effective_from,
+            effective_to=None,
+            created_by_uid=user_uid,
+        )
+
+        self.session.add(new_rate)
+        await self.session.commit()
+        await self.session.refresh(new_rate)
+
+        return new_rate
+
+    async def get_current_vat_rate(self) -> ContractVATRateHistory | None:
+        """Retrieve the currently active efl rate (where effective_to is NULL).
+
+        Returns:
+            The active ContractVATRateHistory ORM instance, or None if not found.
+        """
+        statement = select(ContractVATRateHistory).where(ContractVATRateHistory.effective_to.is_(None))
+        result = await self.session.exec(statement)
+        return result.first()
+
+    async def get_vat_rate_history(self) -> list[ContractVATRateHistory]:
+        """Retrieve all vat rate history entries for a ContractSettings record, newest first.
+
+        Returns:
+            A list of ContractVATRateHistory ORM instances.
+        """
+        statement = select(ContractVATRateHistory).order_by(ContractVATRateHistory.effective_from.desc())
+        result = await self.session.exec(statement)
+        return result.all()
+
+    async def create_vat_rate(
+        self,
+        data: CreateContractVATRateModel,
+        contract_settings_uid: Optional[UUID] = None,
+        user_uid: Optional[UUID] = None,
+    ) -> ContractEFLRateHistory:
+        """Close off the current active efl rate and insert a new efl rate history entry.
+
+        Args:
+            contract_settings_uid: optional contract settings uid,
+            user_uid: The UUID of the user creating the new rate.
+            data: The validated model containing the new efl rate and effective_from date.
+
+        Returns:
+            The newly created ContractVATRateHistory ORM instance.
+        """
+        # close off the current active efl rate
+        current_rate = await self.get_current_vat_rate()
+        if current_rate:
+            current_rate.effective_to = data.effective_from
+            self.session.add(current_rate)
+
+        if not contract_settings_uid:
+            settings = await self.get_contract_settings()
+            contract_settings_uid = settings.uid
+
+        new_rate = ContractVATRateHistory(
+            contract_settings_uid=contract_settings_uid,
             vat_rate=data.vat_rate,
             effective_from=data.effective_from,
             effective_to=None,

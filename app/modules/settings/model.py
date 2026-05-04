@@ -9,13 +9,37 @@ from app.shared.model import MyAbstractSQLModel
 from app.shared.schema import CurrencyEnum, DateFormatEnum, TimeFormatEnum
 
 
-class ContractSettingsRateHistory(MyAbstractSQLModel, table=True):
-    """Tracks historical changes to EFL rate and VAT rate."""
+class ContractEFLRateHistory(MyAbstractSQLModel, table=True):
+    """Tracks historical changes to EFL rate"""
 
-    __tablename__ = "contract_settings_rate_history"
+    __tablename__ = "contract_efl_rate_history"
 
     contract_settings_uid: UUID = Field(foreign_key="contract_settings.uid", nullable=False)
     efl_standard_rate_kwh: Optional[Decimal] = Field(nullable=True, default=None)
+    effective_from: datetime = Field(
+        nullable=False,
+        sa_type=DateTime(timezone=True),
+    )
+    effective_to: Optional[datetime] = Field(
+        nullable=True,
+        default=None,
+        sa_column_kwargs={"nullable": True},
+        sa_type=DateTime(timezone=True),
+    )
+    created_by_uid: Optional[UUID] = Field(foreign_key="users.uid", nullable=True, default=None)
+
+    settings: "ContractSettings" = Relationship(
+        back_populates="efl_rate_history",
+        sa_relationship_kwargs={"foreign_keys": "[ContractEFLRateHistory.contract_settings_uid]"},
+    )
+
+
+class ContractVATRateHistory(MyAbstractSQLModel, table=True):
+    """Tracks historical changes to VAT rate."""
+
+    __tablename__ = "contract_vat_rate_history"
+
+    contract_settings_uid: UUID = Field(foreign_key="contract_settings.uid", nullable=False)
     vat_rate: Optional[int] = Field(nullable=True, default=None)
     effective_from: datetime = Field(
         nullable=False,
@@ -30,8 +54,8 @@ class ContractSettingsRateHistory(MyAbstractSQLModel, table=True):
     created_by_uid: Optional[UUID] = Field(foreign_key="users.uid", nullable=True, default=None)
 
     settings: "ContractSettings" = Relationship(
-        back_populates="rate_history",
-        sa_relationship_kwargs={"foreign_keys": "[ContractSettingsRateHistory.contract_settings_uid]"},
+        back_populates="vat_rate_history",
+        sa_relationship_kwargs={"foreign_keys": "[ContractVATRateHistory.contract_settings_uid]"},
     )
 
 
@@ -55,16 +79,17 @@ class ContractSettings(MyAbstractSQLModel, table=True):
     updated_by_uid: Optional[UUID] = Field(foreign_key="users.uid", nullable=True, default=None)
 
     # Relationships
-    rate_history: Optional[list["ContractSettingsRateHistory"]] = Relationship(back_populates="settings")
+    vat_rate_history: Optional[list["ContractVATRateHistory"]] = Relationship(back_populates="settings")
+    efl_rate_history: Optional[list["ContractEFLRateHistory"]] = Relationship(back_populates="settings")
 
     @property
     def efl_standard_rate_kwh(self) -> Decimal | None:
         """Return the active EFL rate or None if no active rate exists."""
-        active = next((r for r in self.rate_history if r.effective_to is None), None)
+        active = next((r for r in self.efl_rate_history if r.effective_to is None), None)
         return active.efl_standard_rate_kwh if active else None
 
     @property
     def vat_rate(self) -> int | None:
         """Return the active VAT rate or None if no active rate exists."""
-        active = next((r for r in self.rate_history if r.effective_to is None), None)
+        active = next((r for r in self.vat_rate_history if r.effective_to is None), None)
         return active.vat_rate if active else None
