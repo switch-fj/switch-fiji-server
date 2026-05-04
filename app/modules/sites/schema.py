@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import Optional
 from uuid import UUID
 
@@ -33,8 +34,22 @@ class SiteRespModel(DBModel):
     site_name: Optional[str]
     gateway_id: Optional[str]
     firmware: Optional[str]
+    first_seen_at: Optional[datetime]
     device_count: Optional[int]
     contract: Optional[ContractRespModel]
+
+    @field_serializer("first_seen_at")
+    def serialize_first_seen_at_dt(self, value: datetime):
+        """Serialise datetime fields to ISO-8601 strings.
+
+        Args:
+            value: The datetime value to serialise.
+
+        Returns:
+            ISO-8601 formatted string, or None if value is falsy.
+        """
+        if value:
+            return value.isoformat()
 
     @field_serializer("client_uid")
     def serialize_client_uid(self, value: UUID):

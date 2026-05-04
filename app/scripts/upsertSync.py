@@ -1,8 +1,10 @@
 import json
 import os
+from datetime import datetime, timezone
 
 import psycopg2
 from boto3.dynamodb.types import TypeDeserializer
+from dateutil.relativedelta import relativedelta
 
 _conn = None
 _deser = TypeDeserializer()
@@ -29,23 +31,40 @@ def deserialize(dynamo_item: dict) -> dict:
 
 
 def extract_payload(raw: dict) -> dict:
-    """
-    Normalize the flat DynamoDB payload into a consistent
-    internal structure the upsert functions can rely on.
-    Handles the renamed and flattened fields from the IoT engineer.
-    """
+    is_nested_format = "client" in raw and isinstance(raw.get("client"), dict)
+
+    if is_nested_format:
+        client = raw["client"]
+        gateway = raw["gateway"]
+        return {
+            "client_id": client.get("client_id"),
+            "client_name": client.get("client_name"),
+            "client_email": client.get("client_email"),
+            "site_id": client.get("site_id"),
+            "gateway_id": gateway.get("gateway_id"),
+            "firmware": gateway.get("firmware"),
+            "ts_epoch_ms": raw.get("timestamp", {}).get("ts_epoch_ms") or raw.get("ts_epoch_ms"),
+            "meters": raw.get("meters", []),
+            "inverters": raw.get("inverters", []),
+            "ac_units": raw.get("ac_units", []),
+            "irradiance_meters": raw.get("irradiance_meters", []),
+            "generator": raw.get("generator"),
+        }
+
+    # flat format
     return {
         "client_id": raw.get("client_ID") or raw.get("client_id"),
-        "client_name": raw["client_name"],
-        "client_email": raw["client_email"],
-        "site_id": raw["site_id"],
-        "gateway_id": raw["gateway_id"],
+        "client_name": raw.get("client_name"),
+        "client_email": raw.get("client_email"),
+        "site_id": raw.get("site_id"),
+        "gateway_id": raw.get("gateway_id"),
         "firmware": raw.get("fw") or raw.get("firmware"),
-        "ts_epoch_ms": raw["ts_epoch_ms"],
+        "ts_epoch_ms": raw.get("ts_epoch_ms"),
         "meters": raw.get("meters", []),
         "inverters": raw.get("inverters", []),
         "ac_units": raw.get("ac_units", []),
         "irradiance_meters": raw.get("irradiance_meters", []),
+        "generator": raw.get("generator"),
     }
 
 
@@ -105,8 +124,7 @@ def upsert_devices(conn, payload, site_uid: str):
                     """
                     INSERT INTO devices (site_uid, slave_id, device_type)
                     VALUES (%(site_uid)s, %(slave_id)s, %(device_type)s)
-                    ON CONFLICT (site_uid, slave_id, device_type) DO UPDATE
-                        SET device_type = EXCLUDED.device_type
+                    ON CONFLICT (site_uid, slave_id, device_type) DO NOTHING
                 """,
                     {
                         "site_uid": site_uid,
@@ -116,8 +134,79 @@ def upsert_devices(conn, payload, site_uid: str):
                 )
 
 
+def try_lock_contract_dates(conn, site_uid: str, first_seen_at_ms: int):
+    """
+    1. Sets site.first_seen_at if not already set.
+    2. If a contract exists for this site with no actual dates,
+       locks actual_commissioning_at and actual_end_at.
+    """
+    first_seen_at = datetime.fromtimestamp(first_seen_at_ms / 1000, tz=timezone.utc)
+
+    with conn.cursor() as cur:
+        # 1. lock first_seen_at on site — only on first push
+        cur.execute(
+            """
+                UPDATE sites
+                SET first_seen_at = COALESCE(first_seen_at, %(first_seen_at)s)
+                WHERE uid = %(site_uid)s
+            """,
+            {
+                "first_seen_at": first_seen_at,
+                "site_uid": site_uid,
+            },
+        )
+
+        # 2. check if contract exists with no actual dates set
+        cur.execute(
+            """
+            SELECT
+                cd.uid,
+                cd.term_years
+            FROM contract_details cd
+            JOIN contracts c ON c.uid = cd.contract_uid
+            WHERE c.site_uid = %(site_uid)s
+              AND cd.actual_commissioning_at IS NULL
+            LIMIT 1
+        """,
+            {"site_uid": site_uid},
+        )
+        row = cur.fetchone()
+
+        if not row:
+            return  # no pending contract — nothing to do
+
+        details_uid = row[0]
+        term_years = row[1]
+
+        actual_end_at = None
+        if term_years:
+            actual_end_at = first_seen_at + relativedelta(years=term_years)
+
+        # 3. lock actual dates on contract — only once
+        cur.execute(
+            """
+            UPDATE contract_details
+            SET actual_commissioning_at = %(actual_commissioning_at)s,
+                actual_end_at = %(actual_end_at)s
+            WHERE uid = %(details_uid)s
+        """,
+            {
+                "actual_commissioning_at": first_seen_at,
+                "actual_end_at": actual_end_at,
+                "details_uid": details_uid,
+            },
+        )
+
+
 def lambda_handler(event, context):
-    conn = get_conn()
+    print(f"[INFO] Connecting to DB host={os.environ.get('DB_HOST')} port={os.environ.get('DB_PORT')}")
+
+    try:
+        conn = get_conn()
+        print("[INFO] DB connection successful")
+    except Exception as e:
+        print(f"[ERROR] DB connection failed: {e}")
+        raise
 
     for record in event["Records"]:
         if record["eventName"] != "INSERT":
@@ -134,8 +223,16 @@ def lambda_handler(event, context):
 
         try:
             client_uid = upsert_client(conn, payload)
+            print(f"[INFO] Client upserted uid={client_uid}")
             site_uid = upsert_site(conn, payload, client_uid)
+            print(f"[INFO] Site upserted uid={site_uid}")
             upsert_devices(conn, payload, site_uid)
+            print("[INFO] Devices upserted")
+            try_lock_contract_dates(
+                conn,
+                site_uid=site_uid,
+                first_seen_at_ms=int(payload["ts_epoch_ms"]),
+            )
             conn.commit()
             print(f"[INFO] Committed — client_uid={client_uid} site_uid={site_uid}")
         except Exception as e:

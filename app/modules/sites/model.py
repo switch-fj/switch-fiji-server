@@ -1,7 +1,8 @@
+from datetime import datetime
 from typing import TYPE_CHECKING, Optional
 from uuid import UUID
 
-from sqlalchemy import Column, Identity, Integer, String
+from sqlalchemy import Column, DateTime, Identity, Integer, String
 from sqlmodel import Field, Relationship, UniqueConstraint
 
 from app.shared.model import MyAbstractSQLModel
@@ -54,6 +55,12 @@ class Site(MyAbstractSQLModel, table=True):
             default=None,
             nullable=True,
         )
+    )
+    first_seen_at: Optional[datetime] = Field(
+        default=None,
+        description="Timestamp of first valid ESP32 data ingestion for this site.",
+        sa_type=DateTime(timezone=True),
+        sa_column_kwargs={"nullable": True},
     )
 
     # Relationships
