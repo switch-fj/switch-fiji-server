@@ -33,6 +33,22 @@ class InvoiceLineItemEnum(StrEnum):
     MONTHLY_MAINTENANCE_FEE = "Monthly Maintenance Fee"
 
 
+class BaseInvoiceLineItemModel(BaseModel):
+    description: str = Field(...)
+    energy_kwh: Optional[FourDP] = Field(default=None)
+    tariff_rate: Optional[FourDP] = Field(default=None)
+    tariff_period: Optional[int] = Field(default=None)
+    tariff_slot: Optional[str] = Field(default=None)
+    amount: FourDP = Field(...)
+
+
+class BaseInvoiceMeterDataModel(BaseModel):
+    device_uid: Optional[UUID] = Field(default=None)
+    label: str = Field(...)
+    period_start_reading: FourDP = Field(...)
+    period_end_reading: FourDP = Field(...)
+
+
 class CreateInvoiceModel(BaseModel):
     """Request model for creating a new invoice record."""
 
@@ -43,26 +59,16 @@ class CreateInvoiceModel(BaseModel):
     energy_mix: Optional[str] = Field(default=None)
 
 
-class CreateInvoiceLineItemModel(BaseModel):
+class CreateInvoiceLineItemModel(BaseInvoiceLineItemModel):
     """Request model for creating a single invoice line item."""
 
     invoice_uid: UUID = Field(...)
-    description: str = Field(...)
-    energy_kwh: Optional[FourDP] = Field(default=None)
-    tariff_rate: Optional[FourDP] = Field(default=None)
-    tariff_period: Optional[int] = Field(default=None)
-    tariff_slot: Optional[str] = Field(default=None)
-    amount: FourDP = Field(...)
 
 
-class CreateInvoiceMeterDataModel(BaseModel):
+class CreateInvoiceMeterDataModel(BaseInvoiceMeterDataModel):
     """Request model for creating an invoice meter data record."""
 
     invoice_uid: UUID = Field(...)
-    device_uid: Optional[UUID] = Field(default=None)
-    label: str = Field(...)
-    period_start_reading: FourDP = Field(...)
-    period_end_reading: FourDP = Field(...)
 
 
 class CreateInvoiceHistoryModel(BaseModel):
@@ -73,6 +79,18 @@ class CreateInvoiceHistoryModel(BaseModel):
     sent_at: datetime = Field(...)
     was_successful: bool = Field(...)
     failure_reason: Optional[str] = Field(default=None)
+
+
+class CreateInvoiceSnapshotLineItemModel(BaseInvoiceLineItemModel):
+    """Request model for creating a single invoice snapshot line item."""
+
+    snapshot_uid: UUID = Field(...)
+
+
+class CreateInvoiceSnapshotMeterDataModel(BaseInvoiceMeterDataModel):
+    """Request model for creating an invoice snapshot meter data record."""
+
+    snapshot_uid: UUID = Field(...)
 
 
 class InvoiceRespModel(DBModel):
@@ -232,8 +250,8 @@ class InvoiceDetailedRespModel(InvoiceRespModel):
 class InvoiceDetailsDict(BaseModel):
     subtotal: Decimal
     vat_rate: Decimal
-    invoice_line_items: list[CreateInvoiceLineItemModel]
-    invoice_meter_data: list[CreateInvoiceMeterDataModel]
+    invoice_line_items: list[BaseInvoiceLineItemModel]
+    invoice_meter_data: list[BaseInvoiceMeterDataModel]
     energy_mix: str
 
     model_config = ConfigDict(from_attributes=True)

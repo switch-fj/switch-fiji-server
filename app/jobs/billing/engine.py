@@ -23,8 +23,8 @@ from app.modules.invoices.model import (
 from app.modules.invoices.pdf import InvoicePDF
 from app.modules.invoices.repository import InvoiceRepository
 from app.modules.invoices.schema import (
-    CreateInvoiceLineItemModel,
-    CreateInvoiceMeterDataModel,
+    BaseInvoiceLineItemModel,
+    BaseInvoiceMeterDataModel,
     CreateInvoiceModel,
     InvoiceDetailsDict,
     InvoiceLineItemEnum,
@@ -193,7 +193,6 @@ class BillingEngine:
         contract_settings: ContractSettings,
         active_tariff_slots: list[dict],
         readings: tuple[dict, dict],
-        new_invoice: Invoice,
     ):
         period_start_data, period_end_data = readings
 
@@ -220,20 +219,18 @@ class BillingEngine:
         )
         energy_mix = json.dumps({"solar": float(solar_energy_kwh), "gen": float(gen_energy_kwh)})
 
-        create_invoice_meter_data: list[CreateInvoiceMeterDataModel] = []
+        create_invoice_meter_data: list[BaseInvoiceMeterDataModel] = []
         for device in devices:
             if device.slave_id == load_meter.get("slave_id"):
                 create_invoice_meter_data.extend(
                     [
-                        CreateInvoiceMeterDataModel(
-                            invoice_uid=new_invoice.uid,
+                        BaseInvoiceMeterDataModel(
                             device_uid=device.uid,
                             label=InvoiceMeterLabelEnum.SITE_METER_1_DAY.value,
                             period_start_reading=Decimal(period_start_meter[0][0]),
                             period_end_reading=Decimal(period_end_meter[0][0]),
                         ),
-                        CreateInvoiceMeterDataModel(
-                            invoice_uid=new_invoice.uid,
+                        BaseInvoiceMeterDataModel(
                             device_uid=device.uid,
                             label=InvoiceMeterLabelEnum.SITE_METER_1_NIGHT.value,
                             period_start_reading=Decimal(period_start_meter[0][1]),
@@ -245,15 +242,13 @@ class BillingEngine:
             if device.slave_id == gen_meter.get("slave_id"):
                 create_invoice_meter_data.extend(
                     [
-                        CreateInvoiceMeterDataModel(
-                            invoice_uid=new_invoice.uid,
+                        BaseInvoiceMeterDataModel(
                             device_uid=device.uid,
                             label=InvoiceMeterLabelEnum.GEN_METER_1_DAY.value,
                             period_start_reading=Decimal(period_start_meter[1][0]),
                             period_end_reading=Decimal(period_end_meter[1][0]),
                         ),
-                        CreateInvoiceMeterDataModel(
-                            invoice_uid=new_invoice.uid,
+                        BaseInvoiceMeterDataModel(
                             device_uid=device.uid,
                             label=InvoiceMeterLabelEnum.GEN_METER_1_NIGHT.value,
                             period_start_reading=Decimal(period_start_meter[1][1]),
@@ -263,8 +258,7 @@ class BillingEngine:
                 )
 
         create_invoice_line_items = [
-            CreateInvoiceLineItemModel(
-                invoice_uid=new_invoice.uid,
+            BaseInvoiceLineItemModel(
                 description=InvoiceLineItemEnum.ON_SOLAR_ENERGY_SUPPLIED,
                 energy_kwh=Decimal(on_solar_energy_kwh),
                 tariff_rate=Decimal(active_tariff_slots[0]["rate"]),
@@ -272,8 +266,7 @@ class BillingEngine:
                 tariff_period=int(active_tariff_slots[0]["period_number"]),
                 amount=Decimal(on_solar_energy_amount),
             ),
-            CreateInvoiceLineItemModel(
-                invoice_uid=new_invoice.uid,
+            BaseInvoiceLineItemModel(
                 description=InvoiceLineItemEnum.OFF_SOLAR_ENERGY_SUPPLIED,
                 energy_kwh=Decimal(off_solar_energy_kwh),
                 tariff_rate=Decimal(active_tariff_slots[1]["rate"]),

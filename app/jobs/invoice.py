@@ -22,7 +22,6 @@ from app.modules.invoices.model import (
     InvoiceSnapshotLineItem,
     InvoiceSnapshotMeterData,
 )
-from app.modules.invoices.repository import InvoiceRepository
 from app.modules.invoices.schema import CreateInvoiceHistoryModel
 from app.modules.settings.model import ContractSettings
 
@@ -129,7 +128,6 @@ def compute_single_contract_bill(self, contract_uid, gateway_id, site_uid):
             if contract.contract_type == ContractTypeEnum.PPA.value:
                 if contract.system_mode == ContractSystemModeEnum.OFF_GRID.value:
                     create_invoice_dict, readings = BillingEngine.compute_ppa_off_grid_invoice(
-                        session=session,
                         contract=contract,
                         devices=devices,
                         contract_settings=contract_settings,
@@ -138,10 +136,6 @@ def compute_single_contract_bill(self, contract_uid, gateway_id, site_uid):
                         period_end=period_end,
                         is_billing_date=is_billing_date,
                     )
-
-                    new_invoice = Invoice(**create_invoice_dict)
-                    session.add(new_invoice)
-                    session.flush()
 
                     invoice_details_dict: InvoiceDetailsDict = BillingEngine.build_invoice_details(
                         devices=devices,
@@ -157,27 +151,26 @@ def compute_single_contract_bill(self, contract_uid, gateway_id, site_uid):
                     invoice_line_items = invoice_details_dict.invoice_line_items
 
                     if is_billing_date:
-                        invoice = Invoice(
-                            contract_uid=contract.uid,
-                            invoice_ref=InvoiceRepository._build_invoice_ref(),
-                            period_start_at=period_start,
-                            period_end_at=period_end,
-                            subtotal=subtotal,
-                            vat_rate=vat_rate,
-                            energy_mix=energy_mix,
-                        )
-                        session.add(invoice)
+                        new_invoice = Invoice(**create_invoice_dict)
+                        session.add(new_invoice)
                         session.flush()
 
-                        invoice_meter_data_list = [InvoiceMeterData(**d.model_dump()) for d in invoice_meter_data]
-                        invoice_line_items_list = [InvoiceLineItem(**d.model_dump()) for d in invoice_line_items]
-
-                        session.add_all(invoice_meter_data_list)
-                        session.add_all(invoice_line_items_list)
+                        session.add_all(
+                            [
+                                InvoiceMeterData(**{**d.model_dump(), "invoice_uid": new_invoice.uid})
+                                for d in invoice_meter_data
+                            ]
+                        )
+                        session.add_all(
+                            [
+                                InvoiceLineItem(**{**d.model_dump(), "invoice_uid": new_invoice.uid})
+                                for d in invoice_line_items
+                            ]
+                        )
                         session.add(
                             InvoiceHistory(
                                 **CreateInvoiceHistoryModel(
-                                    invoice_uid=invoice.uid,
+                                    invoice_uid=new_invoice.uid,
                                     sent_to=contract.client.client_email,
                                     sent_at=datetime.now(timezone.utc),
                                     was_successful=True,
@@ -186,9 +179,9 @@ def compute_single_contract_bill(self, contract_uid, gateway_id, site_uid):
                         )
                         session.commit()
 
-                        result = (invoice, invoice_meter_data, invoice_line_items)
+                        result = (new_invoice, invoice_meter_data, invoice_line_items)
 
-                    else:
+                    elif now_local.hour == 0:  # daily snapshot — aligns with hourly beat at local midnight
                         snapshot = InvoiceSnapshot(
                             contract_uid=contract.uid,
                             period_start_at=period_start,
@@ -200,15 +193,28 @@ def compute_single_contract_bill(self, contract_uid, gateway_id, site_uid):
                         session.add(snapshot)
                         session.flush()
 
-                        invoice_meter_data_list = [
-                            InvoiceSnapshotMeterData(**d.model_dump()) for d in invoice_meter_data
-                        ]
-                        invoice_line_items_list = [
-                            InvoiceSnapshotLineItem(**d.model_dump()) for d in invoice_line_items
-                        ]
-
-                        session.add_all(invoice_meter_data_list)
-                        session.add_all(invoice_line_items_list)
+                        session.add_all(
+                            [
+                                InvoiceSnapshotMeterData(
+                                    **{
+                                        **d.model_dump(),
+                                        "snapshot_uid": snapshot.uid,
+                                    }
+                                )
+                                for d in invoice_meter_data
+                            ]
+                        )
+                        session.add_all(
+                            [
+                                InvoiceSnapshotLineItem(
+                                    **{
+                                        **d.model_dump(),
+                                        "snapshot_uid": snapshot.uid,
+                                    }
+                                )
+                                for d in invoice_line_items
+                            ]
+                        )
                         session.commit()
 
             if result is None:
