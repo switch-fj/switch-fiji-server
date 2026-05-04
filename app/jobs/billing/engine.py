@@ -11,6 +11,7 @@ from app.database.celery import celery_dynamo_client
 from app.modules.contracts.model import Contract
 from app.modules.contracts.schema import (
     ContractBillingFrequencyEnum,
+    TariffIndexedRuleTypeEnum,
     TariffSlotTypeEnum,
 )
 from app.modules.devices.model import Device
@@ -156,7 +157,7 @@ class BillingEngine:
         on_solar_energy_kwh,
         off_solar_energy_kwh,
         efl_rate_kwh: Decimal,
-        vat_rate: int,
+        tariff_indexed_rule_type: TariffIndexedRuleTypeEnum | None,
         active_tariff: list[dict],
     ):
         efl_rate_kwh = int(efl_rate_kwh)
@@ -170,28 +171,32 @@ class BillingEngine:
             day_rate = float(day_tariff["rate"])
         else:
             tariff_rate = float(day_tariff["rate"])
-            day_rate = 100 - tariff_rate if tariff_rate < 0 else 100 + tariff_rate
-            day_rate = round(efl_rate_kwh * (day_rate / 100), 2)
+            if tariff_indexed_rule_type == TariffIndexedRuleTypeEnum.EFL_LINKED:
+                day_rate = 100 - tariff_rate if tariff_rate < 0 else 100 + tariff_rate
+                day_rate = round(efl_rate_kwh * (day_rate / 100), 2)
 
         if night_tariff["slot_type"] == TariffSlotTypeEnum.FIXED:
             night_rate = float(night_tariff["rate"])
         else:
             tariff_rate = float(night_tariff["rate"])
-            night_rate = 100 - tariff_rate if tariff_rate < 0 else 100 + tariff_rate
-            night_rate = round(efl_rate_kwh * (night_rate / 100), 2)
+
+            if tariff_indexed_rule_type == TariffIndexedRuleTypeEnum.EFL_LINKED:
+                night_rate = 100 - tariff_rate if tariff_rate < 0 else 100 + tariff_rate
+                night_rate = round(efl_rate_kwh * (night_rate / 100), 2)
 
         on_solar_energy_amount = on_solar_energy_kwh * day_rate
         off_solar_energy_amount = off_solar_energy_kwh * night_rate
 
         subtotal = on_solar_energy_amount + off_solar_energy_amount
 
-        return (subtotal, vat_rate, on_solar_energy_amount, off_solar_energy_amount)
+        return (subtotal, on_solar_energy_amount, off_solar_energy_amount)
 
     @staticmethod
     def build_invoice_details(
         devices: list[Device],
         contract_settings: ContractSettings,
         active_tariff_slots: list[dict],
+        tariff_indexed_rule_type: TariffIndexedRuleTypeEnum | None,
         readings: tuple[dict, dict],
     ):
         period_start_data, period_end_data = readings
@@ -208,12 +213,13 @@ class BillingEngine:
         )
         on_solar_energy_kwh, off_solar_energy_kwh = BillingEngine.compute_ppa_off_grid_line_items(usage=usage)
         solar_energy_kwh, gen_energy_kwh = BillingEngine.compute_ppa_off_grid_energy_mix(usage=usage)
-        subtotal, vat_rate, on_solar_energy_amount, off_solar_energy_amount = (
+        subtotal, on_solar_energy_amount, off_solar_energy_amount = (
             BillingEngine.compute_ppa_off_grid_subtotal_and_vat_rate(
                 on_solar_energy_kwh=on_solar_energy_kwh,
                 off_solar_energy_kwh=off_solar_energy_kwh,
                 efl_rate_kwh=contract_settings.efl_standard_rate_kwh,
                 vat_rate=contract_settings.vat_rate,
+                tariff_indexed_rule_type=tariff_indexed_rule_type,
                 active_tariff=active_tariff_slots,
             )
         )
@@ -278,7 +284,7 @@ class BillingEngine:
 
         invoice_details_dict = InvoiceDetailsDict(
             subtotal=subtotal,
-            vat_rate=vat_rate,
+            vat_rate=contract_settings.vat_rate,
             invoice_line_items=create_invoice_line_items,
             invoice_meter_data=create_invoice_meter_data,
             energy_mix=energy_mix,
@@ -315,7 +321,7 @@ class BillingEngine:
         )
         on_solar_energy_kwh, off_solar_energy_kwh = BillingEngine.compute_ppa_off_grid_line_items(usage=usage)
         solar_energy_kwh, gen_energy_kwh = BillingEngine.compute_ppa_off_grid_energy_mix(usage=usage)
-        subtotal, vat_rate, _, _ = BillingEngine.compute_ppa_off_grid_subtotal_and_vat_rate(
+        subtotal, _, _, _ = BillingEngine.compute_ppa_off_grid_subtotal_and_vat_rate(
             on_solar_energy_kwh=on_solar_energy_kwh,
             off_solar_energy_kwh=off_solar_energy_kwh,
             efl_rate_kwh=contract_settings.efl_standard_rate_kwh,
@@ -328,7 +334,7 @@ class BillingEngine:
             period_start_at=period_start,
             period_end_at=period_end,
             subtotal=subtotal,
-            vat_rate=vat_rate,
+            vat_rate=contract_settings.vat_rate,
             energy_mix=energy_mix,
         ).model_dump()
         create_invoice_dict["contract_uid"] = contract.uid

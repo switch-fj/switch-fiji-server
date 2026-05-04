@@ -91,11 +91,15 @@ def compute_single_contract_bill(self, contract_uid, gateway_id, site_uid):
             )
 
             contract_settings = (
-                session.execute(select(ContractSettings).options(selectinload(ContractSettings.rate_history)))
+                session.execute(
+                    select(ContractSettings).options(
+                        selectinload(ContractSettings.efl_rate_history),
+                        selectinload(ContractSettings.vat_rate_history),
+                    )
+                )
                 .scalars()
                 .first()
             )
-            contract_settings
 
             if not contract or not devices:
                 return
@@ -141,6 +145,7 @@ def compute_single_contract_bill(self, contract_uid, gateway_id, site_uid):
                         devices=devices,
                         contract_settings=contract_settings,
                         active_tariff_slots=contract.details.active_tariff_slots,
+                        tariff_index_rule_type=contract.details.tariff_indexed_rule_type,
                         readings=readings,
                     )
 
