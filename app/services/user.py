@@ -10,7 +10,6 @@ from app.core.exceptions import (
     NotFound,
     RefreshTokenExpired,
     RefreshTokenRequired,
-    TokenExpired,
     UserEmailExists,
     WrongCredentials,
 )
@@ -156,10 +155,13 @@ class UserService:
 
         await Authentication.decode_passcode(otp=data.otp, email=data.email)
         token_identity_model = generate_token_identity_model(user)
-        access_token = await Authentication.create_token(user_data=token_identity_model)
+        (access_token, _), (_, jti) = await asyncio.gather(
+            Authentication.create_token(user_data=token_identity_model),
+            Authentication.create_token(user_data=token_identity_model, refresh=True),
+        )
 
         return (
-            token_identity_model,
+            jti,
             TokenModel(
                 access_token=access_token,
                 is_email_verified=user.is_email_verified,
@@ -236,9 +238,6 @@ class UserService:
             token_identity = generate_token_identity_model(user)
             new_access_token, _ = await Authentication.create_token(user_data=token_identity)
             return (new_access_token, user.is_email_verified, auth_type)
-
-        except RefreshTokenRequired, RefreshTokenExpired, InvalidToken, TokenExpired:
-            raise
         except Exception as e:
             logger.error(f"Error generating new access token: {e}")
             raise

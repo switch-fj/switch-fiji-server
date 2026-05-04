@@ -87,18 +87,23 @@ async def verify_login_code(
     data: VerifyLoginModel = Body(...),
     user_service: UserService = Depends(get_user_service),
 ):
-    token_identity_model, token_model = await user_service.verify_login_code(data=data)
+    refresh_jti, token_model = await user_service.verify_login_code(data=data)
+    access_token = token_model.access_token
+
+    message = ""
+
+    if access_token:
+        message = "user logged in successfully!"
+    else:
+        message = "user login otp sent to inbox."
+
     response = JSONResponse(
         status_code=status.HTTP_200_OK,
-        content=ServerRespModel[TokenModel](
-            data=token_model,
-            message="User verified!",
-        ).model_dump(),
+        content=ServerRespModel[TokenModel](data=token_model, message=message).model_dump(),
     )
 
-    if token_identity_model:
-        _, jti = await Authentication.create_token(user_data=token_identity_model, refresh=True)
-        Authentication.set_refresh_token_cookie(response=response, jti=jti)
+    if refresh_jti:
+        Authentication.set_refresh_token_cookie(response=response, jti=refresh_jti)
 
     return response
 
