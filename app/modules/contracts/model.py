@@ -118,9 +118,21 @@ class ContractDetails(MyAbstractSQLModel, table=True):
     minimum_spend: Optional[float] = Field(nullable=True)
 
     # ppa (off-grid) specific
-    tariff_slots: Optional[str] = Field(nullable=True)
+    tariff_slots: Optional[str] = Field(
+        nullable=True,
+        description="""
+            This tariff slot applies to only ppa off-grid.
+        """,
+    )
 
     # ppa (on-grid) specific
+    with_battery: Optional[bool] = Field(nullable=True, default=None)
+    ppa_on_grid_tariff_slots: Optional[str] = Field(
+        nullable=True,
+        description="""
+            This tariff applies to only ppa on-grid. Used for both ppa on-grid with and without battery
+        """,
+    )
     estimated_utility: Optional[int] = Field(nullable=True)
     grid_meter_offset_pair: Optional[str] = Field(
         nullable=True,
