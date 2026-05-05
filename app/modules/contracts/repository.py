@@ -203,10 +203,10 @@ class ContractRepository:
         try:
             data_dict = data.model_dump(exclude_none=True)
             settings_repo = SettingsRepository(session=self.session)
-            current_rate = await settings_repo.get_current_rate()
+            current_rate = await settings_repo.get_current_efl_rate()
 
             if current_rate:
-                data_dict.__setattr__("efl_standard_rate_kwh", current_rate.efl_standard_rate_kwh)
+                data_dict["efl_standard_rate_kwh"] = current_rate.efl_standard_rate_kwh
             if data.tariffs and data.tariff_periods:
                 data_dict.pop("tariffs", None)
 
