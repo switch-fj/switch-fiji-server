@@ -173,7 +173,7 @@ class CreateContractDetailsModel(BaseModel):
     commissioned_at: datetime = Field(..., title="expected commission date")
     end_at: datetime = Field(..., title="expected contract end date")
     actual_commissioned_at: Optional[datetime] = Field(default=None, title="Actual contract commission date")
-    actual_end_at: Optional[datetime] = Field(..., title="Actual Contract end date")
+    actual_end_at: Optional[datetime] = Field(default=None, title="Actual Contract end date")
 
     # system mode (On-grid) specific
     system_size_kwp: Optional[float] = Field(default=None, title="System size kwp")

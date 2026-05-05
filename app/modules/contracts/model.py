@@ -106,7 +106,6 @@ class ContractDetails(MyAbstractSQLModel, table=True):
 
     # ppa specific
     tariff_periods: Optional[int] = Field(nullable=True)  # 1, 2, 3, 4
-    tariff_slots: Optional[str] = Field(nullable=True)
     tariff_indexed_rule_type: Optional[TariffIndexedRuleTypeEnum] = Field(
         sa_column=Column(
             String,
@@ -117,6 +116,9 @@ class ContractDetails(MyAbstractSQLModel, table=True):
     monthly_baseline_consumption_kwh: Optional[float] = Field(nullable=True)
     minimum_consumption_monthly_kwh: Optional[float] = Field(nullable=True)
     minimum_spend: Optional[float] = Field(nullable=True)
+
+    # ppa (off-grid) specific
+    tariff_slots: Optional[str] = Field(nullable=True)
 
     # ppa (on-grid) specific
     estimated_utility: Optional[int] = Field(nullable=True)
