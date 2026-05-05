@@ -126,12 +126,10 @@ class ContractDetails(MyAbstractSQLModel, table=True):
     )
 
     # ppa (on-grid) specific
-    with_battery: Optional[bool] = Field(nullable=True, default=None)
-    ppa_on_grid_tariff_slots: Optional[str] = Field(
+    with_battery: Optional[str] = Field(nullable=True, default="no")
+    ppa_on_grid_no_battery_tariffs: Optional[str] = Field(
         nullable=True,
-        description="""
-            This tariff applies to only ppa on-grid. Used for both ppa on-grid with and without battery
-        """,
+        description="Tariff slots for PPA on-grid without battery (Utility/Solar structure).",
     )
     estimated_utility: Optional[int] = Field(nullable=True)
     grid_meter_offset_pair: Optional[str] = Field(
@@ -149,7 +147,8 @@ class ContractDetails(MyAbstractSQLModel, table=True):
     # system mode (On-grid) specific
     system_size_kwp: Optional[float] = Field(nullable=True)
     guaranteed_production_kwh_per_kwp: Optional[float] = Field(nullable=True)
-    grid_meter_reading_at_commissioning: Optional[float] = Field(nullable=True)
+    grid_meter_reading_at_commissioning_kwh: Optional[float] = Field(nullable=True)
+    grid_meter_reading_at_commissioning_kvar: Optional[float] = Field(nullable=True)
 
     # Lease (on-grid) specific
     equipment_lease_amount: Optional[Decimal] = Field(default=None, nullable=True)
