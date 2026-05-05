@@ -29,8 +29,10 @@ class ContractService:
             if not data.guaranteed_production_kwh_per_kwp:
                 raise BadRequest("Guaranteed production(kwh/kwp) is required for all on-grid system mode.")
 
-            if not data.grid_meter_reading_at_commissioning:
-                raise BadRequest("Grid meter reading at comissioning is required for all on-grid system mode.")
+            if not data.grid_meter_reading_at_commissioning_kwh:
+                raise BadRequest("Grid meter reading at comissioning KWH is required for all on-grid system mode.")
+            if not data.grid_meter_reading_at_commissioning_kvar:
+                raise BadRequest("Grid meter reading at comissioning KVAR is required for all on-grid system mode.")
 
         # checks for lease contracts
         if contract.contract_type == ContractTypeEnum.LEASE.value:
@@ -57,11 +59,16 @@ class ContractService:
             contract.contract_type == ContractTypeEnum.PPA.value
             and contract.system_mode == ContractSystemModeEnum.ON_GRID
         ):
+            if not data.with_battery:
+                raise BadRequest("Availability of battery is required for all PPA on grid contracts.")
             if not data.estimated_utility:
                 raise BadRequest("Estimated utility is required for all PPA on grid contracts.")
 
             if not data.grid_meter_offset_pair:
                 raise BadRequest("Grid meter offset pair is required for all PPA on grid contracts.")
+
+            if data.with_battery == "no" and not data.ppa_on_grid_no_battery_tariffs:
+                raise BadRequest("PPA on grid no battery tariff slot is required.")
 
     async def create_contract(self, token_payload: dict, data: CreateContractModel):
         data_dict = data.model_dump()

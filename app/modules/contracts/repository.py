@@ -205,13 +205,20 @@ class ContractRepository:
             settings_repo = SettingsRepository(session=self.session)
             current_rate = await settings_repo.get_current_efl_rate()
 
+            data_dict.pop("tariffs", None)
+
             if current_rate:
                 data_dict["efl_standard_rate_kwh"] = current_rate.efl_standard_rate_kwh
-            if data.tariffs and data.tariff_periods:
-                data_dict.pop("tariffs", None)
+            if data.tariff_periods:
+                if data.tariffs:
+                    tariffs_as_dicts = [t.model_dump() for t in data.tariffs]
+                    data_dict["tariff_slots"] = json.dumps(tariffs_as_dicts)
 
-                tariffs_as_dicts = [t.model_dump() for t in data.tariffs]
-                data_dict["tariff_slots"] = json.dumps(tariffs_as_dicts)
+                if data.ppa_on_grid_no_battery_tariffs:
+                    ppa_on_grid_no_battery_tariffs_as_dicts = [
+                        t.model_dump() for t in data.ppa_on_grid_no_battery_tariffs
+                    ]
+                    data_dict["ppa_on_grid_no_battery_tariffs"] = json.dumps(ppa_on_grid_no_battery_tariffs_as_dicts)
 
             data_dict["contract_uid"] = contract_uid
             contract_details = ContractDetails(**data_dict)
@@ -252,6 +259,12 @@ class ContractRepository:
                     setattr(
                         contract_details,
                         "tariff_slots",
+                        json.dumps(value),
+                    )
+                elif field == "ppa_on_grid_no_battery_tariffs" and value is not None:
+                    setattr(
+                        contract_details,
+                        "ppa_on_grid_no_battery_tariffs",
                         json.dumps(value),
                     )
                 else:

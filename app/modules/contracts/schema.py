@@ -15,11 +15,14 @@ from pydantic import (
     field_validator,
     model_validator,
 )
+from typing_extensions import Literal
 
 from app.core.exceptions import BadRequest
 from app.modules.clients.schema import ClientRespWithoutSitesCountModel
 from app.shared.schema import CurrencyEnum, DBModel
 from app.utils import uuid_serializer
+
+type YesNo = Literal["yes", "no"]
 
 
 class ContractTypeEnum(StrEnum):
@@ -78,6 +81,36 @@ class TariffSlotEnum(StrEnum):
 
     A = "A"
     B = "B"
+
+
+class OnGridNoBatterySlotEnum(StrEnum):
+    """Enumeration of tariff slot types for PPA on-grid without battery."""
+
+    UTILITY = "Utility"
+    SOLAR = "Solar"
+
+
+class OnGridNoBatteryTariffSlotModel(BaseModel):
+    """Model representing a single tariff slot for PPA on-grid without battery (Utility or Solar)."""
+
+    period_number: int = Field(ge=1, le=4)
+    slot: OnGridNoBatterySlotEnum = Field(...)
+    slot_type: TariffSlotTypeEnum = Field(...)
+    rate: float = Field(...)
+    start_time: str = Field(...)
+    end_time: str = Field(...)
+
+    @model_validator(mode="after")
+    def validate(self):
+        if self.slot_type == TariffSlotTypeEnum.FIXED:
+            if not (0 <= self.rate <= 1):
+                raise BadRequest(f"Slot {self.slot.value} (FIXED) rate must be between 0 and 1, got {self.rate}")
+        elif self.slot_type == TariffSlotTypeEnum.VARIABLE:
+            if not (-100 <= self.rate <= 100):
+                raise BadRequest(
+                    f"Slot {self.slot.value} (VARIABLE) rate must be between -100 and 100, got {self.rate}"
+                )
+        return self
 
 
 class TariffSlotModel(BaseModel):
@@ -178,8 +211,11 @@ class CreateContractDetailsModel(BaseModel):
     # system mode (On-grid) specific
     system_size_kwp: Optional[float] = Field(default=None, title="System size kwp")
     guaranteed_production_kwh_per_kwp: Optional[float] = Field(default=None, title="Guaranteed production kwh per kwp")
-    grid_meter_reading_at_commissioning: Optional[float] = Field(
-        default=None, title="Grid meter reading at commissioning"
+    grid_meter_reading_at_commissioning_kwh: Optional[float] = Field(
+        default=None, title="Grid meter reading at commissioning KWH"
+    )
+    grid_meter_reading_at_commissioning_kvar: Optional[float] = Field(
+        default=None, title="Grid meter reading at commissioning KVAR"
     )
 
     # On Grid Lease specific
@@ -196,6 +232,10 @@ class CreateContractDetailsModel(BaseModel):
     tariffs: Optional[list[TariffSlotModel]] = Field(default=None, title="Tariffs")
 
     # PPA on-Grid
+    with_battery: Optional[YesNo] = Field(default="no", title="PPA on grid battery availability")
+    ppa_on_grid_no_battery_tariffs: Optional[list[OnGridNoBatteryTariffSlotModel]] = Field(
+        default=None, title="PPA on-grid no-battery tariff slots"
+    )
     estimated_utility: Optional[int] = Field(default=None, title="Estimated utility pair")
     grid_meter_offset_pair: Optional[list[tuple[float]]] = Field(default=None, title="Grid meter offset pair")
 
@@ -228,6 +268,7 @@ class CreateContractDetailsModel(BaseModel):
         """
         self._validate_dates()
         self._validate_tariffs_align_with_periods()
+        self._validate_ppa_on_grid_no_battery()
         return self
 
     def _validate_dates(self):
@@ -315,6 +356,45 @@ class CreateContractDetailsModel(BaseModel):
                     f"Tariff period {period_num} must have both slot A and slot B, got: {slots or 'nothing'}"
                 )
 
+    def _validate_ppa_on_grid_no_battery(self):
+        """
+        When with_battery='no' and ppa_on_grid_no_battery_tariffs are provided:
+        - Each period must have exactly 2 slots: Utility and Solar
+        - Total tariff rows must equal tariff_periods × 2
+        - Every period 1..tariff_periods must be represented
+        """
+        if self.with_battery == "yes" or not self.ppa_on_grid_no_battery_tariffs:
+            return
+
+        if not self.tariff_periods:
+            raise BadRequest("tariff_periods is required when ppa_on_grid_no_battery_tariffs is provided")
+
+        slots = self.ppa_on_grid_no_battery_tariffs
+        expected_count = self.tariff_periods * 2
+        if len(slots) != expected_count:
+            raise BadRequest(
+                f"Expected {expected_count} no-battery tariff slots for {self.tariff_periods} "
+                f"period(s) (Utility + Solar per period), got {len(slots)}"
+            )
+
+        from collections import defaultdict
+
+        period_slots: dict[int, set[str]] = defaultdict(set)
+        for slot in slots:
+            period_slots[slot.period_number].add(slot.slot.value)
+
+        for period_num in range(1, self.tariff_periods + 1):
+            found = period_slots.get(period_num, set())
+            expected = {
+                OnGridNoBatterySlotEnum.UTILITY.value,
+                OnGridNoBatterySlotEnum.SOLAR.value,
+            }
+            if found != expected:
+                raise BadRequest(
+                    f"No-battery tariff period {period_num} must have both "
+                    f"Utility and Solar slots, got: {found or 'nothing'}"
+                )
+
 
 class ContractDetailsRespModel(DBModel):
     """Response model for contract details including all financial and scheduling fields."""
@@ -336,7 +416,8 @@ class ContractDetailsRespModel(DBModel):
     # On-grid specific
     system_size_kwp: Optional[float] = None
     guaranteed_production_kwh_per_kwp: Optional[float] = None
-    grid_meter_reading_at_commissioning: Optional[float] = None
+    grid_meter_reading_at_commissioning_kwh: Optional[float] = None
+    grid_meter_reading_at_commissioning_kvar: Optional[float] = None
 
     # On Grid Lease specific
     equipment_lease_amount: Optional[Decimal] = None
@@ -352,6 +433,8 @@ class ContractDetailsRespModel(DBModel):
     tariff_fixed_to_indexed_at: Optional[datetime] = None
 
     # ppa (on-grid) specific
+    with_battery: Optional[str] = None
+    ppa_on_grid_no_battery_tariffs: Optional[str] = None
     estimated_utility: Optional[int] = None
     grid_meter_offset_pair: Optional[str] = None
 
