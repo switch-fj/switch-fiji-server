@@ -78,12 +78,20 @@ def upsert_client(conn, payload) -> str:
                 SET client_name  = EXCLUDED.client_name,
                     client_email = EXCLUDED.client_email
             RETURNING uid
-        """,
+            """,
             {
                 "client_id": payload["client_id"],
                 "client_name": payload["client_name"],
                 "client_email": payload["client_email"],
             },
+        )
+        row = cur.fetchone()
+        if row:
+            return row[0]
+
+        cur.execute(
+            "SELECT uid FROM clients WHERE client_email = %(client_email)s",
+            {"client_email": payload["client_email"]},
         )
         return cur.fetchone()[0]
 
@@ -141,20 +149,14 @@ def upsert_devices(conn, payload, site_uid: str):
 
 
 def try_lock_contract_dates(conn, site_uid: str, first_seen_at_ms: int):
-    """
-    1. Sets site.first_seen_at if not already set.
-    2. If a contract exists for this site with no actual dates,
-       locks actual_commissioning_at and actual_end_at.
-    """
     first_seen_at = datetime.fromtimestamp(first_seen_at_ms / 1000, tz=timezone.utc)
 
     with conn.cursor() as cur:
-        # 1. lock first_seen_at on site — only on first push
         cur.execute(
             """
-                UPDATE sites
-                SET first_seen_at = COALESCE(first_seen_at, %(first_seen_at)s)
-                WHERE uid = %(site_uid)s
+            UPDATE sites
+            SET first_seen_at = COALESCE(first_seen_at, %(first_seen_at)s)
+            WHERE uid = %(site_uid)s
             """,
             {
                 "first_seen_at": first_seen_at,
@@ -162,7 +164,6 @@ def try_lock_contract_dates(conn, site_uid: str, first_seen_at_ms: int):
             },
         )
 
-        # 2. check if contract exists with no actual dates set
         cur.execute(
             """
             SELECT
@@ -170,16 +171,16 @@ def try_lock_contract_dates(conn, site_uid: str, first_seen_at_ms: int):
                 cd.term_years
             FROM contract_details cd
             JOIN contracts c ON c.uid = cd.contract_uid
-            WHERE c.site_uid = %(site_uid)s
-              AND cd.actual_commissioning_at IS NULL
+            WHERE c.site_uid                 = %(site_uid)s
+              AND cd.actual_commissioned_at  IS NULL
             LIMIT 1
-        """,
+            """,
             {"site_uid": site_uid},
         )
         row = cur.fetchone()
 
         if not row:
-            return  # no pending contract — nothing to do
+            return
 
         details_uid = row[0]
         term_years = row[1]
@@ -188,16 +189,15 @@ def try_lock_contract_dates(conn, site_uid: str, first_seen_at_ms: int):
         if term_years:
             actual_end_at = first_seen_at + relativedelta(years=term_years)
 
-        # 3. lock actual dates on contract — only once
         cur.execute(
             """
             UPDATE contract_details
-            SET actual_commissioning_at = %(actual_commissioning_at)s,
-                actual_end_at = %(actual_end_at)s
+            SET actual_commissioned_at = %(actual_commissioned_at)s,
+                actual_end_at          = %(actual_end_at)s
             WHERE uid = %(details_uid)s
-        """,
+            """,
             {
-                "actual_commissioning_at": first_seen_at,
+                "actual_commissioned_at": first_seen_at,
                 "actual_end_at": actual_end_at,
                 "details_uid": details_uid,
             },
