@@ -255,3 +255,67 @@ class InvoiceDetailsDict(BaseModel):
     energy_mix: str
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class InvoiceSnapshotLineItemRespModel(DBModel):
+    """Response model for a single invoice snapshot line item."""
+
+    snapshot_uid: UUID
+    description: str
+    energy_kwh: Optional[Decimal]
+    tariff_rate: Optional[Decimal]
+    tariff_period: Optional[int]
+    tariff_slot: Optional[str]
+    amount: Decimal
+
+    @field_serializer("snapshot_uid")
+    def serialize_snapshot_uuid(self, value: UUID):
+        return uuid_serializer(value)
+
+    @field_serializer("amount", "tariff_rate", "energy_kwh")
+    def serialize_decimals(self, value: Decimal):
+        if value:
+            return f"{value:.2f}"
+
+
+class InvoiceSnapshotMeterDataRespModel(DBModel):
+    """Response model for an invoice snapshot meter data record."""
+
+    snapshot_uid: UUID
+    device_uid: Optional[UUID]
+    label: str
+    period_start_reading: Decimal
+    period_end_reading: Decimal
+
+    @field_serializer("snapshot_uid", "device_uid")
+    def serialize_uuids(self, value: UUID):
+        return uuid_serializer(value)
+
+    @field_serializer("period_start_reading", "period_end_reading")
+    def serialize_decimals(self, value: Decimal):
+        if value:
+            return f"{value:.2f}"
+
+
+class InvoiceSnapshotRespModel(DBModel):
+    """Response model for a live invoice snapshot."""
+
+    period_start_at: datetime
+    period_end_at: datetime
+    subtotal: Decimal
+    vat_rate: Decimal
+    efl_standard_rate_kwh: Decimal
+    energy_mix: Optional[str]
+    snapshotted_at: datetime
+    line_items: list[InvoiceSnapshotLineItemRespModel]
+    meter_data: list[InvoiceSnapshotMeterDataRespModel]
+
+    @field_serializer("period_start_at", "period_end_at", "snapshotted_at")
+    def serialize_period_dt(self, value: datetime):
+        if value:
+            return value.isoformat()
+
+    @field_serializer("subtotal", "vat_rate")
+    def serialize_decimals(self, value: Decimal):
+        if value:
+            return f"{value:.2f}"

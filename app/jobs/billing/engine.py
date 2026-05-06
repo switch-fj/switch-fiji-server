@@ -8,9 +8,20 @@ from dateutil.relativedelta import relativedelta
 
 from app.core.logger import setup_logger
 from app.database.celery import celery_dynamo_client
+from app.jobs.billing.schema import (
+    ComputePPAOnGridNoBatteryInvoiceResp,
+    MeterImportUsage,
+    OnGridMeterImportReading,
+    OnGridNoBatteryEnergyMix,
+    OnGridNoBatteryMeterImportData,
+    OnGridNoBatteryUsage,
+    OnGridPeriodicEnergyData,
+)
 from app.modules.contracts.model import Contract
 from app.modules.contracts.schema import (
     ContractBillingFrequencyEnum,
+    OnGridNoBatterySlotEnum,
+    OnGridNoBatteryTariffSlotModel,
     TariffIndexedRuleTypeEnum,
     TariffSlotTypeEnum,
 )
@@ -39,11 +50,12 @@ logger = setup_logger(__name__)
 
 class BillingEngine:
     @staticmethod
-    def _extract_meter_by_description(reading: dict, description: str) -> dict | None:
+    def _extract_meter_by_description(reading: dict, description: str):
+        selected_meter = []
         for meter in reading.get("meters", []):
             if meter.get("description") == description:
-                return meter
-        return None
+                selected_meter.append(meter)
+        return selected_meter
 
     @staticmethod
     def get_current_billing_period(
@@ -106,17 +118,77 @@ class BillingEngine:
         )
 
         site_meter_tariff = [
-            load_meter.get("tariff", 0)["kwh_t1"],
-            load_meter.get("tariff", 0)["kwh_t2"],
+            load_meter[0].get("tariff", 0)["kwh_t1"],
+            load_meter[0].get("tariff", 0)["kwh_t2"],
         ]
         gen_meter_tariff = [
-            gen_meter.get("tariff", 0)["kwh_t1"],
-            gen_meter.get("tariff", 0)["kwh_t2"],
+            gen_meter[0].get("tariff", 0)["kwh_t1"],
+            gen_meter[0].get("tariff", 0)["kwh_t2"],
         ]
 
         return (
             site_meter_tariff,
             gen_meter_tariff,
+        )
+
+    @staticmethod
+    def get_ppa_on_grid_no_battery_kwh_kvarh_import_data(
+        periodic_energy_data: dict | Any,
+    ) -> OnGridNoBatteryMeterImportData:
+        parsed = OnGridPeriodicEnergyData.model_validate(periodic_energy_data)
+
+        solar_meters = [m for m in parsed.meters if m.description == MeterRoleEnum.SOLAR_METER]
+        gen_meters = [m for m in parsed.meters if m.description == MeterRoleEnum.GEN_METER]
+
+        return OnGridNoBatteryMeterImportData(
+            solar_meter_kwh_kvarh_import=[
+                OnGridMeterImportReading(
+                    slave_id=m.slave_id,
+                    description=m.description,
+                    kwh_import=m.kwh_import,
+                    kvarh_import=m.kvarh_import,
+                )
+                for m in solar_meters
+            ],
+            gen_meter_kwh_kvarh_import=OnGridMeterImportReading(
+                slave_id=gen_meters[0].slave_id,
+                description=gen_meters[0].description,
+                kwh_import=gen_meters[0].kwh_import,
+                kvarh_import=gen_meters[0].kvarh_import,
+            ),
+        )
+
+    @staticmethod
+    def compute_ppa_on_grid_no_battery_usage(
+        period_start_meters_import_data: OnGridNoBatteryMeterImportData,
+        period_end_meters_import_data: OnGridNoBatteryMeterImportData,
+    ) -> OnGridNoBatteryUsage:
+        grid_start = period_start_meters_import_data.gen_meter_kwh_kvarh_import
+        grid_end = period_end_meters_import_data.gen_meter_kwh_kvarh_import
+
+        grid_meter_import_usage = MeterImportUsage(
+            slave_id=grid_start.slave_id,
+            description=grid_start.description,
+            kwh_import_usage=grid_end.kwh_import - grid_start.kwh_import,
+            kvarh_import_usage=grid_end.kvarh_import - grid_start.kvarh_import,
+        )
+
+        solar_meters_import_usage = [
+            MeterImportUsage(
+                slave_id=start.slave_id,
+                description=start.description,
+                kwh_import_usage=end.kwh_import - start.kwh_import,
+                kvarh_import_usage=end.kvarh_import - start.kvarh_import,
+            )
+            for start, end in zip(
+                period_start_meters_import_data.solar_meter_kwh_kvarh_import,
+                period_end_meters_import_data.solar_meter_kwh_kvarh_import,
+            )
+        ]
+
+        return OnGridNoBatteryUsage(
+            solar_meters_import_usage=solar_meters_import_usage,
+            grid_meter_import_usage=grid_meter_import_usage,
         )
 
     @staticmethod
@@ -143,6 +215,17 @@ class BillingEngine:
         off_solar_energy_kwh = usage.get("site_meter_night_usage", 0) - usage.get("gen_meter_night_usage", 0)
 
         return (on_solar_energy_kwh, off_solar_energy_kwh)
+
+    @staticmethod
+    def compute_ppa_on_grid_no_battery_energy_mix(usage: OnGridNoBatteryUsage):
+
+        solar_energy_kwh = 0
+        grid_energy_kwh = usage.grid_meter_import_usage.kwh_import_usage
+
+        for el in usage.solar_meters_import_usage:
+            solar_energy_kwh += el.kwh_import_usage
+
+        return OnGridNoBatteryEnergyMix(solar=solar_energy_kwh, grid=grid_energy_kwh)
 
     @staticmethod
     def compute_ppa_off_grid_energy_mix(usage: dict[str, Any]):
@@ -192,7 +275,104 @@ class BillingEngine:
         return (subtotal, on_solar_energy_amount, off_solar_energy_amount)
 
     @staticmethod
-    def build_invoice_details(
+    def compute_ppa_off_grid_no_battery_subtotal(
+        solar_meters_import_usage: list[MeterImportUsage],
+        tariff_indexed_rule_type: TariffIndexedRuleTypeEnum,
+        efl_standard_rate_kwh: Decimal,
+        solar_tariff: OnGridNoBatteryTariffSlotModel,
+    ):
+        if solar_tariff.slot_type == TariffSlotTypeEnum.FIXED:
+            solar_rate = solar_tariff.rate
+        else:
+            rate = solar_tariff.rate
+            if tariff_indexed_rule_type == TariffIndexedRuleTypeEnum.EFL_LINKED:
+                solar_rate = 100 - rate if rate < 0 else 100 + rate
+                solar_rate = round(efl_standard_rate_kwh * (solar_rate / 100), 2)
+
+        solar_meters_subtotal = 0
+        for m in solar_meters_import_usage:
+            solar_meters_subtotal += m.kwh_import_usage * solar_rate
+
+        return (solar_meters_subtotal, solar_rate)
+
+    @staticmethod
+    def build_ppa_on_grid_no_battery_invoice_details(
+        devices: list[Device],
+        contract_settings: ContractSettings,
+        computed_ppa_no_battery_invoice_resp: ComputePPAOnGridNoBatteryInvoiceResp,
+    ):
+        loaded_invoice_dict = computed_ppa_no_battery_invoice_resp.create_invoice_dict
+        period_start_meters_import_data = computed_ppa_no_battery_invoice_resp.period_start_meters_import_data
+        period_end_meters_import_data = computed_ppa_no_battery_invoice_resp.period_end_meters_import_data
+        usage = computed_ppa_no_battery_invoice_resp.usage
+        solar_rate = computed_ppa_no_battery_invoice_resp.solar_rate
+        solar_tariff = computed_ppa_no_battery_invoice_resp.solar_tariff
+        grid_tariff = computed_ppa_no_battery_invoice_resp.grid_tariff
+        subtotal = computed_ppa_no_battery_invoice_resp.subtotal
+
+        create_invoice_meter_data: list[BaseInvoiceMeterDataModel] = []
+        for device in devices:
+            for start, end in zip(
+                period_start_meters_import_data.solar_meter_kwh_kvarh_import,
+                period_end_meters_import_data.solar_meter_kwh_kvarh_import,
+            ):
+                if device.slave_id == start.slave_id:
+                    create_invoice_meter_data.append(
+                        BaseInvoiceMeterDataModel(
+                            device_uid=device.uid,
+                            label=f"Solar Meter {start.slave_id}",
+                            period_start_reading=Decimal(start.kwh_import),
+                            period_end_reading=Decimal(end.kwh_import),
+                        ),
+                    )
+
+            if device.slave_id == period_start_meters_import_data.gen_meter_kwh_kvarh_import.slave_id:
+                create_invoice_meter_data.append(
+                    BaseInvoiceMeterDataModel(
+                        device_uid=device.uid,
+                        label="Grid Meter",
+                        period_start_reading=Decimal(
+                            period_start_meters_import_data.gen_meter_kwh_kvarh_import.kwh_import
+                        ),
+                        period_end_reading=Decimal(period_end_meters_import_data.gen_meter_kwh_kvarh_import.kwh_import),
+                    )
+                )
+
+        create_invoice_line_items: list[BaseInvoiceLineItemModel] = [
+            BaseInvoiceLineItemModel(
+                description="Grid meter",
+                energy_kwh=Decimal(usage.grid_meter_import_usage.kwh_import_usage),
+                tariff_rate=Decimal("0.0"),
+                tariff_slot=grid_tariff.slot,
+                tariff_period=int(grid_tariff.period_number),
+                amount=Decimal("0.0"),
+            )
+        ]
+
+        for solar_meter in usage.solar_meters_import_usage:
+            create_invoice_line_items.append(
+                BaseInvoiceLineItemModel(
+                    description=f"Solar Meter {solar_meter.slave_id}",
+                    energy_kwh=Decimal(solar_meter.kwh_import_usage),
+                    tariff_rate=Decimal(solar_rate),
+                    tariff_slot=solar_tariff.slot,
+                    tariff_period=int(solar_tariff.period_number),
+                    amount=Decimal(str(solar_meter.kwh_import_usage * solar_rate)),
+                )
+            )
+
+        invoice_details_dict = InvoiceDetailsDict(
+            subtotal=subtotal,
+            vat_rate=contract_settings.vat_rate,
+            invoice_line_items=create_invoice_line_items,
+            invoice_meter_data=create_invoice_meter_data,
+            energy_mix=loaded_invoice_dict["energy_mix"],
+        )
+
+        return invoice_details_dict
+
+    @staticmethod
+    def build_ppa_off_grid_invoice_details(
         devices: list[Device],
         contract_settings: ContractSettings,
         active_tariff_slots: list[dict],
@@ -204,8 +384,8 @@ class BillingEngine:
         period_start_meter = BillingEngine.get_ppa_off_grid_meter_data(period_start_data)
         period_end_meter = BillingEngine.get_ppa_off_grid_meter_data(period_end_data)
 
-        load_meter = BillingEngine._extract_meter_by_description(period_start_data, MeterRoleEnum.LOAD_METER)
-        gen_meter = BillingEngine._extract_meter_by_description(period_start_data, MeterRoleEnum.GEN_METER)
+        load_meter = BillingEngine._extract_meter_by_description(period_start_data, MeterRoleEnum.LOAD_METER)[0]
+        gen_meter = BillingEngine._extract_meter_by_description(period_start_data, MeterRoleEnum.GEN_METER)[0]
 
         usage = BillingEngine.compute_ppa_off_grid_day_night_usage(
             period_start_meter_tariff_reading=period_start_meter,
@@ -218,7 +398,6 @@ class BillingEngine:
                 on_solar_energy_kwh=on_solar_energy_kwh,
                 off_solar_energy_kwh=off_solar_energy_kwh,
                 efl_rate_kwh=contract_settings.efl_standard_rate_kwh,
-                vat_rate=contract_settings.vat_rate,
                 tariff_indexed_rule_type=tariff_indexed_rule_type,
                 active_tariff=active_tariff_slots,
             )
@@ -321,11 +500,11 @@ class BillingEngine:
         )
         on_solar_energy_kwh, off_solar_energy_kwh = BillingEngine.compute_ppa_off_grid_line_items(usage=usage)
         solar_energy_kwh, gen_energy_kwh = BillingEngine.compute_ppa_off_grid_energy_mix(usage=usage)
-        subtotal, _, _, _ = BillingEngine.compute_ppa_off_grid_subtotal_and_vat_rate(
+        subtotal, _, _ = BillingEngine.compute_ppa_off_grid_subtotal_and_vat_rate(
             on_solar_energy_kwh=on_solar_energy_kwh,
             off_solar_energy_kwh=off_solar_energy_kwh,
             efl_rate_kwh=contract_settings.efl_standard_rate_kwh,
-            vat_rate=contract_settings.vat_rate,
+            tariff_indexed_rule_type=contract.details.tariff_indexed_rule_type,
             active_tariff=active_tariff_slots,
         )
         energy_mix = json.dumps({"solar": float(solar_energy_kwh), "gen": float(gen_energy_kwh)})
@@ -341,6 +520,76 @@ class BillingEngine:
         create_invoice_dict["invoice_ref"] = InvoiceRepository._build_invoice_ref()
 
         return (create_invoice_dict, readings)
+
+    @staticmethod
+    def compute_ppa_on_grid_no_battery_invoice(
+        contract: Contract,
+        contract_settings: ContractSettings,
+        gateway_id: str,
+        period_start: datetime,
+        period_end: datetime,
+    ):
+        tariffs: list[OnGridNoBatteryTariffSlotModel] = json.loads(contract.details.ppa_on_grid_no_battery_tariffs)
+        readings = celery_dynamo_client.get_readings_for_billing_period(
+            gateway_id=gateway_id,
+            period_start=period_start,
+            period_end=period_end,
+        )
+        if not readings:
+            logger.warning(f"No readings found for gateway {gateway_id}")
+            return None
+
+        period_start_data, period_end_data = readings
+
+        period_start_meters_import_data: OnGridNoBatteryMeterImportData = (
+            BillingEngine.get_ppa_on_grid_no_battery_kwh_kvarh_import_data(periodic_energy_data=period_start_data)
+        )
+        period_end_meters_import_data: OnGridNoBatteryMeterImportData = (
+            BillingEngine.get_ppa_on_grid_no_battery_kwh_kvarh_import_data(periodic_energy_data=period_end_data)
+        )
+        usage: OnGridNoBatteryUsage = BillingEngine.compute_ppa_on_grid_no_battery_usage(
+            period_start_meters_import_data=period_start_meters_import_data,
+            period_end_meters_import_data=period_end_meters_import_data,
+        )
+        energy_mix = BillingEngine.compute_ppa_on_grid_no_battery_energy_mix(usage=usage)
+
+        for tariff in tariffs:
+            if tariff.slot == OnGridNoBatterySlotEnum.SOLAR.value:
+                solar_tariff = tariff
+            else:
+                grid_tariff = tariff
+
+        subtotal, solar_rate = BillingEngine.compute_ppa_off_grid_no_battery_subtotal(
+            solar_meters_import_usage=usage.solar_meters_import_usage,
+            tariff_indexed_rule_type=contract.details.tariff_indexed_rule_type,
+            efl_standard_rate_kwh=contract_settings.efl_standard_rate_kwh,
+            solar_tariff=solar_tariff,
+        )
+
+        energy_mix = json.dumps({"solar": float(energy_mix.solar), "grid": float(energy_mix.grid)})
+
+        create_invoice_dict: CreateInvoiceModel = CreateInvoiceModel(
+            period_start_at=period_start,
+            period_end_at=period_end,
+            subtotal=subtotal,
+            vat_rate=contract_settings.vat_rate,
+            energy_mix=energy_mix,
+        ).model_dump()
+        create_invoice_dict["contract_uid"] = contract.uid
+        create_invoice_dict["invoice_ref"] = InvoiceRepository._build_invoice_ref()
+
+        return ComputePPAOnGridNoBatteryInvoiceResp(
+            **{
+                "create_invoice_dict": create_invoice_dict,
+                "period_start_meters_import_data": period_start_meters_import_data,
+                "period_end_meters_import_data": period_end_meters_import_data,
+                "usage": usage,
+                "solar_tariff": solar_tariff,
+                "grid_tariff": grid_tariff,
+                "solar_rate": solar_rate,
+                "subtotal": subtotal,
+            }
+        )
 
     @staticmethod
     def generate_pdf(

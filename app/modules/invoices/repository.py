@@ -1,5 +1,6 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from decimal import Decimal
+from typing import Optional
 from uuid import UUID
 
 from fastapi import Depends
@@ -17,6 +18,7 @@ from app.modules.invoices.model import (
     InvoiceHistory,
     InvoiceLineItem,
     InvoiceMeterData,
+    InvoiceSnapshot,
 )
 from app.modules.invoices.schema import (
     CreateInvoiceHistoryModel,
@@ -25,6 +27,7 @@ from app.modules.invoices.schema import (
     CreateInvoiceModel,
 )
 from app.modules.settings.repository import SettingsRepository
+from app.utils.pagination import Pagination
 
 logger = setup_logger(__name__)
 
@@ -242,6 +245,66 @@ class InvoiceRepository:
             invoice.line_items,
             invoice.meter_data,
         )
+
+    async def get_snapshots_by_contract_uid(
+        self,
+        contract_uid: UUID,
+        limit: int = Config.DEFAULT_PAGE_LIMIT,
+        next_cursor: Optional[str] = None,
+        prev_cursor: Optional[str] = None,
+    ):
+        """Retrieve a cursor-paginated list of invoice snapshots for a contract.
+
+        Ordered by snapshotted_at descending (most recent first).
+        Cursor values encode snapshotted_at as microsecond-precision Unix timestamps.
+
+        Args:
+            contract_uid: The UUID of the contract whose snapshots to retrieve.
+            limit: Maximum number of records per page.
+            next_cursor: Encrypted cursor for the next (older) page.
+            prev_cursor: Encrypted cursor for the previous (newer) page.
+
+        Returns:
+            A tuple of (items, next_cursor_out, prev_cursor_out).
+        """
+        statement = (
+            select(InvoiceSnapshot)
+            .options(
+                joinedload(InvoiceSnapshot.line_items),
+                joinedload(InvoiceSnapshot.meter_data),
+            )
+            .where(InvoiceSnapshot.contract_uid == contract_uid)
+            .order_by(InvoiceSnapshot.snapshotted_at.desc())
+        )
+
+        if next_cursor:
+            cursor_ts = Pagination.decrypt_cursor(next_cursor)
+            cursor_dt = datetime.fromtimestamp(cursor_ts / 1_000_000, tz=timezone.utc)
+            statement = statement.where(InvoiceSnapshot.snapshotted_at < cursor_dt)
+
+        if prev_cursor:
+            cursor_ts = Pagination.decrypt_cursor(prev_cursor)
+            cursor_dt = datetime.fromtimestamp(cursor_ts / 1_000_000, tz=timezone.utc)
+            statement = statement.where(InvoiceSnapshot.snapshotted_at > cursor_dt)
+
+        statement = statement.limit(limit + 1).execution_options(populate_existing=True)
+
+        result = await self.session.exec(statement)
+        rows = result.unique().all()
+
+        has_more = len(rows) > limit
+        items = rows[:limit]
+
+        next_cursor_out = None
+        prev_cursor_out = None
+
+        if items:
+            prev_cursor_out = Pagination.encrypt_cursor(int(items[0].snapshotted_at.timestamp() * 1_000_000))
+
+        if has_more:
+            next_cursor_out = Pagination.encrypt_cursor(int(items[-1].snapshotted_at.timestamp() * 1_000_000))
+
+        return items, next_cursor_out, prev_cursor_out
 
     async def update_pdf_s3_key(self, invoice_uid: UUID, key: str) -> None:
         """Update the pdf_s3_key field for an invoice after PDF upload.

@@ -7,8 +7,9 @@ from app.core.exceptions import InsufficientPermissions, NotFound
 from app.core.logger import setup_logger
 from app.modules.contracts.repository import ContractRepository, get_contract_repo
 from app.modules.invoices.repository import InvoiceRepository, get_invoice_repo
-from app.modules.invoices.schema import InvoiceHistoryRespModel
+from app.modules.invoices.schema import InvoiceHistoryRespModel, InvoiceSnapshotRespModel
 from app.shared.schema import (
+    CursorPaginationModel,
     IdentityTypeEnum,
     OffsetPaginationModel,
     PaginatedRespModel,
@@ -88,6 +89,48 @@ class InvoiceService:
                 raise InsufficientPermissions("Access denied")
 
         return resp
+
+    async def get_snapshots_by_contract_uid(
+        self,
+        contract_uid: UUID,
+        token_payload: dict,
+        limit: int,
+        next_cursor: Optional[str],
+        prev_cursor: Optional[str],
+    ):
+        contract = await self.contract_repo.get_contract_by_uid(contract_uid=contract_uid)
+        if not contract:
+            raise NotFound("Contract not found!")
+
+        if token_payload:
+            token_user = token_payload.get("user")
+            identity = token_user.get("identity")
+            role = token_user.get("role")
+            user_uid = token_user.get("uid")
+
+            if identity == IdentityTypeEnum.USER.value and not role == UserRoleEnum.ADMIN:
+                raise InsufficientPermissions("Access denied")
+
+            if identity == IdentityTypeEnum.CLIENT.value and not contract.client_uid == user_uid:
+                raise InsufficientPermissions("Access denied")
+
+        items, next_cursor_out, prev_cursor_out = await self.invoice_repo.get_snapshots_by_contract_uid(
+            contract_uid=contract_uid,
+            limit=limit,
+            next_cursor=next_cursor,
+            prev_cursor=prev_cursor,
+        )
+
+        return PaginatedRespModel.model_validate(
+            {
+                "items": [InvoiceSnapshotRespModel.model_validate(s) for s in items],
+                "pagination": CursorPaginationModel(
+                    limit=limit,
+                    next_cursor=next_cursor_out,
+                    prev_cursor=prev_cursor_out,
+                ),
+            }
+        )
 
     async def save_pdf_s3_key(self, invoice_uid: UUID, key: str) -> None:
         await self.invoice_repo.update_pdf_s3_key(invoice_uid=invoice_uid, key=key)

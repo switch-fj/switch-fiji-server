@@ -7,7 +7,7 @@ from sqlmodel import select, update
 
 from app.core.logger import setup_logger
 from app.database.celery import celery_dynamo_client, get_celery_db_session
-from app.jobs.billing.engine import BillingEngine, InvoiceDetailsDict
+from app.jobs.billing.engine import BillingEngine
 from app.jobs.celery import celery_app
 from app.modules.contracts.model import Contract
 from app.modules.contracts.schema import ContractSystemModeEnum, ContractTypeEnum
@@ -111,6 +111,7 @@ def compute_single_contract_bill(self, contract_uid, gateway_id, site_uid):
                 timezone_key=contract.timezone,
                 commissioned_at=contract.details.actual_commissioned_at or contract.details.commissioned_at,
                 billing_frequency=contract.details.billing_frequency,
+                as_of=now_local,
             )
 
             is_billing_date = now_local >= period_end.astimezone(tz)
@@ -127,113 +128,123 @@ def compute_single_contract_bill(self, contract_uid, gateway_id, site_uid):
                 if already_invoiced:
                     return
 
-            result = None
+            create_invoice_dict = None
+            invoice_details_dict = None
 
-            if contract.contract_type == ContractTypeEnum.PPA.value:
-                if contract.system_mode == ContractSystemModeEnum.OFF_GRID.value:
-                    create_invoice_dict, readings = BillingEngine.compute_ppa_off_grid_invoice(
+            is_ppa = contract.contract_type == ContractTypeEnum.PPA.value
+            is_ppa_off_grid = is_ppa and contract.system_mode == ContractSystemModeEnum.OFF_GRID.value
+            is_ppa_on_grid_with_battery = (
+                is_ppa
+                and contract.system_mode == ContractSystemModeEnum.ON_GRID.value
+                and contract.details.with_battery == "yes"
+            )
+
+            if is_ppa:
+                if is_ppa_off_grid or is_ppa_on_grid_with_battery:
+                    off_grid_result = BillingEngine.compute_ppa_off_grid_invoice(
                         contract=contract,
-                        devices=devices,
                         contract_settings=contract_settings,
                         gateway_id=gateway_id,
                         period_start=period_start,
                         period_end=period_end,
-                        is_billing_date=is_billing_date,
                     )
+                    if off_grid_result is None:
+                        return
+                    create_invoice_dict, readings = off_grid_result
 
-                    invoice_details_dict: InvoiceDetailsDict = BillingEngine.build_invoice_details(
+                    invoice_details_dict = BillingEngine.build_ppa_off_grid_invoice_details(
                         devices=devices,
                         contract_settings=contract_settings,
                         active_tariff_slots=contract.details.active_tariff_slots,
-                        tariff_index_rule_type=contract.details.tariff_indexed_rule_type,
+                        tariff_indexed_rule_type=contract.details.tariff_indexed_rule_type,
                         readings=readings,
                     )
+                else:
+                    computed = BillingEngine.compute_ppa_on_grid_no_battery_invoice(
+                        contract=contract,
+                        contract_settings=contract_settings,
+                        gateway_id=gateway_id,
+                        period_start=period_start,
+                        period_end=period_end,
+                    )
+                    if computed is None:
+                        return
+                    create_invoice_dict = computed.create_invoice_dict
 
-                    subtotal = invoice_details_dict.subtotal
-                    vat_rate = invoice_details_dict.vat_rate
-                    energy_mix = invoice_details_dict.energy_mix
-                    invoice_meter_data = invoice_details_dict.invoice_meter_data
-                    invoice_line_items = invoice_details_dict.invoice_line_items
-
-                    if is_billing_date:
-                        new_invoice = Invoice(**create_invoice_dict)
-                        session.add(new_invoice)
-                        session.flush()
-
-                        session.add_all(
-                            [
-                                InvoiceMeterData(**{**d.model_dump(), "invoice_uid": new_invoice.uid})
-                                for d in invoice_meter_data
-                            ]
-                        )
-                        session.add_all(
-                            [
-                                InvoiceLineItem(**{**d.model_dump(), "invoice_uid": new_invoice.uid})
-                                for d in invoice_line_items
-                            ]
-                        )
-                        session.add(
-                            InvoiceHistory(
-                                **CreateInvoiceHistoryModel(
-                                    invoice_uid=new_invoice.uid,
-                                    sent_to=contract.client.client_email,
-                                    sent_at=datetime.now(timezone.utc),
-                                    was_successful=True,
-                                ).model_dump()
-                            )
-                        )
-                        session.commit()
-
-                        result = (new_invoice, invoice_meter_data, invoice_line_items)
-
-                    elif now_local.hour == 0:  # daily snapshot — aligns with hourly beat at local midnight
-                        snapshot = InvoiceSnapshot(
-                            contract_uid=contract.uid,
-                            period_start_at=period_start,
-                            period_end_at=period_end,
-                            subtotal=subtotal,
-                            vat_rate=vat_rate,
-                            energy_mix=energy_mix,
-                        )
-                        session.add(snapshot)
-                        session.flush()
-
-                        session.add_all(
-                            [
-                                InvoiceSnapshotMeterData(
-                                    **{
-                                        **d.model_dump(),
-                                        "snapshot_uid": snapshot.uid,
-                                    }
-                                )
-                                for d in invoice_meter_data
-                            ]
-                        )
-                        session.add_all(
-                            [
-                                InvoiceSnapshotLineItem(
-                                    **{
-                                        **d.model_dump(),
-                                        "snapshot_uid": snapshot.uid,
-                                    }
-                                )
-                                for d in invoice_line_items
-                            ]
-                        )
-                        session.commit()
-
-            if result is None:
+                    invoice_details_dict = BillingEngine.build_ppa_on_grid_no_battery_invoice_details(
+                        devices=devices,
+                        contract_settings=contract_settings,
+                        computed_ppa_no_battery_invoice_resp=computed,
+                    )
+            else:
+                # WIP: lease computation
                 return
 
+            if create_invoice_dict is None or invoice_details_dict is None:
+                return
+
+            subtotal = invoice_details_dict.subtotal
+            vat_rate = invoice_details_dict.vat_rate
+            energy_mix = invoice_details_dict.energy_mix
+            invoice_meter_data = invoice_details_dict.invoice_meter_data
+            invoice_line_items = invoice_details_dict.invoice_line_items
+
             if is_billing_date:
+                new_invoice = Invoice(**create_invoice_dict)
+                session.add(new_invoice)
+                session.flush()
+
+                session.add_all(
+                    [InvoiceMeterData(**{**d.model_dump(), "invoice_uid": new_invoice.uid}) for d in invoice_meter_data]
+                )
+                session.add_all(
+                    [InvoiceLineItem(**{**d.model_dump(), "invoice_uid": new_invoice.uid}) for d in invoice_line_items]
+                )
+                session.add(
+                    InvoiceHistory(
+                        **CreateInvoiceHistoryModel(
+                            invoice_uid=new_invoice.uid,
+                            sent_to=contract.client.client_email,
+                            sent_at=datetime.now(timezone.utc),
+                            was_successful=True,
+                        ).model_dump()
+                    )
+                )
+                session.commit()
+
                 pdf_bytes, key = BillingEngine.generate_pdf(
                     contract=contract,
                     contract_settings=contract_settings,
-                    result=result,
+                    result=(new_invoice, invoice_meter_data, invoice_line_items),
                 )
-                invoice = result[0]
-                BillingEngine.store_pdf_in_s3(pdf_bytes=pdf_bytes, key=key, invoice_ref=invoice.invoice_ref)
-                session.execute(update(Invoice).where(Invoice.uid == invoice.uid).values(pdf_s3_key=key))
+                BillingEngine.store_pdf_in_s3(pdf_bytes=pdf_bytes, key=key, invoice_ref=new_invoice.invoice_ref)
+                session.execute(update(Invoice).where(Invoice.uid == new_invoice.uid).values(pdf_s3_key=key))
+                session.commit()
+
+            elif now_local.hour == 0:  # daily snapshot — aligns with hourly beat at local midnight
+                snapshot = InvoiceSnapshot(
+                    contract_uid=contract.uid,
+                    period_start_at=period_start,
+                    period_end_at=period_end,
+                    subtotal=subtotal,
+                    vat_rate=vat_rate,
+                    energy_mix=energy_mix,
+                )
+                session.add(snapshot)
+                session.flush()
+
+                session.add_all(
+                    [
+                        InvoiceSnapshotMeterData(**{**d.model_dump(), "snapshot_uid": snapshot.uid})
+                        for d in invoice_meter_data
+                    ]
+                )
+                session.add_all(
+                    [
+                        InvoiceSnapshotLineItem(**{**d.model_dump(), "snapshot_uid": snapshot.uid})
+                        for d in invoice_line_items
+                    ]
+                )
                 session.commit()
 
     except Exception as exc:

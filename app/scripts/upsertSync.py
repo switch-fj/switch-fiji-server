@@ -120,16 +120,22 @@ def upsert_devices(conn, payload, site_uid: str):
     with conn.cursor() as cur:
         for device_type, devices in device_groups:
             for device in devices:
+                is_meter = device_type == "meter"
+
                 cur.execute(
                     """
-                    INSERT INTO devices (site_uid, slave_id, device_type)
-                    VALUES (%(site_uid)s, %(slave_id)s, %(device_type)s)
-                    ON CONFLICT (site_uid, slave_id, device_type) DO NOTHING
-                """,
+                    INSERT INTO devices (site_uid, slave_id, device_type, meter_role, is_dual_tariff)
+                    VALUES (%(site_uid)s, %(slave_id)s, %(device_type)s, %(meter_role)s, %(is_dual_tariff)s)
+                    ON CONFLICT (site_uid, slave_id, device_type) DO UPDATE
+                        SET meter_role     = EXCLUDED.meter_role,
+                            is_dual_tariff = EXCLUDED.is_dual_tariff
+                    """,
                     {
                         "site_uid": site_uid,
                         "slave_id": int(device["slave_id"]),
                         "device_type": device_type,
+                        "meter_role": device.get("description") if is_meter else None,
+                        "is_dual_tariff": (bool(device.get("tariff")) if is_meter else False),
                     },
                 )
 

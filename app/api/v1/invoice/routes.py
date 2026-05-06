@@ -11,12 +11,14 @@ from app.jobs.billing.engine import BillingEngine
 from app.modules.invoices.schema import (
     InvoiceDetailedRespModel,
     InvoiceHistoryRespModel,
+    InvoiceSnapshotRespModel,
 )
 from app.services.contract import ContractService, get_contract_service
 from app.services.invoice import InvoiceService, get_invoice_service
 from app.services.s3 import S3Service
 from app.services.settings import SettingsService, get_settings_service
 from app.shared.schema import (
+    CursorPaginationModel,
     OffsetPaginationModel,
     PaginatedRespModel,
     ServerRespModel,
@@ -25,6 +27,37 @@ from app.shared.schema import (
 invoice_router = APIRouter(prefix="/invoice", tags=["invoice"])
 
 logger = setup_logger(__name__)
+
+
+@invoice_router.get(
+    "/live/{contract_uid}",
+    status_code=status.HTTP_200_OK,
+    response_model=ServerRespModel[PaginatedRespModel[InvoiceSnapshotRespModel, CursorPaginationModel]],
+)
+async def get_live_invoice_by_contract_uid(
+    contract_uid: UUID,
+    invoice_service: InvoiceService = Depends(get_invoice_service),
+    token_payload: dict = Depends(AccessTokenBearer()),
+    limit: Optional[int] = Query(
+        default=Config.DEFAULT_PAGE_LIMIT,
+        ge=Config.DEFAULT_PAGE_MIN_LIMIT,
+        le=Config.DEFAULT_PAGE_MAX_LIMIT,
+    ),
+    next_cursor: Optional[str] = Query(default=None),
+    prev_cursor: Optional[str] = Query(default=None),
+):
+    resp = await invoice_service.get_snapshots_by_contract_uid(
+        contract_uid=contract_uid,
+        token_payload=token_payload,
+        limit=limit,
+        next_cursor=next_cursor,
+        prev_cursor=prev_cursor,
+    )
+
+    return ServerRespModel[PaginatedRespModel[InvoiceSnapshotRespModel, CursorPaginationModel]](
+        data=resp,
+        message="Live invoice retrieved.",
+    )
 
 
 @invoice_router.get(
