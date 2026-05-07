@@ -1,4 +1,5 @@
 from datetime import datetime
+from decimal import Decimal
 from email.utils import parseaddr
 from typing import TYPE_CHECKING, Union
 from uuid import UUID
@@ -78,3 +79,7 @@ def build_redis_url(db: int = 0) -> str:
     if Config.REDIS_PASSWORD:
         return f"redis://:{Config.REDIS_PASSWORD}@{Config.REDIS_HOST}:{Config.REDIS_PORT}/{db}"
     return f"redis://{Config.REDIS_HOST}:{Config.REDIS_PORT}/{db}"
+
+
+def two_decimal_place(val: Decimal, decimal_places: str = "0.01"):
+    return val.quantize(Decimal(decimal_places))

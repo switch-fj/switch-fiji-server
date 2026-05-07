@@ -18,3 +18,4 @@ class MeterRoleEnum(StrEnum):
     AUX_LOADS = "aux_loads"
     MICRO_INV = "micro_inv"
     SOLAR_METER = "solar_meter"
+    GRID_METER = "grid_meter"

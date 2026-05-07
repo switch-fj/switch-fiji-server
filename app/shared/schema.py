@@ -19,21 +19,21 @@ from app.utils import email_validator, uuid_serializer
 T = TypeVar("T")
 
 
-def to_4dp(value) -> Decimal:
-    """Coerce a value to a Decimal quantised to four decimal places.
+def to_2dp(value) -> Decimal:
+    """Coerce a value to a Decimal quantised to 2 decimal places.
 
     Args:
         value: A numeric value (int, float, string, or Decimal) to convert, or None.
 
     Returns:
-        A Decimal rounded to four decimal places, or None if value is None.
+        A Decimal rounded to two decimal places, or None if value is None.
     """
     if value is None:
         return value
-    return Decimal(str(value)).quantize(Decimal("0.0001"), rounding=ROUND_HALF_UP)
+    return Decimal(str(value)).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
 
 
-FourDP = Annotated[Decimal, BeforeValidator(to_4dp), Field(decimal_places=4)]
+TwoDP = Annotated[Decimal, BeforeValidator(to_2dp), Field(decimal_places=2)]
 
 
 class UserRoleEnum(IntEnum):

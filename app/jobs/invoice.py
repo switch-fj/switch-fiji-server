@@ -151,6 +151,7 @@ def compute_single_contract_bill(self, contract_uid, gateway_id, site_uid):
                     if off_grid_result is None:
                         return
                     create_invoice_dict, readings = off_grid_result
+                    period_start_telemetry_data, period_end_telemetry_data = readings
 
                     invoice_details_dict = BillingEngine.build_ppa_off_grid_invoice_details(
                         devices=devices,
@@ -185,6 +186,7 @@ def compute_single_contract_bill(self, contract_uid, gateway_id, site_uid):
 
             subtotal = invoice_details_dict.subtotal
             vat_rate = invoice_details_dict.vat_rate
+            efl_standard_rate_kwh = invoice_details_dict.efl_standard_rate_kwh
             energy_mix = invoice_details_dict.energy_mix
             invoice_meter_data = invoice_details_dict.invoice_meter_data
             invoice_line_items = invoice_details_dict.invoice_line_items
@@ -221,15 +223,20 @@ def compute_single_contract_bill(self, contract_uid, gateway_id, site_uid):
                 session.execute(update(Invoice).where(Invoice.uid == new_invoice.uid).values(pdf_s3_key=key))
                 session.commit()
 
+            # else:  # For testing purposes.
             elif now_local.hour == 0:  # daily snapshot — aligns with hourly beat at local midnight
                 snapshot = InvoiceSnapshot(
                     contract_uid=contract.uid,
                     period_start_at=period_start,
                     period_end_at=period_end,
+                    period_start_telemetry_data=create_invoice_dict.get("period_start_telemetry_data"),
+                    period_end_telemetry_data=create_invoice_dict.get("period_end_telemetry_data"),
                     subtotal=subtotal,
                     vat_rate=vat_rate,
+                    efl_standard_rate_kwh=efl_standard_rate_kwh,
                     energy_mix=energy_mix,
                 )
+
                 session.add(snapshot)
                 session.flush()
 

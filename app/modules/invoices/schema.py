@@ -7,7 +7,7 @@ from uuid import UUID
 from pydantic import BaseModel, ConfigDict, Field, field_serializer
 
 from app.modules.contracts.schema import ContractRespModel
-from app.shared.schema import DBModel, FourDP
+from app.shared.schema import DBModel, TwoDP
 from app.utils import uuid_serializer
 
 
@@ -35,18 +35,18 @@ class InvoiceLineItemEnum(StrEnum):
 
 class BaseInvoiceLineItemModel(BaseModel):
     description: str = Field(...)
-    energy_kwh: Optional[FourDP] = Field(default=None)
-    tariff_rate: Optional[FourDP] = Field(default=None)
+    energy_kwh: Optional[TwoDP] = Field(default=None)
+    tariff_rate: Optional[TwoDP] = Field(default=None)
     tariff_period: Optional[int] = Field(default=None)
     tariff_slot: Optional[str] = Field(default=None)
-    amount: FourDP = Field(...)
+    amount: TwoDP = Field(...)
 
 
 class BaseInvoiceMeterDataModel(BaseModel):
     device_uid: Optional[UUID] = Field(default=None)
     label: str = Field(...)
-    period_start_reading: FourDP = Field(...)
-    period_end_reading: FourDP = Field(...)
+    period_start_reading: TwoDP = Field(...)
+    period_end_reading: TwoDP = Field(...)
 
 
 class CreateInvoiceModel(BaseModel):
@@ -54,8 +54,11 @@ class CreateInvoiceModel(BaseModel):
 
     period_start_at: datetime = Field(...)
     period_end_at: datetime = Field(...)
-    subtotal: FourDP = Field(default=Decimal("0.0000"))
-    vat_rate: FourDP = Field(default=Decimal("0.0000"))
+    period_start_telemetry_data: str = Field(nullable=False)
+    period_end_telemetry_data: str = Field(nullable=False)
+    subtotal: TwoDP = Field(default=Decimal("0.00"))
+    vat_rate: TwoDP = Field(default=Decimal("0.00"))
+    efl_standard_rate_kwh: TwoDP = Field(default=Decimal("0.00"))
     energy_mix: Optional[str] = Field(default=None)
 
 
@@ -99,6 +102,8 @@ class InvoiceRespModel(DBModel):
     invoice_ref: str
     period_start_at: datetime
     period_end_at: datetime
+    period_start_telemetry_data: str
+    period_end_telemetry_data: str
     subtotal: Decimal
     vat_rate: Decimal
     efl_standard_rate_kwh: Decimal
@@ -250,6 +255,7 @@ class InvoiceDetailedRespModel(InvoiceRespModel):
 class InvoiceDetailsDict(BaseModel):
     subtotal: Decimal
     vat_rate: Decimal
+    efl_standard_rate_kwh: Decimal
     invoice_line_items: list[BaseInvoiceLineItemModel]
     invoice_meter_data: list[BaseInvoiceMeterDataModel]
     energy_mix: str
@@ -302,6 +308,8 @@ class InvoiceSnapshotRespModel(DBModel):
 
     period_start_at: datetime
     period_end_at: datetime
+    period_start_telemetry_data: str
+    period_end_telemetry_data: str
     subtotal: Decimal
     vat_rate: Decimal
     efl_standard_rate_kwh: Decimal

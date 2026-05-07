@@ -1,3 +1,5 @@
+from decimal import Decimal
+
 from pydantic import BaseModel, ConfigDict
 
 from app.modules.contracts.schema import OnGridNoBatteryTariffSlotModel
@@ -59,5 +61,5 @@ class ComputePPAOnGridNoBatteryInvoiceResp(BaseModel):
     usage: OnGridNoBatteryUsage
     solar_tariff: OnGridNoBatteryTariffSlotModel
     grid_tariff: OnGridNoBatteryTariffSlotModel
-    solar_rate: float
-    subtotal: float
+    solar_rate: Decimal
+    subtotal: Decimal

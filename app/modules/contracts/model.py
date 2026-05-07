@@ -216,6 +216,9 @@ class ContractDetails(MyAbstractSQLModel, table=True):
         if not self.tariff_periods or not self.months_per_period:
             return None
 
+        if self.with_battery == "no":
+            return None
+
         tz = ZoneInfo(self.contract.timezone)
         start = (self.actual_commissioned_at or self.commissioned_at).astimezone(tz)
         start = start.replace(hour=0, minute=0, second=0, microsecond=0)

@@ -148,8 +148,8 @@ def upsert_devices(conn, payload, site_uid: str):
                 )
 
 
-def try_lock_contract_dates(conn, site_uid: str, first_seen_at_ms: int):
-    first_seen_at = datetime.fromtimestamp(first_seen_at_ms / 1000, tz=timezone.utc)
+def try_lock_contract_dates(conn, site_uid: str, first_seen_at_s: int):
+    first_seen_at = datetime.fromtimestamp(first_seen_at_s, tz=timezone.utc)
 
     with conn.cursor() as cur:
         cur.execute(
@@ -237,7 +237,7 @@ def lambda_handler(event, context):
             try_lock_contract_dates(
                 conn,
                 site_uid=site_uid,
-                first_seen_at_ms=int(payload["ts_epoch_ms"]),
+                first_seen_at_s=int(payload["ts_epoch_ms"]),
             )
             conn.commit()
             print(f"[INFO] Committed — client_uid={client_uid} site_uid={site_uid}")

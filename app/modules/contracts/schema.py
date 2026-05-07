@@ -376,41 +376,32 @@ class CreateContractDetailsModel(BaseModel):
 
     def _validate_ppa_on_grid_no_battery(self):
         """
-        When with_battery='no' and ppa_on_grid_no_battery_tariffs are provided:
-        - Each period must have exactly 2 slots: Utility and Solar
-        - Total tariff rows must equal tariff_periods × 2
-        - Every period 1..tariff_periods must be represented
+        PPA on-grid no battery always has exactly 2 tariff slots:
+        one Utility and one Solar — regardless of tariff_periods.
         """
         if self.with_battery == "yes" or not self.ppa_on_grid_no_battery_tariffs:
             return
 
-        if not self.tariff_periods:
-            raise BadRequest("tariff_periods is required when ppa_on_grid_no_battery_tariffs is provided")
-
         slots = self.ppa_on_grid_no_battery_tariffs
-        expected_count = self.tariff_periods * 2
-        if len(slots) != expected_count:
+
+        if len(slots) != 2:
             raise BadRequest(
-                f"Expected {expected_count} no-battery tariff slots for {self.tariff_periods} "
-                f"period(s) (Utility + Solar per period), got {len(slots)}"
+                f"PPA on-grid without battery requires exactly 2 tariff slots (Utility + Solar), got {len(slots)}"
             )
 
-        from collections import defaultdict
+        slot_types = {s.slot.value for s in slots}
+        expected = {
+            OnGridNoBatterySlotEnum.UTILITY.value,
+            OnGridNoBatterySlotEnum.SOLAR.value,
+        }
+        if slot_types != expected:
+            raise BadRequest(f"PPA on-grid without battery must have both Utility and Solar slots, got: {slot_types}")
 
-        period_slots: dict[int, set[str]] = defaultdict(set)
         for slot in slots:
-            period_slots[slot.period_number].add(slot.slot.value)
-
-        for period_num in range(1, self.tariff_periods + 1):
-            found = period_slots.get(period_num, set())
-            expected = {
-                OnGridNoBatterySlotEnum.UTILITY.value,
-                OnGridNoBatterySlotEnum.SOLAR.value,
-            }
-            if found != expected:
+            if slot.period_number != 1:
                 raise BadRequest(
-                    f"No-battery tariff period {period_num} must have both "
-                    f"Utility and Solar slots, got: {found or 'nothing'}"
+                    f"PPA on-grid without battery tariff slots must have period_number=1, "
+                    f"got period_number={slot.period_number} for slot {slot.slot.value}"
                 )
 
 

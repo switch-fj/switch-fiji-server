@@ -5,6 +5,7 @@ from typing import Any
 from zoneinfo import ZoneInfo
 
 from dateutil.relativedelta import relativedelta
+from fastapi.encoders import jsonable_encoder
 
 from app.core.logger import setup_logger
 from app.database.celery import celery_dynamo_client
@@ -44,6 +45,7 @@ from app.modules.invoices.schema import (
 )
 from app.modules.settings.model import ContractSettings
 from app.services.s3 import S3Service
+from app.utils import two_decimal_place
 
 logger = setup_logger(__name__)
 
@@ -138,7 +140,7 @@ class BillingEngine:
         parsed = OnGridPeriodicEnergyData.model_validate(periodic_energy_data)
 
         solar_meters = [m for m in parsed.meters if m.description == MeterRoleEnum.SOLAR_METER]
-        gen_meters = [m for m in parsed.meters if m.description == MeterRoleEnum.GEN_METER]
+        grid_meters = [m for m in parsed.meters if m.description == MeterRoleEnum.GRID_METER]
 
         return OnGridNoBatteryMeterImportData(
             solar_meter_kwh_kvarh_import=[
@@ -151,10 +153,10 @@ class BillingEngine:
                 for m in solar_meters
             ],
             gen_meter_kwh_kvarh_import=OnGridMeterImportReading(
-                slave_id=gen_meters[0].slave_id,
-                description=gen_meters[0].description,
-                kwh_import=gen_meters[0].kwh_import,
-                kvarh_import=gen_meters[0].kvarh_import,
+                slave_id=grid_meters[0].slave_id,
+                description=grid_meters[0].description,
+                kwh_import=grid_meters[0].kwh_import,
+                kvarh_import=grid_meters[0].kvarh_import,
             ),
         )
 
@@ -236,6 +238,23 @@ class BillingEngine:
         return (solar_energy_kwh, gen_energy_kwh)
 
     @staticmethod
+    def _resolve_off_grid_slot_rate(
+        slot: dict,
+        efl_rate_kwh: Decimal,
+        tariff_indexed_rule_type: TariffIndexedRuleTypeEnum | None,
+    ) -> Decimal:
+        if slot["slot_type"] == TariffSlotTypeEnum.FIXED:
+            return Decimal(str(slot["rate"]))
+
+        rate = Decimal(str(slot["rate"]))
+        if tariff_indexed_rule_type == TariffIndexedRuleTypeEnum.EFL_LINKED:
+            multiplier = (Decimal(100) + rate) / Decimal(100)
+            return (efl_rate_kwh * multiplier).quantize(Decimal("0.01"))
+        if tariff_indexed_rule_type == TariffIndexedRuleTypeEnum.FIXED_ANNUAL_ESCALATOR:
+            raise NotImplementedError("FIXED_ANNUAL_ESCALATOR is not yet supported for PPA off-grid tariff")
+        raise ValueError(f"Unsupported tariff_indexed_rule_type: {tariff_indexed_rule_type}")
+
+    @staticmethod
     def compute_ppa_off_grid_subtotal_and_vat_rate(
         on_solar_energy_kwh,
         off_solar_energy_kwh,
@@ -243,55 +262,43 @@ class BillingEngine:
         tariff_indexed_rule_type: TariffIndexedRuleTypeEnum | None,
         active_tariff: list[dict],
     ):
-        efl_rate_kwh = int(efl_rate_kwh)
-        on_solar_energy_kwh = float(on_solar_energy_kwh)
-        off_solar_energy_kwh = float(off_solar_energy_kwh)
+        on_solar_energy_kwh = Decimal(str(on_solar_energy_kwh))
+        off_solar_energy_kwh = Decimal(str(off_solar_energy_kwh))
 
-        day_tariff = active_tariff[0]
-        night_tariff = active_tariff[1]
+        day_rate = BillingEngine._resolve_off_grid_slot_rate(active_tariff[0], efl_rate_kwh, tariff_indexed_rule_type)
+        night_rate = BillingEngine._resolve_off_grid_slot_rate(active_tariff[1], efl_rate_kwh, tariff_indexed_rule_type)
 
-        if day_tariff["slot_type"] == TariffSlotTypeEnum.FIXED:
-            day_rate = float(day_tariff["rate"])
-        else:
-            tariff_rate = float(day_tariff["rate"])
-            if tariff_indexed_rule_type == TariffIndexedRuleTypeEnum.EFL_LINKED:
-                day_rate = 100 - tariff_rate if tariff_rate < 0 else 100 + tariff_rate
-                day_rate = round(efl_rate_kwh * (day_rate / 100), 2)
+        on_solar_energy_amount = two_decimal_place(on_solar_energy_kwh * day_rate)
+        off_solar_energy_amount = two_decimal_place(off_solar_energy_kwh * night_rate)
 
-        if night_tariff["slot_type"] == TariffSlotTypeEnum.FIXED:
-            night_rate = float(night_tariff["rate"])
-        else:
-            tariff_rate = float(night_tariff["rate"])
-
-            if tariff_indexed_rule_type == TariffIndexedRuleTypeEnum.EFL_LINKED:
-                night_rate = 100 - tariff_rate if tariff_rate < 0 else 100 + tariff_rate
-                night_rate = round(efl_rate_kwh * (night_rate / 100), 2)
-
-        on_solar_energy_amount = on_solar_energy_kwh * day_rate
-        off_solar_energy_amount = off_solar_energy_kwh * night_rate
-
-        subtotal = on_solar_energy_amount + off_solar_energy_amount
+        subtotal = two_decimal_place(on_solar_energy_amount + off_solar_energy_amount)
 
         return (subtotal, on_solar_energy_amount, off_solar_energy_amount)
 
     @staticmethod
-    def compute_ppa_off_grid_no_battery_subtotal(
+    def compute_ppa_on_grid_no_battery_subtotal(
         solar_meters_import_usage: list[MeterImportUsage],
         tariff_indexed_rule_type: TariffIndexedRuleTypeEnum,
         efl_standard_rate_kwh: Decimal,
         solar_tariff: OnGridNoBatteryTariffSlotModel,
     ):
-        if solar_tariff.slot_type == TariffSlotTypeEnum.FIXED:
-            solar_rate = solar_tariff.rate
+        if solar_tariff.get("slot_type") == TariffSlotTypeEnum.FIXED:
+            solar_rate = Decimal(str(solar_tariff.get("rate")))
         else:
-            rate = solar_tariff.rate
+            rate = Decimal(str(solar_tariff.get("rate")))
             if tariff_indexed_rule_type == TariffIndexedRuleTypeEnum.EFL_LINKED:
-                solar_rate = 100 - rate if rate < 0 else 100 + rate
-                solar_rate = round(efl_standard_rate_kwh * (solar_rate / 100), 2)
+                multiplier = (Decimal(100) + rate) / Decimal(100)
+                solar_rate = (efl_standard_rate_kwh * multiplier).quantize(Decimal("0.01"))
+            elif tariff_indexed_rule_type == TariffIndexedRuleTypeEnum.FIXED_ANNUAL_ESCALATOR:
+                raise NotImplementedError(
+                    "FIXED_ANNUAL_ESCALATOR is not yet supported for PPA on-grid no-battery solar tariff"
+                )
+            else:
+                raise ValueError(f"Unsupported tariff_indexed_rule_type: {tariff_indexed_rule_type}")
 
-        solar_meters_subtotal = 0
+        solar_meters_subtotal = Decimal("0")
         for m in solar_meters_import_usage:
-            solar_meters_subtotal += m.kwh_import_usage * solar_rate
+            solar_meters_subtotal += Decimal(str(m.kwh_import_usage)) * solar_rate
 
         return (solar_meters_subtotal, solar_rate)
 
@@ -341,7 +348,7 @@ class BillingEngine:
         create_invoice_line_items: list[BaseInvoiceLineItemModel] = [
             BaseInvoiceLineItemModel(
                 description="Grid meter",
-                energy_kwh=Decimal(usage.grid_meter_import_usage.kwh_import_usage),
+                energy_kwh=Decimal(str(usage.grid_meter_import_usage.kwh_import_usage)),
                 tariff_rate=Decimal("0.0"),
                 tariff_slot=grid_tariff.slot,
                 tariff_period=int(grid_tariff.period_number),
@@ -350,20 +357,22 @@ class BillingEngine:
         ]
 
         for solar_meter in usage.solar_meters_import_usage:
+            energy_kwh = Decimal(str(solar_meter.kwh_import_usage))
             create_invoice_line_items.append(
                 BaseInvoiceLineItemModel(
                     description=f"Solar Meter {solar_meter.slave_id}",
-                    energy_kwh=Decimal(solar_meter.kwh_import_usage),
-                    tariff_rate=Decimal(solar_rate),
+                    energy_kwh=energy_kwh,
+                    tariff_rate=solar_rate,
                     tariff_slot=solar_tariff.slot,
                     tariff_period=int(solar_tariff.period_number),
-                    amount=Decimal(str(solar_meter.kwh_import_usage * solar_rate)),
+                    amount=energy_kwh * solar_rate,
                 )
             )
 
         invoice_details_dict = InvoiceDetailsDict(
             subtotal=subtotal,
             vat_rate=contract_settings.vat_rate,
+            efl_standard_rate_kwh=contract_settings.efl_standard_rate_kwh,
             invoice_line_items=create_invoice_line_items,
             invoice_meter_data=create_invoice_meter_data,
             energy_mix=loaded_invoice_dict["energy_mix"],
@@ -402,7 +411,12 @@ class BillingEngine:
                 active_tariff=active_tariff_slots,
             )
         )
-        energy_mix = json.dumps({"solar": float(solar_energy_kwh), "gen": float(gen_energy_kwh)})
+        energy_mix = json.dumps(
+            {
+                "solar": f"{float(solar_energy_kwh):.2f}",
+                "gen": f"{float(gen_energy_kwh):.2f}",
+            }
+        )
 
         create_invoice_meter_data: list[BaseInvoiceMeterDataModel] = []
         for device in devices:
@@ -507,18 +521,25 @@ class BillingEngine:
             tariff_indexed_rule_type=contract.details.tariff_indexed_rule_type,
             active_tariff=active_tariff_slots,
         )
-        energy_mix = json.dumps({"solar": float(solar_energy_kwh), "gen": float(gen_energy_kwh)})
+        energy_mix = json.dumps(
+            {
+                "solar": f"{float(solar_energy_kwh):.2f}",
+                "gen": f"{float(gen_energy_kwh):.2f}",
+            }
+        )
 
         create_invoice_dict = CreateInvoiceModel(
             period_start_at=period_start,
             period_end_at=period_end,
+            period_start_telemetry_data=json.dumps(jsonable_encoder(period_start_data)),
+            period_end_telemetry_data=json.dumps(jsonable_encoder(period_end_data)),
             subtotal=subtotal,
             vat_rate=contract_settings.vat_rate,
+            efl_standard_rate_kwh=contract_settings.efl_standard_rate_kwh,
             energy_mix=energy_mix,
         ).model_dump()
         create_invoice_dict["contract_uid"] = contract.uid
         create_invoice_dict["invoice_ref"] = InvoiceRepository._build_invoice_ref()
-
         return (create_invoice_dict, readings)
 
     @staticmethod
@@ -554,25 +575,33 @@ class BillingEngine:
         energy_mix = BillingEngine.compute_ppa_on_grid_no_battery_energy_mix(usage=usage)
 
         for tariff in tariffs:
-            if tariff.slot == OnGridNoBatterySlotEnum.SOLAR.value:
+            if tariff.get("slot") == OnGridNoBatterySlotEnum.SOLAR.value:
                 solar_tariff = tariff
             else:
                 grid_tariff = tariff
 
-        subtotal, solar_rate = BillingEngine.compute_ppa_off_grid_no_battery_subtotal(
+        subtotal, solar_rate = BillingEngine.compute_ppa_on_grid_no_battery_subtotal(
             solar_meters_import_usage=usage.solar_meters_import_usage,
             tariff_indexed_rule_type=contract.details.tariff_indexed_rule_type,
             efl_standard_rate_kwh=contract_settings.efl_standard_rate_kwh,
             solar_tariff=solar_tariff,
         )
 
-        energy_mix = json.dumps({"solar": float(energy_mix.solar), "grid": float(energy_mix.grid)})
+        energy_mix = json.dumps(
+            {
+                "solar": f"{float(energy_mix.solar):.2f}",
+                "grid": f"{float(energy_mix.grid):.2f}",
+            }
+        )
 
         create_invoice_dict: CreateInvoiceModel = CreateInvoiceModel(
             period_start_at=period_start,
             period_end_at=period_end,
+            period_start_telemetry_data=json.dumps(jsonable_encoder(period_start_data)),
+            period_end_telemetry_data=json.dumps(jsonable_encoder(period_end_data)),
             subtotal=subtotal,
             vat_rate=contract_settings.vat_rate,
+            efl_standard_rate_kwh=contract_settings.efl_standard_rate_kwh,
             energy_mix=energy_mix,
         ).model_dump()
         create_invoice_dict["contract_uid"] = contract.uid

@@ -33,6 +33,8 @@ class Invoice(MyAbstractSQLModel, table=True):
     period_end_at: datetime = Field(
         sa_type=DateTime(timezone=True),
     )
+    period_start_telemetry_data: str = Field(nullable=False)
+    period_end_telemetry_data: str = Field(nullable=False)
 
     # financials
     subtotal: Decimal = Field(nullable=False)
@@ -66,7 +68,7 @@ class Invoice(MyAbstractSQLModel, table=True):
         Returns:
             The sum of the subtotal and the calculated VAT amount.
         """
-        return self.subtotal + self.vat_amount
+        return Decimal(self.subtotal + self.vat_amount).quantize(Decimal("0.01"))
 
 
 class InvoiceLineItem(MyAbstractSQLModel, table=True):
@@ -148,7 +150,8 @@ class InvoiceSnapshot(MyAbstractSQLModel, table=True):
 
     period_start_at: datetime = Field(sa_type=DateTime(timezone=True), nullable=False)
     period_end_at: datetime = Field(sa_type=DateTime(timezone=True), nullable=False)
-
+    period_start_telemetry_data: str = Field(nullable=False)
+    period_end_telemetry_data: str = Field(nullable=False)
     subtotal: Decimal = Field(nullable=False)
     vat_rate: Decimal = Field(nullable=False)
     efl_standard_rate_kwh: Decimal = Field(nullable=False)
