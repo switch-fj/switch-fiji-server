@@ -227,7 +227,7 @@ class CreateContractDetailsModel(BaseModel):
     monthly_baseline_consumption_kwh: Optional[float] = Field(default=None, title="Monthly baseline consumption kwh")
     minimum_consumption_monthly_kwh: Optional[float] = Field(default=None, title="Minimum consumptions monthly kwh")
     minimum_spend: Optional[float] = Field(default=None, title="Minimum spend")
-    tariff_periods: Optional[int] = Field(default=None, le=4, ge=2, title="Tariff periods")
+    tariff_periods: Optional[int] = Field(default=None, le=4, ge=1, title="Tariff periods")
     tariff_indexed_rule_type: Optional[TariffIndexedRuleTypeEnum] = Field(default=None)
     tariffs: Optional[list[TariffSlotModel]] = Field(default=None, title="Tariffs")
 
