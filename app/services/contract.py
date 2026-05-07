@@ -64,8 +64,8 @@ class ContractService:
             if not data.estimated_utility:
                 raise BadRequest("Estimated utility is required for all PPA on grid contracts.")
 
-            if not data.grid_meter_offset_pair:
-                raise BadRequest("Grid meter offset pair is required for all PPA on grid contracts.")
+            # if not data.grid_meter_offset_pair:
+            #     raise BadRequest("Grid meter offset pair is required for all PPA on grid contracts.")
 
             if data.with_battery == "no" and not data.ppa_on_grid_no_battery_tariffs:
                 raise BadRequest("PPA on grid no battery tariff slot is required.")
