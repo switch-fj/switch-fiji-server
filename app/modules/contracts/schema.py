@@ -97,8 +97,6 @@ class OnGridNoBatteryTariffSlotModel(BaseModel):
     slot: OnGridNoBatterySlotEnum = Field(...)
     slot_type: TariffSlotTypeEnum = Field(...)
     rate: float = Field(...)
-    start_time: str = Field(...)
-    end_time: str = Field(...)
 
     @model_validator(mode="after")
     def validate(self):
@@ -111,6 +109,26 @@ class OnGridNoBatteryTariffSlotModel(BaseModel):
                     f"Slot {self.slot.value} (VARIABLE) rate must be between -100 and 100, got {self.rate}"
                 )
         return self
+
+    @computed_field
+    @property
+    def start_time(self) -> str:
+        """Return the start time for this tariff slot.
+
+        Returns:
+            07:30
+        """
+        return "07:30"
+
+    @computed_field
+    @property
+    def end_time(self) -> str:
+        """Return the end time for this tariff slot.
+
+        Returns:
+            16:30
+        """
+        return "16:30"
 
 
 class TariffSlotModel(BaseModel):
