@@ -1,4 +1,5 @@
 from celery import Celery
+from celery.schedules import crontab
 
 from app.database.redis import sync_redis_client
 from app.utils import build_redis_url
@@ -19,13 +20,13 @@ celery_app.conf.update(
 )
 
 celery_app.conf.beat_schedule = {
-    # "compute-site-stats-every-5-minutes": {
-    #     "task": "compute_all_site_stats",
-    #     "schedule": 300,
-    # },
+    "compute-site-stats-every-5-minutes": {
+        "task": "compute_all_site_stats",
+        "schedule": crontab(minute="*/5"),
+    },
     "compute-contract-bill-every-hour": {
         "task": "compute_all_contracts_bill",
-        "schedule": 300,
+        "schedule": crontab(minute=0),
     },
 }
 
