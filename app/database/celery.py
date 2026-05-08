@@ -95,9 +95,20 @@ class CeleryDynamoClient:
         Returns:
             A tuple of (start_of_day_ms, end_of_day_ms) as integer millisecond timestamps.
         """
-        start_of_day = date.replace(hour=0, minute=0, second=0, microsecond=0)
-        end_of_day = date.replace(hour=23, minute=59, second=59, microsecond=999999)
-        return int(start_of_day.timestamp() * 1000), int(end_of_day.timestamp() * 1000)
+        start_of_day = date.replace(
+            hour=0,
+            minute=0,
+            second=0,
+            microsecond=0,
+        )
+
+        end_of_day = date.replace(
+            hour=23,
+            minute=59,
+            second=59,
+            microsecond=999999,
+        )
+        return int(start_of_day.timestamp()), int(end_of_day.timestamp())
 
     def get_readings_for_billing_period(
         self,
@@ -123,17 +134,21 @@ class CeleryDynamoClient:
             return None
 
         try:
-            start_ms, _ = self._get_day_epoch_range(period_start)
-            _, end_ms = self._get_day_epoch_range(period_end)
+            start_ts = int(period_start.timestamp())
+            end_ts = int(period_end.timestamp())
 
             start_response = self._table.query(
-                KeyConditionExpression=(Key("gateway_id").eq(gateway_id) & Key("ts_epoch_ms").gte(start_ms)),
+                KeyConditionExpression=(
+                    Key("gateway_id").eq(gateway_id) & Key("ts_epoch_ms").between(start_ts, end_ts)
+                ),
                 ScanIndexForward=True,
                 Limit=1,
             )
 
             end_response = self._table.query(
-                KeyConditionExpression=(Key("gateway_id").eq(gateway_id) & Key("ts_epoch_ms").lte(end_ms)),
+                KeyConditionExpression=(
+                    Key("gateway_id").eq(gateway_id) & Key("ts_epoch_ms").between(start_ts, end_ts)
+                ),
                 ScanIndexForward=False,
                 Limit=1,
             )
