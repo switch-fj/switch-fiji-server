@@ -107,6 +107,8 @@ class InvoiceRespModel(DBModel):
     subtotal: Decimal
     vat_rate: Decimal
     efl_standard_rate_kwh: Decimal
+    vat_amount: Decimal
+    total: Decimal
     energy_mix: Optional[str]
 
     @field_serializer("period_start_at", "period_end_at")
@@ -122,7 +124,7 @@ class InvoiceRespModel(DBModel):
         if value:
             return value.isoformat()
 
-    @field_serializer("subtotal", "vat_rate")
+    @field_serializer("subtotal", "vat_rate", "vat_amount", "total")
     def serialize_decimals(self, value: Decimal):
         """Serialise Decimal financial fields to two-decimal-place strings.
 
@@ -314,6 +316,8 @@ class InvoiceSnapshotRespModel(DBModel):
     vat_rate: Decimal
     efl_standard_rate_kwh: Decimal
     energy_mix: Optional[str]
+    vat_amount: Decimal
+    total: Decimal
     snapshotted_at: datetime
     line_items: list[InvoiceSnapshotLineItemRespModel]
     meter_data: list[InvoiceSnapshotMeterDataRespModel]
@@ -323,7 +327,7 @@ class InvoiceSnapshotRespModel(DBModel):
         if value:
             return value.isoformat()
 
-    @field_serializer("subtotal", "vat_rate")
+    @field_serializer("subtotal", "vat_rate", "vat_amount", "total")
     def serialize_decimals(self, value: Decimal):
         if value:
             return f"{value:.2f}"
