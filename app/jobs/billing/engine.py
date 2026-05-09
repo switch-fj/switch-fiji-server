@@ -2,7 +2,6 @@ import json
 from datetime import datetime
 from decimal import Decimal
 from typing import Any
-from zoneinfo import ZoneInfo
 
 from dateutil.relativedelta import relativedelta
 from fastapi.encoders import jsonable_encoder
@@ -61,21 +60,19 @@ class BillingEngine:
 
     @staticmethod
     def get_current_billing_period(
-        timezone_key: str,
         commissioned_at: datetime,
         billing_frequency: str,
         as_of: datetime,
     ):
-        tz = ZoneInfo(timezone_key)
 
         try:
             freq = ContractBillingFrequencyEnum(billing_frequency.lower())
         except ValueError:
             raise ValueError(f"Unsupported billing frequency: {billing_frequency}")
 
-        diff = relativedelta(as_of, commissioned_at.astimezone(tz=tz))
+        diff = relativedelta(as_of, commissioned_at)
         match freq:
-            # case ContractBillingFrequencyEnum.WEEKLY:
+            # case ContractBillingFrequencyEnum.WEEKLY:  # for testing purpose
             #     total_seconds = (as_of - commissioned_at).total_seconds()
             #     n = int(total_seconds // (5 * 60))
             #     delta = relativedelta(minutes=5)

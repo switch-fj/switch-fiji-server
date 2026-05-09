@@ -237,7 +237,7 @@ def lambda_handler(event, context):
             try_lock_contract_dates(
                 conn,
                 site_uid=site_uid,
-                first_seen_at_s=int(payload["ts_epoch_ms"]),
+                first_seen_at_s=int(payload["ts_epoch_ms"]) // 1000,
             )
             conn.commit()
             print(f"[INFO] Committed — client_uid={client_uid} site_uid={site_uid}")

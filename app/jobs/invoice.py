@@ -108,7 +108,6 @@ def compute_single_contract_bill(self, contract_uid, gateway_id, site_uid):
             now_local = datetime.now(tz=tz)
 
             period_start, period_end = BillingEngine.get_current_billing_period(
-                timezone_key=contract.timezone,
                 commissioned_at=contract.details.actual_commissioned_at or contract.details.commissioned_at,
                 billing_frequency=contract.details.billing_frequency,
                 as_of=now_local,
@@ -223,8 +222,7 @@ def compute_single_contract_bill(self, contract_uid, gateway_id, site_uid):
                 session.execute(update(Invoice).where(Invoice.uid == new_invoice.uid).values(pdf_s3_key=key))
                 session.commit()
 
-            # else:  # For testing purposes.
-            elif now_local.hour == 0:  # daily snapshot — aligns with hourly beat at local midnight
+            elif now_local.hour == 0:
                 snapshot = InvoiceSnapshot(
                     contract_uid=contract.uid,
                     period_start_at=period_start,

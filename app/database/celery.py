@@ -108,7 +108,7 @@ class CeleryDynamoClient:
             second=59,
             microsecond=999999,
         )
-        return int(start_of_day.timestamp()), int(end_of_day.timestamp())
+        return int(start_of_day.timestamp()) * 1000, int(end_of_day.timestamp()) * 1000
 
     def get_readings_for_billing_period(
         self,
@@ -121,7 +121,6 @@ class CeleryDynamoClient:
         Queries for the earliest reading on period_start day and the latest on period_end day.
 
         Args:
-            timezone_key: The timezone string for the contract.
             gateway_id: The gateway identifier used as the DynamoDB partition key.
             period_start: The start date of the billing period.
             period_end: The end date of the billing period.
@@ -134,12 +133,12 @@ class CeleryDynamoClient:
             return None
 
         try:
-            start_ts = int(period_start.timestamp())
-            end_ts = int(period_end.timestamp())
+            start_day_ts, _ = self._get_day_epoch_range(period_start)
+            _, end_day_ts = self._get_day_epoch_range(period_end)
 
             start_response = self._table.query(
                 KeyConditionExpression=(
-                    Key("gateway_id").eq(gateway_id) & Key("ts_epoch_ms").between(start_ts, end_ts)
+                    Key("gateway_id").eq(gateway_id) & Key("ts_epoch_ms").between(start_day_ts, end_day_ts)
                 ),
                 ScanIndexForward=True,
                 Limit=1,
@@ -147,7 +146,7 @@ class CeleryDynamoClient:
 
             end_response = self._table.query(
                 KeyConditionExpression=(
-                    Key("gateway_id").eq(gateway_id) & Key("ts_epoch_ms").between(start_ts, end_ts)
+                    Key("gateway_id").eq(gateway_id) & Key("ts_epoch_ms").between(start_day_ts, end_day_ts)
                 ),
                 ScanIndexForward=False,
                 Limit=1,

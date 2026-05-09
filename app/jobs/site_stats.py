@@ -76,7 +76,6 @@ def compute_single_site_stats(self, site_uid: str, gateway_id: str):
 
         # 1. billing period (contract math only)
         period_start, period_end = BillingEngine.get_current_billing_period(
-            timezone_key=contract.timezone,
             commissioned_at=commissioned_at,
             billing_frequency=contract.details.billing_frequency,
             as_of=now,
@@ -98,7 +97,6 @@ def compute_single_site_stats(self, site_uid: str, gateway_id: str):
 
         # 4. actual generation (DynamoDB only — sync boto3)
         billing_data = celery_dynamo_client.get_readings_for_billing_period(
-            timezone_key=contract.timezone,
             gateway_id=gateway_id,
             period_start=period_start,
             period_end=period_end,
