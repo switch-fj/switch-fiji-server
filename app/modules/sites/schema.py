@@ -70,3 +70,17 @@ class SiteDetailedRespModel(SiteRespModel):
     client: ClientRespModel
     contract: ContractRespModel
     details: ContractDetailsRespModel
+
+
+class SiteDailyStatsRespModel(BaseModel):
+    site_uid: str
+    expected_generation_kwh: float
+    actual_generation_kwh: float
+    mtd_generation_kwh: float
+    projected_generation_kwh: float
+    projected_invoice_value: float
+    billing_period_progress_pct: float
+    contract_progress_pct: float
+    performance_vs_baseline_pct: float
+    last_invoice_date: Optional[str]
+    last_invoice_amount: Optional[float]

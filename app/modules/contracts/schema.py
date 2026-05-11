@@ -538,3 +538,10 @@ class ContractDetailedRespModel(ContractRespModel):
     client: ClientRespWithoutSitesCountModel
     site: ContractSiteRespModel
     details: Optional[ContractDetailsRespModel]
+
+
+class EnergyPortfolioRespModel(BaseModel):
+    produced_kwh: Decimal
+    baseline_kwh: float
+    invoice_total: float
+    invoice_count: int

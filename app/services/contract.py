@@ -157,6 +157,11 @@ class ContractService:
 
         return True
 
+    async def energy_portfolio(self):
+        res = await self.contract_repo.compute_energy_portfolio()
+
+        return res
+
 
 def get_contract_service(
     contract_repo: ContractRepository = Depends(get_contract_repo),

@@ -10,8 +10,10 @@ from app.core.config import Config
 from app.core.security import AdminAccessBearer
 from app.database.redis import async_redis_client
 from app.modules.clients.schema import ClientRespModel, CreateClientModel
+from app.modules.contracts.schema import EnergyPortfolioRespModel
 from app.modules.sites.schema import CreateSiteModel, SiteRespModel
 from app.services.client import ClientService, get_client_service
+from app.services.contract import ContractService, get_contract_service
 from app.services.sites import SiteService, get_site_service
 from app.shared.schema import (
     CursorPaginationModel,
@@ -98,7 +100,7 @@ async def stream_site_stats(
     async def event_generator():
         while True:
             try:
-                stats = await async_redis_client.get_site_stats(site_uid=str(site_uid))
+                stats = await async_redis_client.get_site_stats_stream(site_uid=str(site_uid))
 
                 if stats:
                     yield f"data: {stats}\n\n".encode("utf-8")
@@ -120,3 +122,24 @@ async def stream_site_stats(
             "Connection": "keep-alive",
         },
     )
+
+
+@admin_router.get(
+    "/portfolio/stats",
+    status_code=status.HTTP_200_OK,
+    response_model=ServerRespModel[EnergyPortfolioRespModel],
+)
+async def get_portfolio_stats(
+    contract_service: ContractService = Depends(get_contract_service),
+    _: dict = Depends(AdminAccessBearer()),
+):
+    energy_portfolio = await async_redis_client.get_energy_portfolio()
+
+    if energy_portfolio:
+        return ServerRespModel[dict[str, float]](
+            data=json.loads(energy_portfolio), message="Energy portfolio retrieved"
+        )
+
+    resp = await contract_service.energy_portfolio()
+    await async_redis_client.set_energy_portfolio(data=resp.model_dump_json())
+    return ServerRespModel[EnergyPortfolioRespModel](data=resp, message="Energy portfolio retrieved")
