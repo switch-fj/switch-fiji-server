@@ -1,6 +1,6 @@
 import json
-from calendar import monthrange
 from datetime import datetime, timezone
+from decimal import Decimal
 from uuid import UUID
 
 from fastapi import Depends
@@ -291,18 +291,11 @@ class ContractRepository:
             energy portfolio
         """
         now = datetime.now(tz=timezone.utc)
-        month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
-        days_in_month = monthrange(now.year, now.month)[1]
-        month_progress = now.day / days_in_month
 
         baseline_stmt = (
             select(
                 func.coalesce(
-                    func.sum(
-                        ContractDetails.guaranteed_production_kwh_per_kwp
-                        * ContractDetails.system_size_kwp
-                        * month_progress
-                    ),
+                    func.sum(ContractDetails.guaranteed_production_kwh_per_kwp * ContractDetails.system_size_kwp),
                     0,
                 ).label("baseline_kwh")
             )
@@ -328,7 +321,13 @@ class ContractRepository:
                     ),
                     0,
                 ).label("produced_kwh"),
-                func.coalesce(func.sum(InvoiceSnapshot.total), 0).label("invoice_total"),
+                func.coalesce(
+                    func.sum(
+                        (InvoiceSnapshot.subtotal * (InvoiceSnapshot.vat_rate / Decimal(100)))
+                        + InvoiceSnapshot.subtotal
+                    ),
+                    0,
+                ).label("invoice_total"),
                 func.count(InvoiceSnapshot.uid).label("invoice_count"),
             )
             .select_from(InvoiceSnapshot)
@@ -336,7 +335,7 @@ class ContractRepository:
                 InvoiceSnapshotMeterData,
                 InvoiceSnapshotMeterData.snapshot_uid == InvoiceSnapshot.uid,
             )
-            .where(InvoiceSnapshot.period_start_at >= month_start)
+            .where(func.extract("month", InvoiceSnapshot.period_start_at) >= now.month)
         )
 
         invoice_result = await self.session.exec(invoice_stmt)
@@ -344,10 +343,10 @@ class ContractRepository:
 
         energy_portfolio_resp = EnergyPortfolioRespModel(
             **{
-                "produced_kwh": float(invoice_stat.produced_kwh),
-                "baseline_kwh": float(baseline_row.baseline_kwh),
-                "invoice_total": float(invoice_stat.invoice_total),
-                "invoice_count": invoice_stat.invoice_count,
+                "produced_kwh": float(invoice_stat[0]),
+                "baseline_kwh": float(baseline_row),
+                "invoice_total": float(invoice_stat[1]),
+                "invoice_count": invoice_stat[2],
             }
         )
         return energy_portfolio_resp

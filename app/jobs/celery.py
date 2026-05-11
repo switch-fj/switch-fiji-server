@@ -20,13 +20,13 @@ celery_app.conf.update(
 )
 
 celery_app.conf.beat_schedule = {
-    "compute-site-stats-every-5-minutes": {
-        "task": "compute_all_site_stats",
-        "schedule": crontab(minute="*/5"),
-    },
+    # "compute-site-stats-every-5-minutes": {
+    #     "task": "compute_all_site_stats",
+    #     "schedule": crontab(minute="*/5"),
+    # },
     "compute-contract-bill-every-hour": {
         "task": "compute_all_contracts_bill",
-        "schedule": crontab(minute=0),
+        "schedule": crontab(minute="*/5"),
     },
 }
 
