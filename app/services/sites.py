@@ -46,6 +46,17 @@ class SiteService:
         updated_site = await self.site_repo.update_site(site=site, data=data)
         return updated_site
 
+    async def compute_site_stats(self, site_uid: UUID):
+        site = await self.site_repo.get_site_by_uid(site_uid=site_uid)
+        if not site:
+            raise NotFound("Site not found.")
+
+        stats = await self.site_repo.compute_site_stats(site_uid=site_uid)
+        if not stats:
+            raise NotFound("No active contract found for this site.")
+
+        return stats
+
 
 def get_site_service(
     site_repo: SiteRepository = Depends(get_site_repo),

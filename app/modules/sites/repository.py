@@ -1,20 +1,27 @@
 import json
+from datetime import datetime, timezone
 from uuid import UUID
 
 from fastapi import Depends
 from sqlalchemy.orm import selectinload
-from sqlmodel import func, select
+from sqlmodel import desc, func, select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.core.logger import setup_logger
 from app.database.postgres import get_session
 from app.database.redis import async_redis_client
+from app.jobs.billing.engine import BillingEngine
 from app.modules.clients.model import Client
 from app.modules.contracts.model import Contract
 from app.modules.devices.model import Device
+from app.modules.invoices.model import (
+    Invoice,
+    InvoiceSnapshot,
+)
 from app.modules.sites.model import Site
 from app.modules.sites.schema import (
     CreateSiteModel,
+    SiteDailyStatsRespModel,
     SiteDetailedRespModel,
     SiteRespModel,
     UpdateSiteModel,
@@ -92,7 +99,7 @@ class SiteRepository:
             .order_by(Site.created_at.desc())
         )
 
-        result = await self.session.execute(statement)
+        result = await self.session.exec(statement)
         rows = result.all()
 
         if not rows:
@@ -201,6 +208,150 @@ class SiteRepository:
         await self.session.refresh(site)
         await async_redis_client.invalidate_client_sites_cache(str(site.client_uid))
         return site
+
+    async def compute_site_stats(self, site_uid: UUID):
+        """Compute live site stats from DB only — no DynamoDB or Celery needed.
+
+        Args:
+            site_uid: The UUID of the site to compute stats for.
+
+        Returns:
+            A dict of stats, or None if the site has no active contract.
+        """
+
+        contract_result = await self.session.exec(
+            select(Contract).options(selectinload(Contract.details)).where(Contract.site_uid == site_uid)
+        )
+        contract = contract_result.one_or_none()
+
+        site_uid_str = str(site_uid)
+        performance_vs_baseline_pct = 0.0
+        expected_generation_kwh = 0.0
+        actual_generation_kwh = 0.0
+        projected_generation_kwh = 0.0
+        projected_invoice_value = 0.0
+        billing_period_progress_pct = 0.0
+        contract_progress_pct = 0.0
+        mtd_generation_kwh = 0.0
+        last_invoice_date = None
+        last_invoice_amount = None
+
+        if not contract or not contract.details:
+            return SiteDailyStatsRespModel.model_validate(
+                {
+                    "site_uid": site_uid_str,
+                    "expected_generation_kwh": expected_generation_kwh,
+                    "actual_generation_kwh": actual_generation_kwh,
+                    "mtd_generation_kwh": mtd_generation_kwh,
+                    "projected_generation_kwh": projected_generation_kwh,
+                    "projected_invoice_value": projected_invoice_value,
+                    "billing_period_progress_pct": billing_period_progress_pct,
+                    "contract_progress_pct": contract_progress_pct,
+                    "performance_vs_baseline_pct": performance_vs_baseline_pct,
+                    "last_invoice_date": last_invoice_date,
+                    "last_invoice_amount": last_invoice_amount,
+                }
+            )
+
+        now = datetime.now(tz=timezone.utc)
+
+        commissioned_at = contract.details.actual_commissioned_at or contract.details.commissioned_at
+        end_at = contract.details.actual_end_at or contract.details.end_at
+
+        period_start, period_end = BillingEngine.get_current_billing_period(
+            commissioned_at=commissioned_at,
+            billing_frequency=contract.details.billing_frequency,
+            as_of=now,
+        )
+
+        period_total_secs = (period_end - period_start).total_seconds()
+        period_elapsed_secs = (now - period_start).total_seconds()
+        billing_period_progress_pct = round(max(0.0, min((period_elapsed_secs / period_total_secs) * 100, 100.0)), 2)
+
+        contract_total_secs = (end_at - commissioned_at).total_seconds()
+        contract_elapsed_secs = (now - commissioned_at).total_seconds()
+        contract_progress_pct = round(max(0.0, min((contract_elapsed_secs / contract_total_secs) * 100, 100.0)), 2)
+
+        days_in_period = (period_end - period_start).days or 1
+        days_elapsed_in_period = min((now - period_start).days, days_in_period)
+        expected_generation_kwh = round(
+            (contract.details.system_size_kwp or 0)
+            * (contract.details.guaranteed_production_kwh_per_kwp or 0)
+            * (days_elapsed_in_period / 365),
+            2,
+        )
+
+        result = await self.session.exec(
+            select(InvoiceSnapshot)
+            .options(selectinload(InvoiceSnapshot.meter_data))
+            .where(
+                InvoiceSnapshot.contract_uid == contract.uid,
+                InvoiceSnapshot.period_start_at == period_start,
+            )
+            .order_by(desc(InvoiceSnapshot.snapshotted_at))
+            .limit(1)
+        )
+        latest_snapshot = result.one_or_none()
+
+        if latest_snapshot and latest_snapshot.meter_data:
+            actual_generation_kwh = round(float(sum(m.usage for m in latest_snapshot.meter_data)), 2)
+            if billing_period_progress_pct > 0:
+                projected_generation_kwh = round(actual_generation_kwh / (billing_period_progress_pct / 100), 2)
+                projected_invoice_value = round(
+                    projected_generation_kwh * float(latest_snapshot.efl_standard_rate_kwh),
+                    2,
+                )
+
+        month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+        mtd_snapshots_result = await self.session.exec(
+            select(InvoiceSnapshot)
+            .options(selectinload(InvoiceSnapshot.meter_data))
+            .where(
+                InvoiceSnapshot.contract_uid == contract.uid,
+                InvoiceSnapshot.period_start_at >= month_start,
+            )
+        )
+        mtd_snapshots = mtd_snapshots_result.fetchall()
+
+        mtd_generation_kwh = round(
+            float(sum(float(m.usage) for snapshot in mtd_snapshots for m in snapshot.meter_data)),
+            2,
+        )
+
+        full_period_baseline_kwh = (contract.details.guaranteed_production_kwh_per_kwp or 0) * (
+            contract.details.system_size_kwp or 0
+        )
+
+        baseline_kwh = round(full_period_baseline_kwh * (billing_period_progress_pct / 100), 2)
+
+        if baseline_kwh > 0:
+            performance_vs_baseline_pct = round(
+                (actual_generation_kwh - baseline_kwh) / baseline_kwh * 100,
+                2,
+            )
+
+        last_invoice_result = await self.session.exec(
+            select(Invoice).where(Invoice.contract_uid == contract.uid).order_by(desc(Invoice.period_end_at)).limit(1)
+        )
+        last_invoice = last_invoice_result.one_or_none()
+        last_invoice_date = last_invoice.period_end_at.isoformat() if last_invoice else None
+        last_invoice_amount = float(last_invoice.subtotal) if last_invoice else None
+
+        return SiteDailyStatsRespModel.model_validate(
+            {
+                "site_uid": site_uid_str,
+                "expected_generation_kwh": expected_generation_kwh,
+                "actual_generation_kwh": actual_generation_kwh,
+                "mtd_generation_kwh": mtd_generation_kwh,
+                "projected_generation_kwh": projected_generation_kwh,
+                "projected_invoice_value": projected_invoice_value,
+                "billing_period_progress_pct": billing_period_progress_pct,
+                "contract_progress_pct": contract_progress_pct,
+                "performance_vs_baseline_pct": performance_vs_baseline_pct,
+                "last_invoice_date": last_invoice_date,
+                "last_invoice_amount": last_invoice_amount,
+            }
+        )
 
 
 def get_site_repo(session: AsyncSession = Depends(get_session)):

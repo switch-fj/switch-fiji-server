@@ -12,6 +12,7 @@ from app.database.redis import sync_redis_client
 from app.jobs.billing.engine import BillingEngine
 from app.jobs.celery import celery_app
 from app.modules.contracts.model import Contract
+from app.shared.constants import Constants
 
 logger = setup_logger(__name__)
 
@@ -143,7 +144,7 @@ def compute_single_site_stats(self, site_uid: str, gateway_id: str):
         }
 
         sync_redis_client._client.setex(
-            f"site_stats:{site_uid}",
+            Constants.SITE_STATS_STREAM.replace("uid", site_uid),
             600,
             json.dumps(stats),
         )

@@ -1,44 +1,26 @@
 import asyncio
 import json
-from typing import Optional
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Query, status
+from fastapi import APIRouter, Depends, status
 from fastapi.responses import StreamingResponse
 
-from app.core.config import Config
 from app.core.security import AdminAccessBearer
 from app.database.redis import async_redis_client
-from app.modules.clients.schema import ClientRespModel, CreateClientModel
-from app.modules.sites.schema import CreateSiteModel, SiteRespModel
-from app.services.client import ClientService, get_client_service
-from app.services.contract import ContractService, get_contract_service
+from app.modules.sites.schema import (
+    CreateSiteModel,
+    SiteDailyStatsRespModel,
+    SiteRespModel,
+)
 from app.services.sites import SiteService, get_site_service
 from app.shared.schema import (
-    CursorPaginationModel,
-    PaginatedRespModel,
     ServerRespModel,
 )
 
-admin_router = APIRouter(prefix="/admin", tags=["admin"])
+site_router = APIRouter(prefix="/sites", tags=["site"])
 
 
-@admin_router.post(
-    "/client/add",
-    status_code=status.HTTP_201_CREATED,
-    response_model=ServerRespModel[str],
-)
-async def add_client(
-    data: CreateClientModel,
-    client_service: ClientService = Depends(get_client_service),
-    token_payload: dict = Depends(AdminAccessBearer()),
-):
-    client = await client_service.register_client(data=data, token_payload=token_payload)
-
-    return ServerRespModel[str](data=str(client.uid), message="client added successfully")
-
-
-@admin_router.post(
+@site_router.post(
     "/site/add",
     status_code=status.HTTP_201_CREATED,
     response_model=ServerRespModel[str],
@@ -53,27 +35,7 @@ async def add_site(
     return ServerRespModel[str](data=str(site.uid), message="Site added to client successfully")
 
 
-@admin_router.get(
-    "/clients",
-    status_code=status.HTTP_200_OK,
-    response_model=ServerRespModel[PaginatedRespModel[ClientRespModel, CursorPaginationModel]],
-)
-async def get_clients(
-    q: Optional[str] = Query(default=None),
-    limit: int = Query(default=Config.DEFAULT_PAGE_LIMIT),
-    next_cursor: Optional[str] = Query(default=None),
-    prev_cursor: Optional[str] = Query(default=None),
-    client_service: ClientService = Depends(get_client_service),
-    _: dict = Depends(AdminAccessBearer()),
-):
-    result = await client_service.get_clients(q=q, limit=limit, next_cursor=next_cursor, prev_cursor=prev_cursor)
-
-    return ServerRespModel[PaginatedRespModel[ClientRespModel, CursorPaginationModel]](
-        data=result, message="clients retrieved"
-    )
-
-
-@admin_router.get(
+@site_router.get(
     "/sites/{client_uid}",
     status_code=status.HTTP_200_OK,
     response_model=ServerRespModel[list[SiteRespModel]],
@@ -88,7 +50,7 @@ async def get_client_sites_by_uid(
     return ServerRespModel[list[SiteRespModel]](data=sites, message="client's sites retrieved")
 
 
-@admin_router.get(
+@site_router.get(
     "/sites/{site_uid}/stats/stream",
     status_code=status.HTTP_200_OK,
     summary="Stream live stats for a single site via SSE",
@@ -123,11 +85,22 @@ async def stream_site_stats(
     )
 
 
-@admin_router.get("/portfolio/stats")
-async def get_portfolio_stats(
-    contract_service: ContractService = Depends(get_contract_service),
+@site_router.get(
+    "/sites/{site_uid}/stats",
+    status_code=status.HTTP_200_OK,
+    response_model=ServerRespModel[SiteDailyStatsRespModel],
+)
+async def site_stats(
+    site_uid: UUID,
+    site_service: SiteService = Depends(get_site_service),
     _: dict = Depends(AdminAccessBearer()),
 ):
-    resp = await contract_service.energy_portfolio()
-
-    return ServerRespModel[dict[str, float]](data=resp, message="Energy portfolio retrieved")
+    stats = await async_redis_client.get_site_stats(site_uid=str(site_uid))
+    if stats:
+        return ServerRespModel[SiteDailyStatsRespModel](
+            data=SiteDailyStatsRespModel.model_validate(json.loads(stats)),
+            message="Site stat retrieved",
+        )
+    site_stats = await site_service.compute_site_stats(site_uid=site_uid)
+    await async_redis_client.set_site_stats(data=site_stats.model_dump_json(), site_uid=str(site_uid))
+    return ServerRespModel[SiteDailyStatsRespModel](data=site_stats, message="Site stat retrieved")

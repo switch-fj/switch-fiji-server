@@ -9,6 +9,7 @@ from redis.exceptions import ConnectionError, RedisError
 
 from app.core.config import Config
 from app.core.logger import setup_logger
+from app.shared.constants import Constants
 from app.utils import build_redis_url
 
 logger = setup_logger(__name__)
@@ -19,7 +20,6 @@ class AsyncRedisClient:
 
     _instance: Optional["AsyncRedisClient"] = None
     _client: Optional[aioredis.Redis] = None
-    BLOCKLIST_PREFIX = "blocked:"
     SITES_CACHE_TTL = 60
 
     def __new__(cls):
@@ -66,6 +66,23 @@ class AsyncRedisClient:
         """
         return self._client
 
+    async def get_site_stats_stream(self, site_uid: str):
+        """Retrieve cached site stats JSON string from Redis.
+
+        Args:
+            site_uid: The unique identifier of the site.
+
+        Returns:
+            The cached JSON string for the site stats, or None if unavailable.
+        """
+        if not self._client:
+            return None
+        try:
+            return await self._client.get(Constants.SITE_STATS_STREAM.replace("uid", site_uid))
+        except Exception as e:
+            logger.error(f"Error getting site stats for {site_uid}: {e}")
+            return None
+
     async def get_site_stats(self, site_uid: str):
         """Retrieve cached site stats JSON string from Redis.
 
@@ -78,7 +95,25 @@ class AsyncRedisClient:
         if not self._client:
             return None
         try:
-            return await self._client.get(f"site_stats:{site_uid}")
+            return await self._client.get(Constants.SITE_STAT.replace("uid", site_uid))
+        except Exception as e:
+            logger.error(f"Error getting site stats for {site_uid}: {e}")
+            return None
+
+    async def set_site_stats(self, data: str, site_uid: str):
+        """Store site stats JSON string in Redis.
+
+        Args:
+            data: JSON string of the client's sites to cache.
+            site_uid: The unique identifier of the site.
+
+        Returns:
+            None on success or if the client is not initialised.
+        """
+        if not self._client:
+            return None
+        try:
+            await self._client.setex(Constants.SITE_STAT.replace("uid", site_uid), 3600, data)
         except Exception as e:
             logger.error(f"Error getting site stats for {site_uid}: {e}")
             return None
@@ -96,7 +131,7 @@ class AsyncRedisClient:
             return None
 
         try:
-            return await self._client.get(f"sites:client:{client_uid}")
+            return await self._client.get(Constants.CLIENT_SITES.replace("uid", client_uid))
         except Exception as e:
             logger.error(f"Error getting sites for client {client_uid}: {e}")
             return None
@@ -115,7 +150,11 @@ class AsyncRedisClient:
             return None
 
         try:
-            await self._client.set(f"sites:client:{client_uid}", data, ex=self.SITES_CACHE_TTL)
+            await self._client.set(
+                Constants.CLIENT_SITES.replace("uid", client_uid),
+                data,
+                ex=self.SITES_CACHE_TTL,
+            )
         except Exception as e:
             logger.error(f"Error setting sites for client {client_uid}: {e}")
             return None
@@ -129,7 +168,7 @@ class AsyncRedisClient:
         Returns:
             None
         """
-        await self._client.delete(f"sites:client:{client_uid}")
+        await self._client.delete(Constants.CLIENT_SITES.replace("uid", client_uid))
 
     @backoff.on_exception(backoff.expo, (ConnectionError, RedisError), max_tries=3, max_time=30)
     async def add_to_blocklist(self, key: str, expiry: int = 86400) -> bool:
@@ -139,7 +178,11 @@ class AsyncRedisClient:
             return False
 
         try:
-            await self._client.set(name=f"{self.BLOCKLIST_PREFIX}:{key}", value=key, ex=expiry)
+            await self._client.set(
+                name=Constants.BLOCKLIST_PREFIX.replace("key", key),
+                value=key,
+                ex=expiry,
+            )
             return True
         except Exception as e:
             logger.error(f"Error adding to blocklist: {e}")
@@ -152,7 +195,7 @@ class AsyncRedisClient:
             return False
 
         try:
-            return await self._client.exists(f"{self.BLOCKLIST_PREFIX}:{key}") > 0
+            return await self._client.exists(Constants.BLOCKLIST_PREFIX.replace("key", key)) > 0
         except Exception as e:
             logger.error(f"Error checking blocklist: {e}")
             return False

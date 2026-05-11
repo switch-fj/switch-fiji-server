@@ -1,10 +1,11 @@
 import json
-from datetime import datetime
+from calendar import monthrange
+from datetime import datetime, timezone
 from uuid import UUID
 
 from fastapi import Depends
 from sqlalchemy.orm import joinedload, selectinload
-from sqlmodel import select
+from sqlmodel import func, select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.core.auth import Authentication
@@ -16,6 +17,7 @@ from app.modules.contracts.schema import (
     CreateContractDetailsModel,
     CreateContractModel,
 )
+from app.modules.invoices.model import InvoiceSnapshot, InvoiceSnapshotMeterData
 from app.modules.settings.repository import SettingsRepository
 from app.modules.sites.model import Site
 
@@ -280,6 +282,68 @@ class ContractRepository:
             await self.session.rollback()
             logger.error(f"Error updating contract details: {e}")
             raise
+
+    async def compute_baseline_kwh(self):
+        """Fetch a contract with its associated client, site, and details by UUID.
+
+        Returns:
+            Baseline = guaranteed_production_kwh_per_kwp × system_size_kwp from contract details,
+            prorated to the current month if needed.
+        """
+        now = datetime.now(tz=timezone.utc)
+        month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+        days_in_month = monthrange(now.year, now.month)[1]
+        month_progress = now.day / days_in_month
+
+        baseline_stmt = (
+            select(
+                func.coalesce(
+                    func.sum(
+                        ContractDetails.guaranteed_production_kwh_per_kwp
+                        * ContractDetails.system_size_kwp
+                        * month_progress
+                    ),
+                    0,
+                ).label("baseline_kwh")
+            )
+            .where(ContractDetails.actual_commissioned_at.isnot(None))
+            .where(
+                func.now()
+                > func.coalesce(
+                    ContractDetails.actual_commissioned_at,
+                    ContractDetails.commissioned_at,
+                )
+            )
+            .where(func.now() < func.coalesce(ContractDetails.actual_end_at, ContractDetails.end_at))
+        )
+
+        baseline_result = await self.session.exec(baseline_stmt)
+        baseline_row = baseline_result.one()
+
+        produced_stmt = (
+            select(
+                func.coalesce(
+                    func.sum(
+                        InvoiceSnapshotMeterData.period_end_reading - InvoiceSnapshotMeterData.period_start_reading
+                    ),
+                    0,
+                ).label("produced_kwh")
+            )
+            .select_from(InvoiceSnapshot)
+            .join(
+                InvoiceSnapshotMeterData,
+                InvoiceSnapshotMeterData.snapshot_uid == InvoiceSnapshot.uid,
+            )
+            .where(InvoiceSnapshot.period_start_at >= month_start)
+        )
+
+        produced_result = await self.session.exec(produced_stmt)
+        produced_row = produced_result.one()
+
+        return {
+            "produced_kwh": float(produced_row),
+            "baseline_kwh": float(baseline_row),
+        }
 
 
 def get_contract_repo(session: AsyncSession = Depends(get_session)):
