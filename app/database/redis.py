@@ -83,6 +83,39 @@ class AsyncRedisClient:
             logger.error(f"Error getting site stats for {site_uid}: {e}")
             return None
 
+    async def get_energy_portfolio(self):
+        """Retrieve cached current month energy portfolio JSON string from Redis.
+
+        Returns:
+            The cached JSON string for the current month energy portfolio.
+        """
+
+        if not self._client:
+            return None
+
+        try:
+            return await self._client.get(Constants.ENERGY_PORTFOLIO)
+        except Exception as e:
+            logger.error(f"Error fetching Energy portfolio {e}")
+            return None
+
+    async def set_energy_portfolio(self, data: str):
+        """Store sites current month energy porfolio JSON string in Redis.
+
+        Args:
+            data: JSON string of the energy portfolio to cache.
+
+        Returns:
+            None on success or if the client is not initialised.
+        """
+        if not self._client:
+            return None
+        try:
+            await self._client.setex(Constants.ENERGY_PORTFOLIO, 3600, data)
+        except Exception as e:
+            logger.error(f"Error setting site energy portfolio {e}")
+            return None
+
     async def get_site_stats(self, site_uid: str):
         """Retrieve cached site stats JSON string from Redis.
 

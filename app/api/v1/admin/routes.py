@@ -10,6 +10,7 @@ from app.core.config import Config
 from app.core.security import AdminAccessBearer
 from app.database.redis import async_redis_client
 from app.modules.clients.schema import ClientRespModel, CreateClientModel
+from app.modules.contracts.schema import EnergyPortfolioRespModel
 from app.modules.sites.schema import CreateSiteModel, SiteRespModel
 from app.services.client import ClientService, get_client_service
 from app.services.contract import ContractService, get_contract_service
@@ -123,11 +124,22 @@ async def stream_site_stats(
     )
 
 
-@admin_router.get("/portfolio/stats")
+@admin_router.get(
+    "/portfolio/stats",
+    status_code=status.HTTP_200_OK,
+    response_model=ServerRespModel[EnergyPortfolioRespModel],
+)
 async def get_portfolio_stats(
     contract_service: ContractService = Depends(get_contract_service),
     _: dict = Depends(AdminAccessBearer()),
 ):
-    resp = await contract_service.energy_portfolio()
+    energy_portfolio = await async_redis_client.get_energy_portfolio()
 
-    return ServerRespModel[dict[str, float]](data=resp, message="Energy portfolio retrieved")
+    if energy_portfolio:
+        return ServerRespModel[dict[str, float]](
+            data=json.loads(energy_portfolio), message="Energy portfolio retrieved"
+        )
+
+    resp = await contract_service.energy_portfolio()
+    await async_redis_client.set_energy_portfolio(data=resp.model_dump_json())
+    return ServerRespModel[EnergyPortfolioRespModel](data=resp, message="Energy portfolio retrieved")

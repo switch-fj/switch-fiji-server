@@ -158,7 +158,7 @@ class ContractService:
         return True
 
     async def energy_portfolio(self):
-        res = await self.contract_repo.compute_baseline_kwh()
+        res = await self.contract_repo.compute_energy_portfolio()
 
         return res
 

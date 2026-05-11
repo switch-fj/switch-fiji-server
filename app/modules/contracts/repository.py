@@ -16,6 +16,7 @@ from app.modules.contracts.model import Contract, ContractDetails
 from app.modules.contracts.schema import (
     CreateContractDetailsModel,
     CreateContractModel,
+    EnergyPortfolioRespModel,
 )
 from app.modules.invoices.model import InvoiceSnapshot, InvoiceSnapshotMeterData
 from app.modules.settings.repository import SettingsRepository
@@ -283,12 +284,11 @@ class ContractRepository:
             logger.error(f"Error updating contract details: {e}")
             raise
 
-    async def compute_baseline_kwh(self):
+    async def compute_energy_portfolio(self):
         """Fetch a contract with its associated client, site, and details by UUID.
 
         Returns:
-            Baseline = guaranteed_production_kwh_per_kwp × system_size_kwp from contract details,
-            prorated to the current month if needed.
+            energy portfolio
         """
         now = datetime.now(tz=timezone.utc)
         month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
@@ -320,14 +320,16 @@ class ContractRepository:
         baseline_result = await self.session.exec(baseline_stmt)
         baseline_row = baseline_result.one()
 
-        produced_stmt = (
+        invoice_stmt = (
             select(
                 func.coalesce(
                     func.sum(
                         InvoiceSnapshotMeterData.period_end_reading - InvoiceSnapshotMeterData.period_start_reading
                     ),
                     0,
-                ).label("produced_kwh")
+                ).label("produced_kwh"),
+                func.coalesce(func.sum(InvoiceSnapshot.total), 0).label("invoice_total"),
+                func.count(InvoiceSnapshot.uid).label("invoice_count"),
             )
             .select_from(InvoiceSnapshot)
             .join(
@@ -337,13 +339,18 @@ class ContractRepository:
             .where(InvoiceSnapshot.period_start_at >= month_start)
         )
 
-        produced_result = await self.session.exec(produced_stmt)
-        produced_row = produced_result.one()
+        invoice_result = await self.session.exec(invoice_stmt)
+        invoice_stat = invoice_result.one()
 
-        return {
-            "produced_kwh": float(produced_row),
-            "baseline_kwh": float(baseline_row),
-        }
+        energy_portfolio_resp = EnergyPortfolioRespModel(
+            **{
+                "produced_kwh": float(invoice_stat.produced_kwh),
+                "baseline_kwh": float(baseline_row.baseline_kwh),
+                "invoice_total": float(invoice_stat.invoice_total),
+                "invoice_count": invoice_stat.invoice_count,
+            }
+        )
+        return energy_portfolio_resp
 
 
 def get_contract_repo(session: AsyncSession = Depends(get_session)):
