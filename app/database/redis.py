@@ -111,7 +111,7 @@ class AsyncRedisClient:
         if not self._client:
             return None
         try:
-            await self._client.setex(Constants.ENERGY_PORTFOLIO, 3600, data)
+            await self._client.setex(Constants.ENERGY_PORTFOLIO, 300, data)
         except Exception as e:
             logger.error(f"Error setting site energy portfolio {e}")
             return None
