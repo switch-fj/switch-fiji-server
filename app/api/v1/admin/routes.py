@@ -99,22 +99,14 @@ async def stream_site_stats(
     _: dict = Depends(AdminAccessBearer()),
 ):
     async def event_generator() -> AsyncGenerator[bytes, None]:
-        last_computed_at = None
-
         while True:
             try:
                 raw = await async_redis_client.get_site_stats(site_uid=str(site_uid))
 
                 if raw:
-                    data = json.loads(raw)
-                    current_computed_at = data.get("computed_at")
-
-                    if current_computed_at != last_computed_at:
-                        last_computed_at = current_computed_at
-                        yield f"data: {raw}\n\n".encode("utf-8")
+                    yield f"data: {json.loads(raw)}\n\n".encode("utf-8")
                 else:
                     yield f"data: {json.dumps({'status': 'computing', 'site_uid': str(site_uid)})}\n\n".encode("utf-8")
-
             except Exception as e:
                 yield f"data: {json.dumps({'status': 'error', 'detail': str(e)})}\n\n".encode("utf-8")
 
