@@ -142,8 +142,7 @@ def compute_single_contract_bill(self, contract_uid, gateway_id, site_uid):
                     is_ppa_off_grid=is_ppa_off_grid,
                     is_ppa_on_grid_with_battery=is_ppa_on_grid_with_battery,
                 )
-            else:
-                # elif now_local.hour == 0:
+            elif now_local.hour == 0:
                 snapshot_start = now_local.replace(hour=0, minute=0, second=0, microsecond=0).astimezone(timezone.utc)
                 snapshot_end = now_local.replace(hour=23, minute=59, second=59, microsecond=999999).astimezone(
                     timezone.utc
