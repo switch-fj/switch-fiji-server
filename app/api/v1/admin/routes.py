@@ -1,6 +1,6 @@
 import asyncio
 import json
-from typing import Optional
+from typing import AsyncGenerator, Optional
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, Query, status
@@ -96,14 +96,22 @@ async def get_client_sites_by_uid(
 )
 async def stream_site_stats(
     site_uid: UUID,
+    _: dict = Depends(AdminAccessBearer()),
 ):
-    async def event_generator():
+    async def event_generator() -> AsyncGenerator[bytes, None]:
+        last_computed_at = None
+
         while True:
             try:
-                stats = await async_redis_client.get_site_stats_stream(site_uid=str(site_uid))
+                raw = await async_redis_client.get_site_stats(site_uid=str(site_uid))
 
-                if stats:
-                    yield f"data: {stats}\n\n".encode("utf-8")
+                if raw:
+                    data = json.loads(raw)
+                    current_computed_at = data.get("computed_at")
+
+                    if current_computed_at != last_computed_at:
+                        last_computed_at = current_computed_at
+                        yield f"data: {raw}\n\n".encode("utf-8")
                 else:
                     yield f"data: {json.dumps({'status': 'computing', 'site_uid': str(site_uid)})}\n\n".encode("utf-8")
 
@@ -114,7 +122,6 @@ async def stream_site_stats(
 
     return StreamingResponse(
         content=event_generator(),
-        status_code=status.HTTP_200_OK,
         media_type="text/event-stream",
         headers={
             "Cache-Control": "no-cache",

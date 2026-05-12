@@ -185,6 +185,7 @@ def compute_single_site_stats(self, site_uid: str, gateway_id: str):
         last_invoice_amount = float(last_invoice.subtotal) if last_invoice else None
 
         stats = {
+            "computed_at": now.isoformat(),
             "site_uid": site_uid,
             "expected_generation_kwh": expected_generation_kwh,
             "actual_generation_kwh": actual_generation_kwh,
