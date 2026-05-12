@@ -1,5 +1,5 @@
 import json
-from datetime import datetime
+from datetime import datetime, timezone
 from zoneinfo import ZoneInfo
 
 from sqlalchemy import text
@@ -185,7 +185,7 @@ def compute_single_site_stats(self, site_uid: str, gateway_id: str):
         last_invoice_amount = float(last_invoice.subtotal) if last_invoice else None
 
         stats = {
-            "computed_at": now.isoformat(),
+            "computed_at": now.astimezone(tz=timezone.utc).isoformat(),
             "site_uid": site_uid,
             "expected_generation_kwh": expected_generation_kwh,
             "actual_generation_kwh": actual_generation_kwh,
