@@ -328,7 +328,7 @@ class ContractRepository:
                     ),
                     0,
                 ).label("invoice_total"),
-                func.count(func.distinct(InvoiceSnapshot.uid)).label("invoice_count"),
+                func.count(InvoiceSnapshot.uid).distinct().label("invoice_count"),
             )
             .select_from(InvoiceSnapshot)
             .join(
