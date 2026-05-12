@@ -142,7 +142,8 @@ def compute_single_contract_bill(self, contract_uid, gateway_id, site_uid):
                     is_ppa_off_grid=is_ppa_off_grid,
                     is_ppa_on_grid_with_battery=is_ppa_on_grid_with_battery,
                 )
-            elif now_local.hour == 0:
+            else:
+                # elif now_local.hour == 0:
                 snapshot_start = now_local.replace(hour=0, minute=0, second=0, microsecond=0).astimezone(timezone.utc)
                 snapshot_end = now_local.replace(hour=23, minute=59, second=59, microsecond=999999).astimezone(
                     timezone.utc
@@ -306,6 +307,17 @@ def _handle_snapshot(
     is_ppa_off_grid: bool,
     is_ppa_on_grid_with_battery: bool,
 ):
+    existing_snapshot = session.execute(
+        select(InvoiceSnapshot).where(
+            InvoiceSnapshot.contract_uid == contract.uid,
+            InvoiceSnapshot.period_start_at == snapshot_start,
+            InvoiceSnapshot.period_end_at == snapshot_end,
+        )
+    ).scalar_one_or_none()
+
+    if existing_snapshot:
+        return
+
     result = _compute_invoice_data(
         contract=contract,
         contract_settings=contract_settings,

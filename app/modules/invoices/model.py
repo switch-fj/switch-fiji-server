@@ -3,7 +3,7 @@ from decimal import Decimal
 from typing import TYPE_CHECKING, Optional
 from uuid import UUID
 
-from sqlmodel import DateTime, Field, Index, Relationship, text
+from sqlmodel import DateTime, Field, Index, Relationship, UniqueConstraint, text
 
 from app.shared.model import MyAbstractSQLModel
 
@@ -18,6 +18,12 @@ class Invoice(MyAbstractSQLModel, table=True):
     __tablename__ = "invoices"
 
     __table_args__ = (
+        UniqueConstraint(
+            "contract_uid",
+            "period_start_at",
+            "period_end_at",
+            name="uq_invoice_contract_period",
+        ),
         Index("ix_invoices_contract_uid", "contract_uid"),
         Index("ix_invoices_created_at", text("created_at DESC")),
         Index("ix_invoices_period_start_at", "period_start_at"),
@@ -142,6 +148,12 @@ class InvoiceSnapshot(MyAbstractSQLModel, table=True):
     __tablename__ = "invoice_snapshots"
 
     __table_args__ = (
+        UniqueConstraint(
+            "contract_uid",
+            "period_start_at",
+            "period_end_at",
+            name="uq_invoice_snapshots_contract_period",
+        ),
         Index("ix_invoice_snapshots_contract_period", "contract_uid", "period_start_at"),
         Index("ix_invoice_snapshots_snapshotted_at", text("snapshotted_at DESC")),
     )

@@ -541,7 +541,7 @@ class ContractDetailedRespModel(ContractRespModel):
 
 
 class EnergyPortfolioRespModel(BaseModel):
-    produced_kwh: Decimal
+    produced_kwh: float
     baseline_kwh: float
     invoice_total: float
     invoice_count: int
