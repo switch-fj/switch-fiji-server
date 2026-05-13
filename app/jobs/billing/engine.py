@@ -297,7 +297,7 @@ class BillingEngine:
         for m in solar_meters_import_usage:
             solar_meters_subtotal += Decimal(str(m.kwh_import_usage)) * solar_rate
 
-        return (solar_meters_subtotal, solar_rate)
+        return (solar_meters_subtotal.quantize(Decimal("0.01")), solar_rate)
 
     @staticmethod
     def build_ppa_on_grid_no_battery_invoice_details(
