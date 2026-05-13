@@ -66,7 +66,12 @@ def compute_site_stat(self, site_uid: str, gateway_id: str):
             sync_redis_client._client.setex(
                 Constants.SITE_STATS_STREAM.replace("uid", site_uid),
                 600,
-                json.dumps({"message": "site has no contract."}),
+                json.dumps(
+                    {
+                        "message": "site has no contract.",
+                        "site_uid": site_uid,
+                    }
+                ),
             )
             return
 
@@ -76,7 +81,12 @@ def compute_site_stat(self, site_uid: str, gateway_id: str):
             sync_redis_client._client.setex(
                 Constants.SITE_STATS_STREAM.replace("uid", site_uid),
                 600,
-                json.dumps({"message": "site has contract has not started"}),
+                json.dumps(
+                    {
+                        "message": "site contract has not started",
+                        "site_uid": site_uid,
+                    }
+                ),
             )
             return
 
