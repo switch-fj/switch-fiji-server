@@ -22,23 +22,18 @@ logger = setup_logger(__name__)
 def compute_site_stats(self):
     """
     Beat triggers this every 5 mins.
-    Fetches all active sites and dispatches
+    Fetches all sites and dispatches
     one compute task per site to the worker pool.
     """
     try:
         with get_celery_db_session() as session:
             result = session.execute(
                 text("""
-                    SELECT DISTINCT
-                        s.uid::text  AS site_uid,
-                        s.gateway_id AS gateway_id
-                    FROM sites s
-                    JOIN contracts c ON c.site_uid = s.uid
-                    JOIN contract_details cd ON cd.contract_uid = c.uid
-                    WHERE COALESCE(cd.actual_commissioned_at, cd.commissioned_at) IS NOT NULL
-                        AND NOW() > COALESCE(cd.actual_commissioned_at, cd.commissioned_at)
-                        AND NOW() < COALESCE(cd.actual_end_at, cd.end_at)
-                    """)
+                SELECT
+                    s.uid::text AS site_uid,
+                    s.gateway_id AS gateway_id
+                FROM sites s
+            """)
             )
             sites = result.fetchall()
 
@@ -68,12 +63,26 @@ def compute_site_stat(self, site_uid: str, gateway_id: str):
             ).scalar_one_or_none()
 
         if not contract or not contract.details:
+            sync_redis_client._client.setex(
+                Constants.SITE_STATS_STREAM.replace("uid", site_uid),
+                600,
+                json.dumps({"message": "site has no contract."}),
+            )
+            return
+
+        commissioned_at = contract.details.actual_commissioned_at or contract.details.commissioned_at
+
+        if not commissioned_at or datetime.now(timezone.utc) <= commissioned_at:
+            sync_redis_client._client.setex(
+                Constants.SITE_STATS_STREAM.replace("uid", site_uid),
+                600,
+                json.dumps({"message": "site has contract has not started"}),
+            )
             return
 
         tz = ZoneInfo(contract.timezone)
         now = datetime.now(tz=tz)
 
-        commissioned_at = contract.details.actual_commissioned_at or contract.details.commissioned_at
         end_at = contract.details.actual_end_at or contract.details.end_at
 
         period_start, period_end = BillingEngine.get_current_billing_period(
