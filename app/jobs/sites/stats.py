@@ -18,8 +18,8 @@ from app.shared.constants import Constants
 logger = setup_logger(__name__)
 
 
-@celery_app.task(name="compute_all_site_stats", bind=True, max_retries=3, default_retry_delay=5)
-def compute_all_site_stats(self):
+@celery_app.task(name="compute_site_stats", bind=True, max_retries=3, default_retry_delay=5)
+def compute_site_stats(self):
     """
     Beat triggers this every 5 mins.
     Fetches all active sites and dispatches
@@ -43,7 +43,7 @@ def compute_all_site_stats(self):
             sites = result.fetchall()
 
         for site in sites:
-            compute_single_site_stats.delay(
+            compute_site_stat.delay(
                 site_uid=site.site_uid,
                 gateway_id=site.gateway_id,
             )
@@ -52,8 +52,8 @@ def compute_all_site_stats(self):
         raise self.retry(exc=exc)
 
 
-@celery_app.task(name="compute_single_site_stats", bind=True, max_retries=3, default_retry_delay=5)
-def compute_single_site_stats(self, site_uid: str, gateway_id: str):
+@celery_app.task(name="compute_site_stat", bind=True, max_retries=3, default_retry_delay=5)
+def compute_site_stat(self, site_uid: str, gateway_id: str):
     """
     Computes all site stats variables for a single site
     and writes the result to Redis.

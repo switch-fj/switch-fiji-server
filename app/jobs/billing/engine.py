@@ -618,6 +618,67 @@ class BillingEngine:
         )
 
     @staticmethod
+    def compute_invoice_data(
+        contract: Contract,
+        contract_settings: ContractSettings,
+        devices: Device,
+        gateway_id: str,
+        period_start: datetime,
+        period_end: datetime,
+        is_ppa_off_grid: bool,
+        is_ppa_on_grid_with_battery: bool,
+    ):
+        """
+        Run billing engine computation for a given period.
+        Returns:
+            (create_invoice_dict, invoice_details_dict) or None.
+        """
+        create_invoice_dict = None
+        invoice_details_dict = None
+
+        if is_ppa_off_grid or is_ppa_on_grid_with_battery:
+            off_grid_result = BillingEngine.compute_ppa_off_grid_invoice(
+                contract=contract,
+                contract_settings=contract_settings,
+                gateway_id=gateway_id,
+                period_start=period_start,
+                period_end=period_end,
+            )
+            if off_grid_result is None:
+                return None
+
+            create_invoice_dict, readings = off_grid_result
+            invoice_details_dict = BillingEngine.build_ppa_off_grid_invoice_details(
+                devices=devices,
+                contract_settings=contract_settings,
+                active_tariff_slots=contract.details.active_tariff_slots,
+                tariff_indexed_rule_type=contract.details.tariff_indexed_rule_type,
+                readings=readings,
+            )
+        else:
+            computed = BillingEngine.compute_ppa_on_grid_no_battery_invoice(
+                contract=contract,
+                contract_settings=contract_settings,
+                gateway_id=gateway_id,
+                period_start=period_start,
+                period_end=period_end,
+            )
+            if computed is None:
+                return None
+
+            create_invoice_dict = computed.create_invoice_dict
+            invoice_details_dict = BillingEngine.build_ppa_on_grid_no_battery_invoice_details(
+                devices=devices,
+                contract_settings=contract_settings,
+                computed_ppa_no_battery_invoice_resp=computed,
+            )
+
+        if create_invoice_dict is None or invoice_details_dict is None:
+            return None
+
+        return create_invoice_dict, invoice_details_dict
+
+    @staticmethod
     def generate_pdf(
         contract: Contract,
         result: tuple[Invoice, list[InvoiceMeterData], list[InvoiceLineItem]],

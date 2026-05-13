@@ -19,14 +19,19 @@ celery_app.conf.update(
     redbeat_redis_url=redbeat_redis_url,
 )
 
+
 celery_app.conf.beat_schedule = {
-    "compute-site-stats-every-5-minutes": {
-        "task": "compute_all_site_stats",
+    "trigger_site_stats_every_5_minutes": {
+        "task": "compute_site_stats",
         "schedule": crontab(minute="*/5"),
     },
-    "compute-contract-bill-every-hour": {
-        "task": "compute_all_contracts_bill",
+    "trigger_compute-active_contracts_every_1_hour": {
+        "task": "compute_active_contracts",
         "schedule": crontab(minute=0),
+    },
+    "trigger_snapshot_active_contracts_at_00_30": {
+        "task": "snapshot_active_contracts",
+        "schedule": crontab(hour=0, minute=30),
     },
 }
 
@@ -40,5 +45,5 @@ celery_app.conf.timezone = "UTC"
 celery_app.autodiscover_tasks(["app.jobs"])
 
 from app.jobs import auth  # noqa
-from app.jobs import site_stats  # noqa
-from app.jobs import invoice  # noqa
+from app.jobs.sites import stats  # noqa
+from app.jobs.contracts import invoice  # noqa
