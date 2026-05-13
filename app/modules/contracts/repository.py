@@ -313,14 +313,20 @@ class ContractRepository:
         baseline_result = await self.session.exec(baseline_stmt)
         baseline_row = baseline_result.one()
 
+        meter_subq = (
+            select(
+                InvoiceSnapshotMeterData.snapshot_uid,
+                func.sum(
+                    InvoiceSnapshotMeterData.period_end_reading - InvoiceSnapshotMeterData.period_start_reading
+                ).label("produced_kwh"),
+            )
+            .group_by(InvoiceSnapshotMeterData.snapshot_uid)
+            .subquery()
+        )
+
         invoice_stmt = (
             select(
-                func.coalesce(
-                    func.sum(
-                        InvoiceSnapshotMeterData.period_end_reading - InvoiceSnapshotMeterData.period_start_reading
-                    ),
-                    0,
-                ).label("produced_kwh"),
+                func.coalesce(func.sum(meter_subq.c.produced_kwh), 0).label("produced_kwh"),
                 func.coalesce(
                     func.sum(
                         (InvoiceSnapshot.subtotal * (InvoiceSnapshot.vat_rate / Decimal(100)))
@@ -328,13 +334,10 @@ class ContractRepository:
                     ),
                     0,
                 ).label("invoice_total"),
-                func.count(InvoiceSnapshot.uid).distinct().label("invoice_count"),
+                func.count(InvoiceSnapshot.uid).label("invoice_count"),
             )
             .select_from(InvoiceSnapshot)
-            .join(
-                InvoiceSnapshotMeterData,
-                InvoiceSnapshotMeterData.snapshot_uid == InvoiceSnapshot.uid,
-            )
+            .join(meter_subq, meter_subq.c.snapshot_uid == InvoiceSnapshot.uid)
             .where(func.extract("month", InvoiceSnapshot.period_start_at) >= now.month)
         )
 
