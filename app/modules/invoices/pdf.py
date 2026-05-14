@@ -74,7 +74,7 @@ class InvoicePDF:
         Returns:
             A string with up to four decimal places and trailing zeros stripped.
         """
-        return f"{Decimal(str(value)):.4f}".rstrip("0").rstrip(".")
+        return f"{Decimal(str(value)).quantize(Decimal('0.01'))}"
 
     @staticmethod
     def render_invoice_pdf(
@@ -100,8 +100,7 @@ class InvoicePDF:
         from weasyprint import HTML
 
         subtotal = invoice.subtotal
-        vat_rate = invoice.vat_rate
-        vat_amount = subtotal * vat_rate
+        vat_amount = invoice.vat_amount
         total = subtotal + vat_amount
         date_fmt = contract_settings.date_format
         time_fmt = contract_settings.time_format
