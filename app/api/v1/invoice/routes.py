@@ -11,6 +11,7 @@ from app.jobs.billing.engine import BillingEngine
 from app.modules.invoices.schema import (
     InvoiceDetailedRespModel,
     InvoiceHistoryRespModel,
+    InvoiceRespModel,
     InvoiceSnapshotRespModel,
 )
 from app.services.contract import ContractService, get_contract_service
@@ -73,9 +74,10 @@ async def get_invoice_details_by_uid(
     resp = await invoice_service.get_invoice_details_by_uid(invoice_uid=invoice_uid, token_payload=token_payload)
 
     invoice, contract, line_items, meter_data = resp
-    invoice_resp = InvoiceDetailedRespModel.model_validate(
+    invoice_resp = InvoiceRespModel.model_validate(invoice)
+    invoice_detailed_resp = InvoiceDetailedRespModel.model_validate(
         {
-            **invoice.__dict__,
+            **invoice_resp.__dict__,
             "contract": contract,
             "line_items": line_items,
             "meter_data": meter_data,
@@ -83,7 +85,7 @@ async def get_invoice_details_by_uid(
     )
 
     return ServerRespModel[InvoiceDetailedRespModel](
-        data=invoice_resp,
+        data=invoice_detailed_resp,
         message="Invoice retrieved!.",
     )
 

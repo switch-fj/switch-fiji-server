@@ -106,6 +106,43 @@ class BillingEngine:
         return (period_start, period_end)
 
     @staticmethod
+    def get_all_billing_periods(
+        commissioned_at: datetime,
+        billing_frequency: str,
+        as_of: datetime,
+    ) -> list[tuple[datetime, datetime]]:
+        """Returns all billing periods from commissioned_at up to as_of."""
+        try:
+            freq = ContractBillingFrequencyEnum(billing_frequency.lower())
+        except ValueError:
+            raise ValueError(f"Unsupported billing frequency: {billing_frequency}")
+
+        match freq:
+            case ContractBillingFrequencyEnum.WEEKLY:
+                delta = relativedelta(weeks=1)
+            case ContractBillingFrequencyEnum.BI_WEEKLY:
+                delta = relativedelta(weeks=2)
+            case ContractBillingFrequencyEnum.MONTHLY:
+                delta = relativedelta(months=1)
+            case ContractBillingFrequencyEnum.QUARTERLY:
+                delta = relativedelta(months=3)
+            case ContractBillingFrequencyEnum.SEMI_ANNUALLY:
+                delta = relativedelta(months=6)
+            case ContractBillingFrequencyEnum.ANNUALLY:
+                delta = relativedelta(years=1)
+
+        periods = []
+        period_start = commissioned_at
+        while True:
+            period_end = period_start + delta - relativedelta(seconds=1)
+            if period_end > as_of:
+                break
+            periods.append((period_start, period_end))
+            period_start = period_end + relativedelta(seconds=1)
+
+        return periods
+
+    @staticmethod
     def get_ppa_off_grid_meter_data(
         periodic_energy_data: dict | Any,
     ):
@@ -489,12 +526,14 @@ class BillingEngine:
         gateway_id: str,
         period_start: datetime,
         period_end: datetime,
+        is_multi_day: bool = False,
     ):
         active_tariff_slots = contract.details.active_tariff_slots
         readings = celery_dynamo_client.get_readings_for_billing_period(
             gateway_id=gateway_id,
             period_start=period_start,
             period_end=period_end,
+            is_multi_day=is_multi_day,
         )
         if not readings:
             logger.warning(f"No readings found for gateway {gateway_id}")
@@ -546,12 +585,14 @@ class BillingEngine:
         gateway_id: str,
         period_start: datetime,
         period_end: datetime,
+        is_multi_day: bool = False,
     ):
         tariffs: list[OnGridNoBatteryTariffSlotModel] = json.loads(contract.details.ppa_on_grid_no_battery_tariffs)
         readings = celery_dynamo_client.get_readings_for_billing_period(
             gateway_id=gateway_id,
             period_start=period_start,
             period_end=period_end,
+            is_multi_day=is_multi_day,
         )
         if not readings:
             logger.warning(f"No readings found for gateway {gateway_id}")
@@ -618,6 +659,16 @@ class BillingEngine:
         )
 
     @staticmethod
+    def compute_ppa_on_grid_with_battery_invoice(
+        contract: Contract,
+        contract_settings: ContractSettings,
+        gateway_id: str,
+        period_start: datetime,
+        period_end: datetime,
+    ):
+        pass
+
+    @staticmethod
     def compute_invoice_data(
         contract: Contract,
         contract_settings: ContractSettings,
@@ -627,6 +678,7 @@ class BillingEngine:
         period_end: datetime,
         is_ppa_off_grid: bool,
         is_ppa_on_grid_with_battery: bool,
+        is_multi_day: bool = False,
     ):
         """
         Run billing engine computation for a given period.
@@ -643,6 +695,7 @@ class BillingEngine:
                 gateway_id=gateway_id,
                 period_start=period_start,
                 period_end=period_end,
+                is_multi_day=is_multi_day,
             )
             if off_grid_result is None:
                 return None
@@ -662,6 +715,7 @@ class BillingEngine:
                 gateway_id=gateway_id,
                 period_start=period_start,
                 period_end=period_end,
+                is_multi_day=is_multi_day,
             )
             if computed is None:
                 return None

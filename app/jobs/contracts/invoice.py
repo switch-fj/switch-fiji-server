@@ -112,13 +112,23 @@ def compute_contract_invoice(self, contract_uid, gateway_id, site_uid):
                 and contract.details.with_battery == "yes"
             )
 
+            # is_billing_date = now_local >= period_end.astimezone(tz)
+
             if not is_ppa:
                 # WIP: lease computation
                 return
 
-            is_billing_date = now_local >= period_end.astimezone(tz)
+            all_periods = BillingEngine.get_all_billing_periods(
+                commissioned_at=commissioned_at,
+                billing_frequency=contract.details.billing_frequency,
+                as_of=now_local,
+            )
 
-            if is_billing_date:
+            logger.info(f"all_periods: {all_periods}")
+
+            for period_start, period_end in all_periods[1:]:
+                logger.info(f"period_start: {period_start}")
+                logger.info(f"period_end: {period_end}")
                 _handle_invoice(
                     session=session,
                     contract=contract,
@@ -127,7 +137,6 @@ def compute_contract_invoice(self, contract_uid, gateway_id, site_uid):
                     gateway_id=gateway_id,
                     period_start=period_start,
                     period_end=period_end,
-                    tz=tz,
                     is_ppa_off_grid=is_ppa_off_grid,
                     is_ppa_on_grid_with_battery=is_ppa_on_grid_with_battery,
                 )
@@ -167,6 +176,7 @@ def _handle_invoice(
         period_end=period_end,
         is_ppa_off_grid=is_ppa_off_grid,
         is_ppa_on_grid_with_battery=is_ppa_on_grid_with_battery,
+        is_multi_day=True,
     )
     if result is None:
         logger.warning(f"Invoice computation returned no data for contract {contract.uid}")

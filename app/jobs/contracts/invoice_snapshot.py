@@ -1,11 +1,10 @@
 from datetime import datetime, timedelta, timezone
-from zoneinfo import ZoneInfo
 
 from sqlalchemy.orm import joinedload, selectinload
 from sqlmodel import Session, select
 
 from app.core.logger import setup_logger
-from app.database.celery import get_celery_db_session
+from app.database.celery import celery_dynamo_client, get_celery_db_session
 from app.jobs.billing.engine import BillingEngine
 from app.jobs.celery import celery_app
 from app.jobs.contracts.shared import _get_active_contracts
@@ -47,6 +46,7 @@ def snapshot_active_contracts(self):
 )
 def compute_contract_invoice_snapshot(self, contract_uid, gateway_id, site_uid):
     try:
+        celery_dynamo_client.init()
         with get_celery_db_session() as session:
             contract = session.execute(
                 select(Contract)
@@ -79,13 +79,16 @@ def compute_contract_invoice_snapshot(self, contract_uid, gateway_id, site_uid):
             if not contract or not devices:
                 return
 
-            tz = ZoneInfo(contract.timezone)
-            now_local = datetime.now(tz=tz)
-
-            yesterday = (now_local - timedelta(days=1)).date()
-
-            snapshot_start = datetime(yesterday.year, yesterday.month, yesterday.day, 0, 0, 0, tzinfo=tz).astimezone(
-                timezone.utc
+            now_utc = datetime.now(timezone.utc)
+            yesterday = (now_utc - timedelta(days=1)).date()
+            snapshot_start = datetime(
+                yesterday.year,
+                yesterday.month,
+                yesterday.day,
+                0,
+                0,
+                0,
+                tzinfo=timezone.utc,
             )
             snapshot_end = datetime(
                 yesterday.year,
@@ -95,8 +98,8 @@ def compute_contract_invoice_snapshot(self, contract_uid, gateway_id, site_uid):
                 59,
                 59,
                 999999,
-                tzinfo=tz,
-            ).astimezone(timezone.utc)
+                tzinfo=timezone.utc,
+            )
 
             is_ppa = contract.contract_type == ContractTypeEnum.PPA.value
             is_ppa_off_grid = is_ppa and contract.system_mode == ContractSystemModeEnum.OFF_GRID.value

@@ -124,7 +124,7 @@ class InvoiceRespModel(DBModel):
         if value:
             return value.isoformat()
 
-    @field_serializer("subtotal", "vat_rate", "vat_amount", "total")
+    @field_serializer("subtotal", "vat_rate", "efl_standard_rate_kwh", "vat_amount", "total")
     def serialize_decimals(self, value: Decimal):
         """Serialise Decimal financial fields to two-decimal-place strings.
 

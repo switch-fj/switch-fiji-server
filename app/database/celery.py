@@ -115,6 +115,7 @@ class CeleryDynamoClient:
         gateway_id: str,
         period_start: datetime,
         period_end: datetime,
+        is_multi_day: bool = False,
     ) -> tuple[dict, dict] | None:
         """Fetch the boundary DynamoDB readings for a gateway over a billing period.
 
@@ -124,7 +125,7 @@ class CeleryDynamoClient:
             gateway_id: The gateway identifier used as the DynamoDB partition key.
             period_start: The start date of the billing period.
             period_end: The end date of the billing period.
-
+            is_multi_day: A flag for multi day period.
         Returns:
             A tuple of (start_item, end_item) dicts from DynamoDB, or None if readings are missing.
         """
@@ -133,8 +134,10 @@ class CeleryDynamoClient:
             return None
 
         try:
-            start_day_ts, _ = self._get_day_epoch_range(period_start)
-            _, end_day_ts = self._get_day_epoch_range(period_end)
+            start_day_ts, end_day_ts = self._get_day_epoch_range(period_start)
+
+            if is_multi_day:
+                _, end_day_ts = self._get_day_epoch_range(period_end)
 
             start_response = self._table.query(
                 KeyConditionExpression=(

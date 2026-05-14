@@ -1,3 +1,5 @@
+
+
 {
  "gateway_id": "M300-TAVEUNI-001",
  "ts_epoch_ms": 1776925925801,
@@ -171,5 +173,115 @@
 }
 
 
+// ppa on-grid with battery
 
-[{"period_number": 1, "slot": "A", "slot_type": "Fixed", "rate": 0.5, "start_time": "07:30", "end_time": "16:30"}, {"period_number": 1, "slot": "B", "slot_type": "Fixed", "rate": 0.5, "start_time": "16:30", "end_time": "07:30"}, {"period_number": 2, "slot": "A", "slot_type": "Variable", "rate": 0.49, "start_time": "07:30", "end_time": "16:30"}, {"period_number": 2, "slot": "B", "slot_type": "Variable", "rate": 0.49, "start_time": "16:30", "end_time": "07:30"}]
+{
+  "client": {
+    "client_name": "Soleya Pte Limited",
+    "client_email": "noellie@soleyafiji.com",
+    "client_id": "005",
+    "site_id": "1"
+  },
+  "gateway": {
+    "gateway_id": "M100-SOLEYA-001",
+    "firmware": "m100-soleya-1.0"
+  },
+  "timestamp": {
+    "ts_epoch_ms": 1747008000000
+  },
+  "meters": [
+    {
+      "slave_id": 1,
+      "description": "grid_meter",
+      "v1": 238.4, "v2": 237.9, "v3": 239.1,
+      "i1": 14.2,  "i2": 13.8,  "i3": 14.5,
+      "kw1": 3.39, "kw2": 3.28, "kw3": 3.46,
+      "kw_total": 10.13,
+      "kva_total": 10.22,
+      "kvar_total": 1.35,
+      "pf_total": 0.991,
+      "freq_hz": 50.00,
+      "kwh_import": 4821.3,
+      "kwh_export": 312.7
+    },
+    {
+      "slave_id": 2,
+      "description": "essential_loads_meter",
+      "v1": 238.1, "v2": 237.6, "v3": 238.8,
+      "i1": 18.4,  "i2": 17.9,  "i3": 18.7,
+      "kw1": 4.38, "kw2": 4.25, "kw3": 4.46,
+      "kw_total": 13.09,
+      "kva_total": 13.21,
+      "kvar_total": 1.76,
+      "pf_total": 0.991,
+      "freq_hz": 50.00,
+      "kwh_total": 11240.6
+    },
+    {
+      "slave_id": 3,
+      "description": "non_essential_loads_meter",
+      "v1": 237.9, "v2": 237.4, "v3": 238.6,
+      "i1": 8.1,   "i2": 7.6,   "i3": 8.4,
+      "kw1": 1.93, "kw2": 1.81, "kw3": 2.00,
+      "kw_total": 5.74,
+      "kva_total": 5.81,
+      "kvar_total": 0.89,
+      "pf_total": 0.988,
+      "freq_hz": 50.00,
+      "kwh_total": 3876.2
+    },
+    {
+      "slave_id": 4,
+      "description": "generator_meter",
+      "v1": 0.0, "v2": 0.0, "v3": 0.0,
+      "i1": 0.0, "i2": 0.0, "i3": 0.0,
+      "kw_total": 0.0,
+      "kva_total": 0.0,
+      "kvar_total": 0.0,
+      "pf_total": 0.0,
+      "freq_hz": 0.0,
+      "kwh_t1": 1204.8,
+      "kwh_t2": 387.3
+    }
+  ],
+  "inverters": [
+    {
+      "slave_id": 1,
+      "status": "normal",
+      "battery_soc": 78,
+      "battery_voltage_v": 52.4,
+      "battery_current_a": -28.6,
+      "battery_power_w": -1498,
+      "battery_state": "charging",
+      "battery_temp_c": 27.3,
+      "pv1_power_w": 6840,
+      "pv2_power_w": 5920,
+      "pv_total_w": 12760,
+      "load_l1_w": 4380,
+      "load_l2_w": 4120,
+      "load_l3_w": 4490,
+      "load_total_w": 12990,
+      "grid_v_l1": 238.4,
+      "grid_v_l2": 237.9,
+      "grid_v_l3": 239.1,
+      "freq_hz": 50.00
+    }
+  ],
+  "generator": {
+    "status": "off",
+    "relay_state": 0,
+    "confirmed_running": false,
+    "runtime_minutes": 0,
+    "start_trigger": null,
+    "soc_at_start": null
+  }
+}
+
+
+
+
+{"gateway": {"firmware": "m100-kundan-1.0", "gateway_id": "M100-KUNDAN-001"}, "gateway_id": "M100-KUNDAN-001", "client": {"client_email": "payables@kundan.com.fj", "site_id": 1, "client_name": "Kundan Singh Supermarket", "client_id": 4}, "timestamp": {"ts_epoch_ms": 1778544048}, "meters": [{"kwh_export": 54.4, "kw1": 7073.5, "kwh_import": 321177.3, "kw3": 4781.4, "kw2": 3812.9, "description": "grid_meter", "pf_total": 0.8, "kvar2": 2175.5, "kvarh_export": 59.5, "kvar3": 4742.3, "kvar1": -439.5, "kva_total": 17357.7, "kvah_total": "m1_kvah_total", "kw_total": 14668.7, "i1": 29.6, "kvar_total": 6247.6, "i2": 18.1, "kva1": 7145.8, "i3": 28.1, "kva2": 4392.1, "kva3": 6829.1, "freq_hz": 49.9, "pf1": 1, "v1": 241.9, "kvarh_import": 235549.8, "v2": 243, "pf3": 0.7, "v3": 243.2, "pf2": 0.9, "slave_id": 1}, {"kwh_export": 0.3, "kw1": 9128.9, "kwh_import": 48081, "kw3": 9158.8, "kw2": 9083.1, "description": "solar_meter", "pf_total": 0.8, "kvar2": 5909.7, "kvarh_export": 34.9, "kvar3": 6006.4, "kvar1": 5820.7, "kva_total": 32678.4, "kvah_total": "m2_kvah_total", "kw_total": 27381.7, "i1": 44.8, "kvar_total": 17385.6, "i2": 44.7, "kva1": 10829.9, "i3": 45.1, "kva2": 10844.5, "kva3": 10953.2, "freq_hz": 49.9, "pf1": 0.8, "v1": 241.7, "kvarh_import": 4949.4, "v2": 242.5, "pf3": 0.8, "v3": 242.9, "pf2": 0.8, "slave_id": 2}], "ts_epoch_ms": 1778544048383}
+
+{"gateway": {"firmware": "m100-kundan-1.0", "gateway_id": "M100-KUNDAN-001"}, "gateway_id": "M100-KUNDAN-001", "client": {"client_email": "payables@kundan.com.fj", "site_id": 1, "client_name": "Kundan Singh Supermarket", "client_id": 4}, "timestamp": {"ts_epoch_ms": 1778716791}, "meters": [{"kwh_export": 54.4, "kw1": 14519.8, "kwh_import": 322966.6, "kw3": 10952.2, "kw2": 13807.5, "description": "grid_meter", "pf_total": 0.9, "kvar2": 4155.7, "kvarh_export": 64.5, "kvar3": 6902.6, "kvar1": 1092.7, "kva_total": 42114.4, "kvah_total": "m1_kvah_total", "kw_total": 39182.8, "i1": 60.5, "kvar_total": 11965.3, "i2": 59.3, "kva1": 14738.2, "i3": 53.4, "kva2": 14446.3, "kva3": 13013.6, "freq_hz": 50, "pf1": 1, "v1": 243.6, "kvarh_import": 236489.4, "v2": 243.7, "pf3": 0.8, "v3": 243.9, "pf2": 1, "slave_id": 1}, {"kwh_export": 0.3, "kw1": 3437.7, "kwh_import": 48328, "kw3": 3439.8, "kw2": 3428, "description": "solar_meter", "pf_total": 0.5, "kvar2": 5829.1, "kvarh_export": 34.9, "kvar3": 5852.7, "kvar1": 5782.6, "kva_total": 20116.4, "kvah_total": "m2_kvah_total", "kw_total": 10275, "i1": 27.6, "kvar_total": 17420.1, "i2": 27.8, "kva1": 6732.6, "i3": 27.8, "kva2": 6764.5, "kva3": 6795.9, "freq_hz": 49.9, "pf1": 0.5, "v1": 243.8, "kvarh_import": 5355.1, "v2": 243.8, "pf3": 0.5, "v3": 244.2, "pf2": 0.5, "slave_id": 2}], "ts_epoch_ms": 1778716791298}
+
+{'gateway': {'firmware': 'm100-kundan-1.0', 'gateway_id': 'M100-KUNDAN-001'}, 'gateway_id': 'M100-KUNDAN-001', 'client': {'client_email': 'payables@kundan.com.fj', 'site_id': Decimal('1'), 'client_name': 'Kundan Singh Supermarket', 'client_id': Decimal('4')}, 'timestamp': {'ts_epoch_ms': Decimal('1777527121')}, 'meters': [{'kwh_export': '', 'kwh_import': '', 'kw_total': 'm1_kw_total', 'i1': '', 'kvar_total': 'm1_kvar_total', 'description': 'grid_meter', 'i2': '', 'pf_total': '', 'i3': '', 'kvarh_export': '', 'kva_total': 'm1_kva_total', 'freq_hz': '', 'v1': '', 'kvarh_import': '', 'v2': '', 'v3': '', 'slave_id': Decimal('1')}, {'kwh_export': '', 'kwh_import': '', 'kw_total': 'm2_kw_total', 'i1': '', 'kvar_total': 'm2_kvar_total', 'description': 'solar_meter', 'i2': '', 'pf_total': '', 'i3': '', 'kvarh_export': '', 'kva_total': 'm2_kva_total', 'freq_hz': '', 'v1': '', 'kvarh_import': '', 'v2': '', 'v3': '', 'slave_id': Decimal('2')}], 'ts_epoch_ms': Decimal('1777527121926')}
