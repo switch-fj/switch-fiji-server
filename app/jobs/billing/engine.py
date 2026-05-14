@@ -112,12 +112,14 @@ class BillingEngine:
         as_of: datetime,
     ) -> list[tuple[datetime, datetime]]:
         """Returns all billing periods from commissioned_at up to as_of."""
-        try:
-            freq = ContractBillingFrequencyEnum(billing_frequency.lower())
-        except ValueError:
-            raise ValueError(f"Unsupported billing frequency: {billing_frequency}")
+        # try:
+        #     freq = ContractBillingFrequencyEnum(billing_frequency.lower())
+        # except ValueError:
+        #     raise ValueError(f"Unsupported billing frequency: {billing_frequency}")
 
-        match freq:
+        match billing_frequency:
+            case "daily":
+                delta = relativedelta(days=1)
             case ContractBillingFrequencyEnum.WEEKLY:
                 delta = relativedelta(weeks=1)
             case ContractBillingFrequencyEnum.BI_WEEKLY:

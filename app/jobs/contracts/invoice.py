@@ -124,18 +124,28 @@ def compute_contract_invoice(self, contract_uid, gateway_id, site_uid):
                 as_of=now_local,
             )
 
-            for period_start, period_end in all_periods:
-                _handle_invoice(
-                    session=session,
-                    contract=contract,
-                    contract_settings=contract_settings,
-                    devices=devices,
-                    gateway_id=gateway_id,
-                    period_start=period_start,
-                    period_end=period_end,
-                    is_ppa_off_grid=is_ppa_off_grid,
-                    is_ppa_on_grid_with_battery=is_ppa_on_grid_with_battery,
-                )
+            for idx, (period_start, period_end) in enumerate(all_periods, start=1):
+                try:
+                    logger.info(f"Processing period {idx}/{len(all_periods)} {period_start} -> {period_end}")
+
+                    _handle_invoice(
+                        session=session,
+                        contract=contract,
+                        contract_settings=contract_settings,
+                        devices=devices,
+                        gateway_id=gateway_id,
+                        period_start=period_start,
+                        period_end=period_end,
+                        is_ppa_off_grid=is_ppa_off_grid,
+                        is_ppa_on_grid_with_battery=is_ppa_on_grid_with_battery,
+                    )
+
+                    logger.info(f"Completed period {idx}")
+
+                except Exception as exc:
+                    logger.exception(f"Failed processing period {idx}: {period_start} -> {period_end}. Error: {exc}")
+
+                    continue
 
     except Exception as exc:
         raise self.retry(exc=exc)

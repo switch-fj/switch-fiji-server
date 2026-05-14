@@ -41,7 +41,7 @@ def snapshot_active_contracts(self):
 @celery_app.task(
     name="compute_contract_invoice_snapshot",
     bind=True,
-    max_retries=3,
+    max_retries=0,
     default_retry_delay=5,
 )
 def compute_contract_invoice_snapshot(self, contract_uid, gateway_id, site_uid):
@@ -109,17 +109,26 @@ def compute_contract_invoice_snapshot(self, contract_uid, gateway_id, site_uid):
                 and contract.details.with_battery == "yes"
             )
 
-            _handle_snapshot(
-                session=session,
-                contract=contract,
-                contract_settings=contract_settings,
-                devices=devices,
-                gateway_id=gateway_id,
-                snapshot_start=snapshot_start,
-                snapshot_end=snapshot_end,
-                is_ppa_off_grid=is_ppa_off_grid,
-                is_ppa_on_grid_with_battery=is_ppa_on_grid_with_battery,
-            )
+            try:
+                logger.info(f"{snapshot_start} -> {snapshot_end}")
+
+                _handle_snapshot(
+                    session=session,
+                    contract=contract,
+                    contract_settings=contract_settings,
+                    devices=devices,
+                    gateway_id=gateway_id,
+                    snapshot_start=snapshot_start,
+                    snapshot_end=snapshot_end,
+                    is_ppa_off_grid=is_ppa_off_grid,
+                    is_ppa_on_grid_with_battery=is_ppa_on_grid_with_battery,
+                )
+
+                logger.info("Completed period")
+
+            except Exception as exc:
+                logger.exception(f"{snapshot_start} -> {snapshot_end}. Error: {exc}")
+
     except Exception as exc:
         raise self.retry(exc=exc)
 

@@ -335,7 +335,7 @@ class SiteRepository:
         )
         last_invoice = last_invoice_result.one_or_none()
         last_invoice_date = last_invoice.period_end_at.isoformat() if last_invoice else None
-        last_invoice_amount = float(last_invoice.subtotal) if last_invoice else None
+        last_invoice_amount = float(last_invoice.total) if last_invoice else None
 
         return SiteDailyStatsRespModel.model_validate(
             {

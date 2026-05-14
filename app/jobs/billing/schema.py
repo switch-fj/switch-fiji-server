@@ -1,6 +1,7 @@
 from decimal import Decimal
+from typing import Optional
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, computed_field
 
 from app.modules.contracts.schema import OnGridNoBatteryTariffSlotModel
 
@@ -63,3 +64,45 @@ class ComputePPAOnGridNoBatteryInvoiceResp(BaseModel):
     grid_tariff: OnGridNoBatteryTariffSlotModel
     solar_rate: Decimal
     subtotal: Decimal
+
+
+# New schemas for contract type billing calculation
+
+
+class PPAOnGridMeters(BaseModel):
+    grid_meter: Optional[dict] = None
+
+
+class PPAOnGridWithBatterExtractedMeters(PPAOnGridMeters):
+    essential_loads_meter: Optional[dict] = None
+    non_essential_loads_meter: Optional[dict] = None
+    generator_meter: Optional[dict] = None
+
+
+class PPAOnGridEnergyItem(BaseModel):
+    slave_id: Optional[int]
+    description: str
+    start_kwh: float
+    end_kwh: float
+
+    @computed_field
+    @property
+    def usage(self) -> float:
+        return float(f"{self.end_kwh - self.start_kwh}:.2f")
+
+
+class PPAOnGridWithBatteryEnergyData(BaseModel):
+    essential: PPAOnGridEnergyItem
+    non_essential: PPAOnGridEnergyItem
+    grid_import: PPAOnGridEnergyItem
+    grid_export: PPAOnGridEnergyItem
+
+
+class PPAOnGridNoBatteryExtractedMeters(PPAOnGridMeters):
+    solar_meters: list[dict] = []
+
+
+class PPAOnGridNoBatteryEnergyData(BaseModel):
+    solar: list[PPAOnGridEnergyItem]
+    grid_import: PPAOnGridEnergyItem
+    grid_export: PPAOnGridEnergyItem
