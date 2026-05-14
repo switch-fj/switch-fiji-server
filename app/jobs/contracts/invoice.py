@@ -124,11 +124,7 @@ def compute_contract_invoice(self, contract_uid, gateway_id, site_uid):
                 as_of=now_local,
             )
 
-            logger.info(f"all_periods: {all_periods}")
-
-            for period_start, period_end in all_periods[1:]:
-                logger.info(f"period_start: {period_start}")
-                logger.info(f"period_end: {period_end}")
+            for period_start, period_end in all_periods:
                 _handle_invoice(
                     session=session,
                     contract=contract,
