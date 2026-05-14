@@ -101,7 +101,7 @@ class InvoicePDF:
 
         subtotal = invoice.subtotal
         vat_amount = invoice.vat_amount
-        total = subtotal + vat_amount
+        total = invoice.total
         date_fmt = contract_settings.date_format
         time_fmt = contract_settings.time_format
         contract_timezone = contract.timezone
