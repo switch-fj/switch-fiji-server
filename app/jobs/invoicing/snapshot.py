@@ -1,13 +1,16 @@
 from datetime import datetime, timedelta, timezone
+from typing import Optional
 
 from sqlalchemy.orm import joinedload, selectinload
 from sqlmodel import Session, select
 
 from app.core.logger import setup_logger
 from app.database.celery import celery_dynamo_client, get_celery_db_session
-from app.jobs.billing.engine import BillingEngine
 from app.jobs.celery import celery_app
-from app.jobs.contracts.shared import _get_active_contracts
+from app.jobs.invoicing.shared import _get_active_contracts
+from app.modules.billing.ppa_off_grid import PPAOffGridFactory
+from app.modules.billing.ppa_on_grid_no_battery import PPAOnGridNoBatteryFactory
+from app.modules.billing.ppa_on_grid_with_battery import PPAOnGridWithBatteryFactory
 from app.modules.contracts.model import Contract
 from app.modules.contracts.schema import ContractSystemModeEnum, ContractTypeEnum
 from app.modules.devices.model import Device
@@ -101,12 +104,18 @@ def compute_contract_invoice_snapshot(self, contract_uid, gateway_id, site_uid):
                 tzinfo=timezone.utc,
             )
 
+            is_lease = contract.contract_type == ContractTypeEnum.LEASE.value
             is_ppa = contract.contract_type == ContractTypeEnum.PPA.value
             is_ppa_off_grid = is_ppa and contract.system_mode == ContractSystemModeEnum.OFF_GRID.value
             is_ppa_on_grid_with_battery = (
                 is_ppa
                 and contract.system_mode == ContractSystemModeEnum.ON_GRID.value
                 and contract.details.with_battery == "yes"
+            )
+            is_ppa_on_grid_no_battery = (
+                is_ppa
+                and contract.system_mode == ContractSystemModeEnum.ON_GRID.value
+                and contract.details.with_battery == "no"
             )
 
             try:
@@ -120,14 +129,16 @@ def compute_contract_invoice_snapshot(self, contract_uid, gateway_id, site_uid):
                     gateway_id=gateway_id,
                     snapshot_start=snapshot_start,
                     snapshot_end=snapshot_end,
+                    is_lease=is_lease,
                     is_ppa_off_grid=is_ppa_off_grid,
                     is_ppa_on_grid_with_battery=is_ppa_on_grid_with_battery,
+                    is_ppa_on_grid_no_battery=is_ppa_on_grid_no_battery,
                 )
 
                 logger.info("Completed period")
 
             except Exception as exc:
-                logger.exception(f"{snapshot_start} -> {snapshot_end}. Error: {exc}")
+                logger.exception(f"Failed processing period {snapshot_start} -> {snapshot_end}. Error: {exc}")
 
     except Exception as exc:
         raise self.retry(exc=exc)
@@ -141,8 +152,10 @@ def _handle_snapshot(
     gateway_id: str,
     snapshot_start: datetime,
     snapshot_end: datetime,
+    is_lease: bool,
     is_ppa_off_grid: bool,
     is_ppa_on_grid_with_battery: bool,
+    is_ppa_on_grid_no_battery: bool,
 ):
     existing_snapshot = session.execute(
         select(InvoiceSnapshot).where(
@@ -155,37 +168,71 @@ def _handle_snapshot(
     if existing_snapshot:
         return
 
-    result = BillingEngine.compute_invoice_data(
-        contract=contract,
-        contract_settings=contract_settings,
-        devices=devices,
+    readings = celery_dynamo_client.get_readings_for_billing_period(
         gateway_id=gateway_id,
         period_start=snapshot_start,
         period_end=snapshot_end,
-        is_ppa_off_grid=is_ppa_off_grid,
-        is_ppa_on_grid_with_battery=is_ppa_on_grid_with_battery,
     )
-    if result is None:
-        logger.warning(
-            f"Snapshot computation returned no data for contract {contract.uid} ({snapshot_start} → {snapshot_end})"
-        )
+
+    if not readings:
+        logger.warning(f"No readings found for gateway {gateway_id}")
         return
 
-    create_invoice_dict, invoice_details_dict = result
-    invoice_meter_data = invoice_details_dict.invoice_meter_data
-    invoice_line_items = invoice_details_dict.invoice_line_items
+    telemetry_start_reading, telemetry_end_reading = readings
+    snapshot: Optional[InvoiceSnapshot] = None
+    invoice_meter_data = None
+    invoice_line_items = None
 
-    snapshot = InvoiceSnapshot(
-        contract_uid=contract.uid,
-        period_start_at=snapshot_start,
-        period_end_at=snapshot_end,
-        period_start_telemetry_data=create_invoice_dict.get("period_start_telemetry_data"),
-        period_end_telemetry_data=create_invoice_dict.get("period_end_telemetry_data"),
-        subtotal=invoice_details_dict.subtotal,
-        vat_rate=invoice_details_dict.vat_rate,
-        efl_standard_rate_kwh=invoice_details_dict.efl_standard_rate_kwh,
-        energy_mix=invoice_details_dict.energy_mix,
-    )
+    if is_lease:
+        # WIP: Factory under construction.
+        pass
+
+    if is_ppa_on_grid_with_battery:
+        ppa_on_grid_with_battery_factory = PPAOnGridWithBatteryFactory.factory(
+            telemetry_start_reading=telemetry_start_reading,
+            telemetry_end_reading=telemetry_end_reading,
+            contract=contract,
+            devices=devices,
+            contract_settings=contract_settings,
+        )
+
+        snapshot = ppa_on_grid_with_battery_factory.invoice_snapshot(
+            period_start_at=snapshot_start, period_end_at=snapshot_end
+        )
+        invoice_meter_data = ppa_on_grid_with_battery_factory.invoice_meter_data
+        invoice_line_items = ppa_on_grid_with_battery_factory.invoice_line_items
+
+    if is_ppa_off_grid:
+        ppa_off_grid_factory = PPAOffGridFactory.factory(
+            telemetry_start_reading=telemetry_start_reading,
+            telemetry_end_reading=telemetry_end_reading,
+            contract=contract,
+            devices=devices,
+            contract_settings=contract_settings,
+        )
+
+        snapshot = ppa_off_grid_factory.invoice_snapshot(period_start_at=snapshot_start, period_end_at=snapshot_end)
+        invoice_meter_data = ppa_off_grid_factory.invoice_meter_data
+        invoice_line_items = ppa_off_grid_factory.invoice_line_items
+
+    if is_ppa_on_grid_no_battery:
+        ppa_on_grid_no_battery_factory = PPAOnGridNoBatteryFactory(
+            telemetry_start_reading=telemetry_start_reading,
+            telemetry_end_reading=telemetry_end_reading,
+            contract=contract,
+            devices=devices,
+            contract_settings=contract_settings,
+        )
+
+        snapshot = ppa_on_grid_no_battery_factory.invoice_snapshot(
+            period_start_at=snapshot_start, period_end_at=snapshot_end
+        )
+        invoice_meter_data = ppa_on_grid_no_battery_factory.invoice_meter_data
+        invoice_line_items = ppa_on_grid_no_battery_factory.invoice_line_items
+
+    if not snapshot:
+        logger.warning(f"Error creating invoice snapshot {gateway_id}")
+        return
 
     session.add(snapshot)
     session.flush()

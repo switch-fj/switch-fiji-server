@@ -6,9 +6,12 @@ from sqlmodel import Session, select, update
 
 from app.core.logger import setup_logger
 from app.database.celery import celery_dynamo_client, get_celery_db_session
-from app.jobs.billing.engine import BillingEngine
 from app.jobs.celery import celery_app
-from app.jobs.contracts.shared import _get_active_contracts
+from app.jobs.invoicing.shared import _get_active_contracts
+from app.modules.billing.engine import BillingEngine
+from app.modules.billing.ppa_off_grid import PPAOffGridFactory
+from app.modules.billing.ppa_on_grid_no_battery import PPAOnGridNoBatteryFactory
+from app.modules.billing.ppa_on_grid_with_battery import PPAOnGridWithBatteryFactory
 from app.modules.contracts.model import Contract
 from app.modules.contracts.schema import ContractSystemModeEnum, ContractTypeEnum
 from app.modules.devices.model import Device
@@ -19,6 +22,7 @@ from app.modules.invoices.model import (
     InvoiceLineItem,
     InvoiceMeterData,
 )
+from app.modules.invoices.repository import InvoiceRepository
 from app.modules.invoices.schema import CreateInvoiceHistoryModel
 from app.modules.settings.model import ContractSettings
 
@@ -104,6 +108,7 @@ def compute_contract_invoice(self, contract_uid, gateway_id, site_uid):
                 as_of=now_local,
             )
 
+            is_lease = contract.contract_type == ContractTypeEnum.LEASE.value
             is_ppa = contract.contract_type == ContractTypeEnum.PPA.value
             is_ppa_off_grid = is_ppa and contract.system_mode == ContractSystemModeEnum.OFF_GRID.value
             is_ppa_on_grid_with_battery = (
@@ -111,22 +116,17 @@ def compute_contract_invoice(self, contract_uid, gateway_id, site_uid):
                 and contract.system_mode == ContractSystemModeEnum.ON_GRID.value
                 and contract.details.with_battery == "yes"
             )
-
-            # is_billing_date = now_local >= period_end.astimezone(tz)
-
-            if not is_ppa:
-                # WIP: lease computation
-                return
-
-            all_periods = BillingEngine.get_all_billing_periods(
-                commissioned_at=commissioned_at,
-                billing_frequency=contract.details.billing_frequency,
-                as_of=now_local,
+            is_ppa_on_grid_no_battery = (
+                is_ppa
+                and contract.system_mode == ContractSystemModeEnum.ON_GRID.value
+                and contract.details.with_battery == "no"
             )
 
-            for idx, (period_start, period_end) in enumerate(all_periods, start=1):
+            is_billing_date = now_local >= period_end.astimezone(tz)
+
+            if is_billing_date:
                 try:
-                    logger.info(f"Processing period {idx}/{len(all_periods)} {period_start} -> {period_end}")
+                    logger.info(f"Processing period {period_start} -> {period_end}")
 
                     _handle_invoice(
                         session=session,
@@ -136,16 +136,16 @@ def compute_contract_invoice(self, contract_uid, gateway_id, site_uid):
                         gateway_id=gateway_id,
                         period_start=period_start,
                         period_end=period_end,
+                        is_lease=is_lease,
                         is_ppa_off_grid=is_ppa_off_grid,
                         is_ppa_on_grid_with_battery=is_ppa_on_grid_with_battery,
+                        is_ppa_on_grid_no_battery=is_ppa_on_grid_no_battery,
                     )
 
-                    logger.info(f"Completed period {idx}")
+                    logger.info("Completed period")
 
                 except Exception as exc:
-                    logger.exception(f"Failed processing period {idx}: {period_start} -> {period_end}. Error: {exc}")
-
-                    continue
+                    logger.exception(f"Failed processing period {period_start} -> {period_end}. Error: {exc}")
 
     except Exception as exc:
         raise self.retry(exc=exc)
@@ -159,8 +159,10 @@ def _handle_invoice(
     gateway_id: str,
     period_start: datetime,
     period_end: datetime,
+    is_lease: bool,
     is_ppa_off_grid: bool,
     is_ppa_on_grid_with_battery: bool,
+    is_ppa_on_grid_no_battery: bool,
 ):
     already_invoiced = session.execute(
         select(Invoice).where(
@@ -173,26 +175,83 @@ def _handle_invoice(
     if already_invoiced:
         return
 
-    result = BillingEngine.compute_invoice_data(
-        contract=contract,
-        contract_settings=contract_settings,
-        devices=devices,
+    readings = celery_dynamo_client.get_readings_for_billing_period(
         gateway_id=gateway_id,
         period_start=period_start,
         period_end=period_end,
-        is_ppa_off_grid=is_ppa_off_grid,
-        is_ppa_on_grid_with_battery=is_ppa_on_grid_with_battery,
-        is_multi_day=True,
     )
-    if result is None:
-        logger.warning(f"Invoice computation returned no data for contract {contract.uid}")
+
+    if not readings:
+        logger.warning(f"No readings found for gateway {gateway_id}")
         return
 
-    create_invoice_dict, invoice_details_dict = result
-    invoice_meter_data = invoice_details_dict.invoice_meter_data
-    invoice_line_items = invoice_details_dict.invoice_line_items
+    telemetry_start_reading, telemetry_end_reading = readings
+    new_invoice = None
+    invoice_meter_data = None
+    invoice_line_items = None
 
-    new_invoice = Invoice(**create_invoice_dict)
+    if is_lease:
+        # WIP: Factory under construction.
+        pass
+
+    if is_ppa_on_grid_with_battery:
+        ppa_on_grid_with_battery_factory = PPAOnGridWithBatteryFactory.factory(
+            telemetry_start_reading=telemetry_start_reading,
+            telemetry_end_reading=telemetry_end_reading,
+            contract=contract,
+            devices=devices,
+            contract_settings=contract_settings,
+        )
+
+        new_invoice = ppa_on_grid_with_battery_factory.invoice(
+            period_start_at=period_start,
+            period_end_at=period_end,
+            contract_uid=contract.uid,
+            invoice_ref=InvoiceRepository._build_invoice_ref(),
+        )
+        invoice_meter_data = ppa_on_grid_with_battery_factory.invoice_meter_data
+        invoice_line_items = ppa_on_grid_with_battery_factory.invoice_line_items
+
+    if is_ppa_off_grid:
+        ppa_off_grid_factory = PPAOffGridFactory.factory(
+            telemetry_start_reading=telemetry_start_reading,
+            telemetry_end_reading=telemetry_end_reading,
+            contract=contract,
+            devices=devices,
+            contract_settings=contract_settings,
+        )
+
+        new_invoice = ppa_off_grid_factory.invoice(
+            period_start_at=period_start,
+            period_end_at=period_end,
+            contract_uid=contract.uid,
+            invoice_ref=InvoiceRepository._build_invoice_ref(),
+        )
+        invoice_meter_data = ppa_off_grid_factory.invoice_meter_data
+        invoice_line_items = ppa_off_grid_factory.invoice_line_items
+
+    if is_ppa_on_grid_no_battery:
+        ppa_on_grid_no_battery_factory = PPAOnGridNoBatteryFactory(
+            telemetry_start_reading=telemetry_start_reading,
+            telemetry_end_reading=telemetry_end_reading,
+            contract=contract,
+            devices=devices,
+            contract_settings=contract_settings,
+        )
+
+        new_invoice = ppa_on_grid_no_battery_factory.invoice(
+            period_start_at=period_start,
+            period_end_at=period_end,
+            contract_uid=contract.uid,
+            invoice_ref=InvoiceRepository._build_invoice_ref(),
+        )
+        invoice_meter_data = ppa_on_grid_no_battery_factory.invoice_meter_data
+        invoice_line_items = ppa_on_grid_no_battery_factory.invoice_line_items
+
+    if not new_invoice:
+        logger.warning(f"Error creating invoice {gateway_id}")
+        return
+
     session.add(new_invoice)
     session.flush()
 

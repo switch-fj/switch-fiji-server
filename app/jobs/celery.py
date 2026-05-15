@@ -46,5 +46,5 @@ celery_app.autodiscover_tasks(["app.jobs"])
 
 from app.jobs import auth  # noqa
 from app.jobs.sites import stats  # noqa
-from app.jobs.contracts import invoice  # noqa
-from app.jobs.contracts import invoice_snapshot  # noqa
+from app.jobs.invoicing import invoice  # noqa
+from app.jobs.invoicing import snapshot  # noqa

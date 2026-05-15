@@ -5,6 +5,47 @@ from pydantic import BaseModel, ConfigDict, computed_field
 
 from app.modules.contracts.schema import OnGridNoBatteryTariffSlotModel
 
+# off grif schema
+
+
+class PPAOnAndOffGridEnergyItem(BaseModel):
+    slave_id: int
+    description: str
+    start_day_tariff: float
+    start_night_tariff: float
+    end_day_tariff: float
+    end_night_tariff: float
+
+    @computed_field
+    @property
+    def day_usage(self) -> float:
+        return float(f"{self.end_day_tariff - self.start_day_tariff}")
+
+    @computed_field
+    @property
+    def night_usage(self) -> float:
+        return float(f"{self.start_night_tariff - self.end_night_tariff}")
+
+
+class PPAOffGridExtractedMeters:
+    gen_meter: dict
+    load_meter: dict
+
+
+class PPAOffGridNoBatteryEnergyData(BaseModel):
+    load: PPAOnAndOffGridEnergyItem
+    gen: PPAOnAndOffGridEnergyItem
+
+
+class PPAOffGridEnergyMix(BaseModel):
+    """Computed billing-period energy mix for all load meter and the gen meter."""
+
+    load: float
+    gen: float
+
+
+# ==============================
+
 
 class OnGridMeterImportReading(BaseModel):
     """Single meter entry from a DynamoDB periodic reading (on-grid no battery)."""
@@ -69,17 +110,25 @@ class ComputePPAOnGridNoBatteryInvoiceResp(BaseModel):
 # New schemas for contract type billing calculation
 
 
-class PPAOnGridMeters(BaseModel):
+class OnGridMeters(BaseModel):
     grid_meter: Optional[dict] = None
 
 
-class PPAOnGridWithBatterExtractedMeters(PPAOnGridMeters):
+class OnGridWithBatterExtractedMeters(OnGridMeters):
     essential_loads_meter: Optional[dict] = None
     non_essential_loads_meter: Optional[dict] = None
     generator_meter: Optional[dict] = None
 
 
-class PPAOnGridEnergyItem(BaseModel):
+class OnGridWithBatteryEnergyMix(BaseModel):
+    """Computed billing-period energy mix for all solar meters and the grid meter."""
+
+    solar: float
+    grid_export: float
+    grid_import: float
+
+
+class OnGridEnergyItem(BaseModel):
     slave_id: Optional[int]
     description: str
     start_kwh: float
@@ -88,21 +137,22 @@ class PPAOnGridEnergyItem(BaseModel):
     @computed_field
     @property
     def usage(self) -> float:
-        return float(f"{self.end_kwh - self.start_kwh}:.2f")
+        return float(f"{self.end_kwh - self.start_kwh}")
 
 
-class PPAOnGridWithBatteryEnergyData(BaseModel):
-    essential: PPAOnGridEnergyItem
-    non_essential: PPAOnGridEnergyItem
-    grid_import: PPAOnGridEnergyItem
-    grid_export: PPAOnGridEnergyItem
+class OnGridWithBatteryEnergyData(BaseModel):
+    essential: OnGridEnergyItem
+    non_essential: OnGridEnergyItem
+    grid_import: OnGridEnergyItem
+    grid_export: OnGridEnergyItem
+    generator: PPAOnAndOffGridEnergyItem
 
 
-class PPAOnGridNoBatteryExtractedMeters(PPAOnGridMeters):
+class OnGridNoBatteryExtractedMeters(OnGridMeters):
     solar_meters: list[dict] = []
 
 
-class PPAOnGridNoBatteryEnergyData(BaseModel):
-    solar: list[PPAOnGridEnergyItem]
-    grid_import: PPAOnGridEnergyItem
-    grid_export: PPAOnGridEnergyItem
+class OnGridNoBatteryEnergyData(BaseModel):
+    solar: list[OnGridEnergyItem]
+    grid_import: OnGridEnergyItem
+    grid_export: OnGridEnergyItem

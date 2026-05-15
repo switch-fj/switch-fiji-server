@@ -14,11 +14,13 @@ from app.utils import uuid_serializer
 class InvoiceMeterLabelEnum(StrEnum):
     """Enumeration of standardised labels for invoice meter data records."""
 
-    SITE_METER_1_DAY = "Site Meter 1 - Day"
-    SITE_METER_1_NIGHT = "Site Meter 1 - Night"
-    GEN_METER_1_DAY = "Generator Meter 1 - Day"
-    GEN_METER_1_NIGHT = "Generator Meter 1 - Night"
+    SITE_METER_DAY = "Site Meter - Day"
+    SITE_METER_NIGHT = "Site Meter - Night"
+    GEN_METER_DAY = "Generator Meter - Day"
+    GEN_METER_NIGHT = "Generator Meter - Night"
     SOLAR_GENRATION = "Solar Generation"
+    ESSENTIAL_LOAD_GENRATION = "Essential Load Generation"
+    NON_ESSENTIAL_LOAD_GENRATION = "Non Essential Load Generation"
     SELF_CONSUMPTION = "Self Consumption"
     FED_TO_GRID = "Fed to Grid"
     GRID_ENERGY = "Grid Energy"
@@ -31,6 +33,9 @@ class InvoiceLineItemEnum(StrEnum):
     OFF_SOLAR_ENERGY_SUPPLIED = "Off Solar Energy Supplied"
     FIXED_ASSET_LEASE = "Fixed Asset Lease"
     MONTHLY_MAINTENANCE_FEE = "Monthly Maintenance Fee"
+    ESSENTIAL_ENERGY_SUPPLIED = "Essential Energy Supplied"
+    NON_ESSENTIAL_ENERGY_SUPPLIED = "Non Essential Energy Supplied"
+    GENERATOR_ENERGY_SUPPLIED = "Generator Energy Supplied"
 
 
 class BaseInvoiceLineItemModel(BaseModel):

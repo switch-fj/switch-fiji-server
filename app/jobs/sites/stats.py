@@ -9,8 +9,8 @@ from sqlmodel import desc, select
 from app.core.logger import setup_logger
 from app.database.celery import celery_dynamo_client, get_celery_db_session
 from app.database.redis import sync_redis_client
-from app.jobs.billing.engine import BillingEngine
 from app.jobs.celery import celery_app
+from app.modules.billing.engine import BillingEngine
 from app.modules.contracts.model import Contract
 from app.modules.invoices.model import Invoice
 from app.shared.constants import Constants

@@ -10,7 +10,7 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 from app.core.logger import setup_logger
 from app.database.postgres import get_session
 from app.database.redis import async_redis_client
-from app.jobs.billing.engine import BillingEngine
+from app.modules.billing.engine import BillingEngine
 from app.modules.clients.model import Client
 from app.modules.contracts.model import Contract
 from app.modules.devices.model import Device
