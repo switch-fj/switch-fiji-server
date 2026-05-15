@@ -5,6 +5,7 @@ from uuid import UUID
 
 from fastapi.encoders import jsonable_encoder
 
+from app.modules.billing.base_contract_factory import BaseContractFactory
 from app.modules.billing.schema import (
     OnGridEnergyItem,
     OnGridNoBatteryEnergyData,
@@ -29,7 +30,7 @@ from app.modules.invoices.schema import (
 from app.modules.settings.model import ContractSettings
 
 
-class PPAOnGridNoBatteryFactory:
+class PPAOnGridNoBatteryFactory(BaseContractFactory):
     def __init__(
         self,
         energy_data: OnGridNoBatteryEnergyData,
@@ -59,7 +60,7 @@ class PPAOnGridNoBatteryFactory:
         grid_meter = None
         solar_meters = []
 
-        meters = telemetry_data.get("meters", [])
+        meters: list[dict] = telemetry_data.get("meters", [])
 
         if not len(meters):
             raise ValueError("PPA On-grid No Battery telemetry data has empty meter data")
@@ -67,10 +68,10 @@ class PPAOnGridNoBatteryFactory:
         for meter in meters:
             description = meter.get("description")
             if description == MeterRoleEnum.GRID_METER.value:
-                grid_meter = meter.get(MeterRoleEnum.GRID_METER.value)
+                grid_meter = meter
 
             if description == MeterRoleEnum.SOLAR_METER.value:
-                solar_meters.append(meter.get(MeterRoleEnum.SOLAR_METER.value))
+                solar_meters.append(meter)
 
         return OnGridNoBatteryExtractedMeters(grid_meter=grid_meter, solar_meters=solar_meters)
 
@@ -97,13 +98,11 @@ class PPAOnGridNoBatteryFactory:
         else:
             rate = Decimal(str(self.solar_tariff.rate))
 
-            if tariff_indexed_rule_type == TariffIndexedRuleTypeEnum.FIXED_ANNUAL_ESCALATOR:
+            if tariff_indexed_rule_type == TariffIndexedRuleTypeEnum.EFL_LINKED:  # ✅
                 multiplier = (Decimal(100) + rate) / Decimal(100)
-                solar_rate = (efl_standard_rate_kwh * multiplier).quantize(Decimal("0.01"))
+                solar_rate = Decimal(efl_standard_rate_kwh * multiplier).quantize(Decimal("0.01"))
             elif tariff_indexed_rule_type == TariffIndexedRuleTypeEnum.FIXED_ANNUAL_ESCALATOR:
-                raise NotImplementedError(
-                    "FIXED_ANNUAL_ESCALATOR is not yet supported for PPA on-grid no-battery solar tariff"
-                )
+                raise NotImplementedError(...)
             else:
                 raise ValueError(f"Unsupported tariff_indexed_rule_type: {tariff_indexed_rule_type}")
 
@@ -165,7 +164,7 @@ class PPAOnGridNoBatteryFactory:
     def invoice_line_items(self):
         create_invoice_line_items: list[BaseInvoiceLineItemModel] = [
             BaseInvoiceLineItemModel(
-                description="Grid meter",
+                description="Grid Import (not charged)",
                 energy_kwh=Decimal(str(self.energy_data.grid_import.usage)),
                 tariff_rate=Decimal("0.0"),
                 tariff_slot=self.grid_tariff.slot,
@@ -194,7 +193,6 @@ class PPAOnGridNoBatteryFactory:
         self,
     ):
         create_invoice_meter_data: list[BaseInvoiceMeterDataModel] = []
-        self.start_meters.solar_meters
         for device in self.devices:
             for solar in self.energy_data.solar:
                 if device.slave_id == solar.slave_id:
@@ -229,12 +227,12 @@ class PPAOnGridNoBatteryFactory:
         contract_settings: ContractSettings,
     ):
         # start period
-        start_meters: OnGridNoBatteryExtractedMeters = cls._extract_meters(reading=telemetry_start_reading)
+        start_meters: OnGridNoBatteryExtractedMeters = cls._extract_meters(telemetry_data=telemetry_start_reading)
         start_grid_meter = start_meters.grid_meter
         start_solar_meter = start_meters.solar_meters
 
         # end period
-        end_meters: OnGridNoBatteryExtractedMeters = cls._extract_meters(reading=telemetry_end_reading)
+        end_meters: OnGridNoBatteryExtractedMeters = cls._extract_meters(telemetry_data=telemetry_end_reading)
         end_grid_meter = end_meters.grid_meter
         end_solar_meter = end_meters.solar_meters
 
@@ -255,6 +253,7 @@ class PPAOnGridNoBatteryFactory:
             end_kwh=end_grid_meter["kwh_import"],
         )
         grid_export = OnGridEnergyItem(
+            slave_id=start_grid_meter["slave_id"],
             description="Fed to Grid",
             start_kwh=start_grid_meter["kwh_export"],
             end_kwh=end_grid_meter["kwh_export"],

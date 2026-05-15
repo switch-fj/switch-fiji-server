@@ -17,12 +17,16 @@ class PPAOnAndOffGridEnergyItem(BaseModel):
     @computed_field
     @property
     def day_usage(self) -> float:
-        return float(f"{self.end_day_tariff - self.start_day_tariff}")
+        value = self.end_day_tariff - self.start_day_tariff
+
+        return float(f"{value:.2f}")
 
     @computed_field
     @property
     def night_usage(self) -> float:
-        return float(f"{self.end_night_tariff - self.start_night_tariff}")
+        value = self.end_night_tariff - self.start_night_tariff
+
+        return float(f"{value:.2f}")
 
 
 class PPAOffGridExtractedMeters(BaseModel):
@@ -122,8 +126,8 @@ class OnGridWithBatteryEnergyMix(BaseModel):
     """Computed billing-period energy mix for all solar meters and the grid meter."""
 
     solar: float
-    grid_export: float
-    grid_import: float
+    grid: float
+    battery: float
 
 
 class OnGridEnergyItem(BaseModel):
@@ -135,7 +139,9 @@ class OnGridEnergyItem(BaseModel):
     @computed_field
     @property
     def usage(self) -> float:
-        return float(f"{self.end_kwh - self.start_kwh}")
+        value = self.end_kwh - self.start_kwh
+
+        return float(f"{value:.2f}")
 
 
 class OnGridWithBatteryEnergyData(BaseModel):

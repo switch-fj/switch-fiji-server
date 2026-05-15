@@ -5,6 +5,7 @@ from uuid import UUID
 
 from fastapi.encoders import jsonable_encoder
 
+from app.modules.billing.base_contract_factory import BaseContractFactory
 from app.modules.billing.schema import (
     OnGridEnergyItem,
     OnGridWithBatterExtractedMeters,
@@ -32,7 +33,7 @@ from app.modules.settings.model import ContractSettings
 from app.utils import two_decimal_place
 
 
-class PPAOnGridWithBatteryFactory:
+class PPAOnGridWithBatteryFactory(BaseContractFactory):
     def __init__(
         self,
         energy_data: OnGridWithBatteryEnergyData,
@@ -63,7 +64,7 @@ class PPAOnGridWithBatteryFactory:
 
         for meter in meters:
             description = meter.get("description", "")
-            if description == MeterRoleEnum.GEN_METER.value:
+            if description == MeterRoleEnum.GRID_METER.value:
                 grid_meter = meter
 
             if description == MeterRoleEnum.ESSENTIAL_LOAD.value:
@@ -136,10 +137,10 @@ class PPAOnGridWithBatteryFactory:
         generator = PPAOnAndOffGridEnergyItem(
             slave_id=generator_meter_t1["slave_id"],
             description="Generator",
-            start_day_tariff=generator_meter_t1["kwh_t2"],
-            start_night_tariff=generator_meter_t1["kwh_t1"],
-            end_day_tariff=generator_meter_t2["kwh_t2"],
-            end_night_tariff=generator_meter_t2["kwh_1"],
+            start_day_tariff=generator_meter_t1["kwh_t1"],
+            start_night_tariff=generator_meter_t1["kwh_t2"],
+            end_day_tariff=generator_meter_t2["kwh_t1"],
+            end_night_tariff=generator_meter_t2["kwh_t2"],
         )
 
         energy_data = OnGridWithBatteryEnergyData(
@@ -279,14 +280,14 @@ class PPAOnGridWithBatteryFactory:
 
     @property
     def energy_mix(self):
-        solar = self.energy_data.essential.usage + self.energy_data.non_essential.usage
-        grid_export = self.energy_data.grid_export
-        grid_import = self.energy_data.grid_import
+        solar_usage = self.energy_data.essential.usage
+        battery_usage = self.energy_data.non_essential.usage
+        grid_import_usage = self.energy_data.grid_import.usage
 
         return OnGridWithBatteryEnergyMix(
-            solar=solar,
-            grid_import=grid_import,
-            grid_export=grid_export,
+            solar=solar_usage,
+            grid=grid_import_usage,
+            battery=battery_usage,
         )
 
     @property
@@ -301,7 +302,7 @@ class PPAOnGridWithBatteryFactory:
 
     @property
     def solar_rate(self):
-        return self.calculate_rate(tariff=self.solar_tariff)
+        return self.calculate_rate(tariff_slot=self.solar_tariff)
 
     @property
     def day_utility_tariff(self):
@@ -309,7 +310,7 @@ class PPAOnGridWithBatteryFactory:
 
     @property
     def day_utility_rate(self):
-        return self.calculate_rate(tariff=self.day_utility_tariff)
+        return self.calculate_rate(tariff_slot=self.day_utility_tariff)
 
     @property
     def night_utility_tariff(self):
@@ -317,7 +318,7 @@ class PPAOnGridWithBatteryFactory:
 
     @property
     def night_utility_rate(self):
-        return self.calculate_rate(tariff=self.night_utility_tariff)
+        return self.calculate_rate(tariff_slot=self.night_utility_tariff)
 
     @property
     def battery_utility_tariff(self):
@@ -325,7 +326,7 @@ class PPAOnGridWithBatteryFactory:
 
     @property
     def battery_rate(self):
-        return self.calculate_rate(tariff=self.battery_utility_tariff)
+        return self.calculate_rate(tariff_slot=self.battery_utility_tariff)
 
     @property
     def solar_energy_cost(self):
@@ -349,7 +350,12 @@ class PPAOnGridWithBatteryFactory:
 
     @property
     def subtotal(self):
-        return self.battery_energy_cost + self.solar_energy_cost + self.generator_energy_cost
+        return (
+            self.battery_energy_cost
+            + self.solar_energy_cost
+            + self.generator_day_energy_cost
+            + self.generator_night_energy_cost
+        )
 
     @property
     def invoice_line_items(self):
@@ -380,7 +386,7 @@ class PPAOnGridWithBatteryFactory:
             ),
             BaseInvoiceLineItemModel(
                 description=f"{InvoiceLineItemEnum.GENERATOR_ENERGY_SUPPLIED.value} Night",
-                energy_kwh=Decimal(self.energy_data.generator.day_usage),
+                energy_kwh=Decimal(self.energy_data.generator.night_usage),
                 tariff_rate=Decimal(self.night_utility_tariff.rate),
                 tariff_slot=self.night_utility_tariff.slot,
                 tariff_period=int(self.night_utility_tariff.period_number),
@@ -416,7 +422,7 @@ class PPAOnGridWithBatteryFactory:
                     ),
                 )
 
-            if device.slave_id == self.energy_data.generator:
+            if device.slave_id == self.energy_data.generator.slave_id:
                 create_invoice_meter_data.extend(
                     [
                         BaseInvoiceMeterDataModel(

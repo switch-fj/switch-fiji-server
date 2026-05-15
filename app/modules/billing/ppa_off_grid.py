@@ -6,6 +6,7 @@ from uuid import UUID
 from fastapi.encoders import jsonable_encoder
 
 from app.core.logger import setup_logger
+from app.modules.billing.base_contract_factory import BaseContractFactory
 from app.modules.billing.schema import (
     PPAOffGridEnergyData,
     PPAOffGridEnergyMix,
@@ -30,7 +31,7 @@ from app.utils import two_decimal_place
 logger = setup_logger(__name__)
 
 
-class PPAOffGridFactory:
+class PPAOffGridFactory(BaseContractFactory):
     def __init__(
         self,
         telemetry_start_reading: dict,
