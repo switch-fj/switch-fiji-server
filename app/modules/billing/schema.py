@@ -5,8 +5,6 @@ from pydantic import BaseModel, ConfigDict, computed_field
 
 from app.modules.contracts.schema import OnGridNoBatteryTariffSlotModel
 
-# off grif schema
-
 
 class PPAOnAndOffGridEnergyItem(BaseModel):
     slave_id: int
@@ -24,24 +22,24 @@ class PPAOnAndOffGridEnergyItem(BaseModel):
     @computed_field
     @property
     def night_usage(self) -> float:
-        return float(f"{self.start_night_tariff - self.end_night_tariff}")
+        return float(f"{self.end_night_tariff - self.start_night_tariff}")
 
 
-class PPAOffGridExtractedMeters:
+class PPAOffGridExtractedMeters(BaseModel):
     gen_meter: dict
     load_meter: dict
 
 
-class PPAOffGridNoBatteryEnergyData(BaseModel):
+class PPAOffGridEnergyData(BaseModel):
     load: PPAOnAndOffGridEnergyItem
-    gen: PPAOnAndOffGridEnergyItem
+    backup_gen: PPAOnAndOffGridEnergyItem
 
 
 class PPAOffGridEnergyMix(BaseModel):
     """Computed billing-period energy mix for all load meter and the gen meter."""
 
     load: float
-    gen: float
+    backup_gen: float
 
 
 # ==============================

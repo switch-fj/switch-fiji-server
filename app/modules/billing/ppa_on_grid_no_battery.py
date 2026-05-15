@@ -65,10 +65,11 @@ class PPAOnGridNoBatteryFactory:
             raise ValueError("PPA On-grid No Battery telemetry data has empty meter data")
 
         for meter in meters:
-            if meter.get(MeterRoleEnum.GRID_METER.value, None):
+            description = meter.get("description")
+            if description == MeterRoleEnum.GRID_METER.value:
                 grid_meter = meter.get(MeterRoleEnum.GRID_METER.value)
 
-            if meter.get(MeterRoleEnum.SOLAR_METER.value, None):
+            if description == MeterRoleEnum.SOLAR_METER.value:
                 solar_meters.append(meter.get(MeterRoleEnum.SOLAR_METER.value))
 
         return OnGridNoBatteryExtractedMeters(grid_meter=grid_meter, solar_meters=solar_meters)

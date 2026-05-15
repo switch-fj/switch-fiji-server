@@ -19,6 +19,7 @@ from app.modules.contracts.schema import (
     TariffSlotTypeEnum,
 )
 from app.modules.devices.model import Device
+from app.modules.devices.schema import MeterRoleEnum
 from app.modules.invoices.model import InvoiceSnapshot
 from app.modules.invoices.schema import (
     BaseInvoiceLineItemModel,
@@ -61,17 +62,18 @@ class PPAOnGridWithBatteryFactory:
         meters: list[dict] = telemetry_data.get("meters", [])
 
         for meter in meters:
-            if meter.get("grid_meter", None):
-                grid_meter = meter.get("grid_meter")
+            description = meter.get("description", "")
+            if description == MeterRoleEnum.GEN_METER.value:
+                grid_meter = meter
 
-            if meter.get("essential_loads_meter", None):
-                essential_loads_meter = meter.get("essential_loads_meter")
+            if description == MeterRoleEnum.ESSENTIAL_LOAD.value:
+                essential_loads_meter = meter
 
-            if meter.get("non_essential_loads_meter", None):
-                non_essential_loads_meter = meter.get("non_essential_loads_meter")
+            if description == MeterRoleEnum.NON_ESSENTIAL_LOAD.value:
+                non_essential_loads_meter = meter
 
-            if meter.get("generator_meter", None):
-                generator_meter = meter.get("generator_meter")
+            if description == MeterRoleEnum.GENERATOR_METER.value:
+                generator_meter = meter
 
         return OnGridWithBatterExtractedMeters.model_validate(
             {
