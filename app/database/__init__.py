@@ -6,6 +6,9 @@ from app.modules.invoices.model import (
     InvoiceHistory,
     InvoiceLineItem,
     InvoiceMeterData,
+    InvoiceSnapshot,
+    InvoiceSnapshotLineItem,
+    InvoiceSnapshotMeterData,
 )
 from app.modules.settings.model import ContractSettings
 from app.modules.sites.model import Site
@@ -23,4 +26,7 @@ __all__ = [
     "InvoiceMeterData",
     "InvoiceHistory",
     "ContractSettings",
+    "InvoiceSnapshot",
+    "InvoiceSnapshotLineItem",
+    "InvoiceSnapshotMeterData",
 ]
