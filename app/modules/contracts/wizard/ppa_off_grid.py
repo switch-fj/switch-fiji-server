@@ -6,7 +6,6 @@ from uuid import UUID
 from fastapi.encoders import jsonable_encoder
 
 from app.core.logger import setup_logger
-from app.modules.billing.base_contract_factory import BaseContractFactory
 from app.modules.billing.schema import (
     PPAOffGridEnergyData,
     PPAOffGridEnergyMix,
@@ -15,6 +14,7 @@ from app.modules.billing.schema import (
 )
 from app.modules.contracts.model import Contract
 from app.modules.contracts.schema import TariffIndexedRuleTypeEnum, TariffSlotTypeEnum
+from app.modules.contracts.wizard.base import BaseContractWizard
 from app.modules.devices.model import Device
 from app.modules.devices.schema import MeterRoleEnum
 from app.modules.invoices.model import InvoiceSnapshot
@@ -31,7 +31,7 @@ from app.utils import two_decimal_place
 logger = setup_logger(__name__)
 
 
-class PPAOffGridFactory(BaseContractFactory):
+class PPAOffGridContractWizard(BaseContractWizard):
     def __init__(
         self,
         telemetry_start_reading: dict,
@@ -142,7 +142,7 @@ class PPAOffGridFactory(BaseContractFactory):
     @property
     def energy_mix(self):
         load = self.energy_data.load.day_usage + self.energy_data.load.night_usage
-        backup_gen = self.energy_data.gen.day_usage + self.energy_data.gen.night_usage
+        backup_gen = self.energy_data.backup_gen.day_usage + self.energy_data.backup_gen.night_usage
 
         return PPAOffGridEnergyMix(
             load=float(f"{load:.2f}"),
@@ -159,14 +159,14 @@ class PPAOffGridFactory(BaseContractFactory):
 
     @property
     def on_solar_energy_kwh(self) -> float:
-        value = self.energy_data.load.day_usage - self.energy_data.gen.day_usage
+        value = self.energy_data.load.day_usage - self.energy_data.backup_gen.day_usage
         if value < 0:
-            logger.warning("log warning: metering anomaly, gen > load for day period")
+            logger.warning("log warning: metering anomaly, backup_gen > load for day period")
         return max(0.0, value)
 
     @property
     def off_solar_energy_kwh(self):
-        return self.energy_data.load.night_usage - self.energy_data.gen.night_usage
+        return self.energy_data.load.night_usage - self.energy_data.backup_gen.night_usage
 
     @property
     def on_solar_energy_amount(self):
@@ -268,20 +268,20 @@ class PPAOffGridFactory(BaseContractFactory):
                     ]
                 )
 
-            if device.slave_id == self.energy_data.gen.slave_id:
+            if device.slave_id == self.energy_data.backup_gen.slave_id:
                 create_invoice_meter_data.extend(
                     [
                         BaseInvoiceMeterDataModel(
                             device_uid=device.uid,
                             label=InvoiceMeterLabelEnum.GEN_METER_DAY.value,
-                            period_start_reading=Decimal(self.energy_data.gen.start_day_tariff),
-                            period_end_reading=Decimal(self.energy_data.gen.end_day_tariff),
+                            period_start_reading=Decimal(self.energy_data.backup_gen.start_day_tariff),
+                            period_end_reading=Decimal(self.energy_data.backup_gen.end_day_tariff),
                         ),
                         BaseInvoiceMeterDataModel(
                             device_uid=device.uid,
                             label=InvoiceMeterLabelEnum.GEN_METER_NIGHT.value,
-                            period_start_reading=Decimal(self.energy_data.gen.start_night_tariff),
-                            period_end_reading=Decimal(self.energy_data.gen.end_night_tariff),
+                            period_start_reading=Decimal(self.energy_data.backup_gen.start_night_tariff),
+                            period_end_reading=Decimal(self.energy_data.backup_gen.end_night_tariff),
                         ),
                     ]
                 )

@@ -13,7 +13,7 @@ from app.modules.invoices.schema import (
 from app.modules.settings.model import ContractSettings
 
 
-class BaseContractFactory(ABC):
+class BaseContractWizard(ABC):
     @classmethod
     @abstractmethod
     def factory(
@@ -23,7 +23,7 @@ class BaseContractFactory(ABC):
         contract: Contract,
         devices: list[Device],
         contract_settings: ContractSettings,
-    ) -> "BaseContractFactory": ...
+    ) -> "BaseContractWizard": ...
 
     @property
     @abstractmethod

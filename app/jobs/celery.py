@@ -23,7 +23,7 @@ celery_app.conf.update(
 celery_app.conf.beat_schedule = {
     "trigger_site_stats_every_5_minutes": {
         "task": "compute_site_stats",
-        "schedule": crontab(minute="*/5"),
+        "schedule": crontab(minute="*/1"),
     },
     "trigger_compute_active_contracts_every_1_hour": {
         "task": "compute_active_contracts",

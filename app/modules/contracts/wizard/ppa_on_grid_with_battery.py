@@ -5,7 +5,7 @@ from uuid import UUID
 
 from fastapi.encoders import jsonable_encoder
 
-from app.modules.billing.base_contract_factory import BaseContractFactory
+from app.core.logger import setup_logger
 from app.modules.billing.schema import (
     OnGridEnergyItem,
     OnGridWithBatterExtractedMeters,
@@ -19,6 +19,7 @@ from app.modules.contracts.schema import (
     TariffSlotModel,
     TariffSlotTypeEnum,
 )
+from app.modules.contracts.wizard.base import BaseContractWizard
 from app.modules.devices.model import Device
 from app.modules.devices.schema import MeterRoleEnum
 from app.modules.invoices.model import InvoiceSnapshot
@@ -32,8 +33,10 @@ from app.modules.invoices.schema import (
 from app.modules.settings.model import ContractSettings
 from app.utils import two_decimal_place
 
+logger = setup_logger(__name__)
 
-class PPAOnGridWithBatteryFactory(BaseContractFactory):
+
+class PPAOnGridWithBatteryContractWizard(BaseContractWizard):
     def __init__(
         self,
         energy_data: OnGridWithBatteryEnergyData,
@@ -86,6 +89,25 @@ class PPAOnGridWithBatteryFactory(BaseContractFactory):
         )
 
     @classmethod
+    def _validate_meters(cls, extracted: OnGridWithBatterExtractedMeters, period: str):
+        missing = []
+
+        if extracted.grid_meter is None:
+            missing.append("grid_meter")
+        if extracted.essential_loads_meter is None:
+            missing.append("essential_loads_meter")
+        if extracted.non_essential_loads_meter is None:
+            missing.append("non_essential_loads_meter")
+        if extracted.generator_meter is None:
+            missing.append("generator_meter")
+
+        if missing:
+            raise ValueError(
+                f"Missing required meters in telemetry data for period {period}: "
+                f"{', '.join(missing)}. Check meter role descriptions in the telemetry payload."
+            )
+
+    @classmethod
     def factory(
         cls,
         telemetry_start_reading: dict,
@@ -109,6 +131,9 @@ class PPAOnGridWithBatteryFactory(BaseContractFactory):
         essential_loads_meter_t2 = extracted_meters_t2.essential_loads_meter
         non_essential_loads_meter_t2 = extracted_meters_t2.non_essential_loads_meter
         generator_meter_t2 = extracted_meters_t2.generator_meter
+
+        cls._validate_meters(extracted_meters_t1, period="T1 (start)")
+        cls._validate_meters(extracted_meters_t2, period="T2 (end)")
 
         essesntial = OnGridEnergyItem(
             slave_id=essential_loads_meter_t1["slave_id"],

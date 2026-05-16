@@ -8,11 +8,14 @@ from app.core.logger import setup_logger
 from app.database.celery import celery_dynamo_client, get_celery_db_session
 from app.jobs.celery import celery_app
 from app.jobs.invoicing.shared import _get_active_contracts
-from app.modules.billing.ppa_off_grid import PPAOffGridFactory
-from app.modules.billing.ppa_on_grid_no_battery import PPAOnGridNoBatteryFactory
-from app.modules.billing.ppa_on_grid_with_battery import PPAOnGridWithBatteryFactory
 from app.modules.contracts.model import Contract
-from app.modules.contracts.schema import ContractSystemModeEnum, ContractTypeEnum
+from app.modules.contracts.wizard.ppa_off_grid import PPAOffGridContractWizard
+from app.modules.contracts.wizard.ppa_on_grid_no_battery import (
+    PPAOnGridNoBatteryContractWizard,
+)
+from app.modules.contracts.wizard.ppa_on_grid_with_battery import (
+    PPAOnGridWithBatteryContractWizard,
+)
 from app.modules.devices.model import Device
 from app.modules.devices.schema import DeviceType
 from app.modules.invoices.model import (
@@ -21,6 +24,12 @@ from app.modules.invoices.model import (
     InvoiceSnapshotMeterData,
 )
 from app.modules.settings.model import ContractSettings
+from app.utils.contracts import (
+    is_lease,
+    is_ppa_off_grid,
+    is_ppa_on_grid_no_battery,
+    is_ppa_on_grid_with_battery,
+)
 
 logger = setup_logger(__name__)
 
@@ -53,7 +62,10 @@ def compute_contract_invoice_snapshot(self, contract_uid, gateway_id, site_uid):
         with get_celery_db_session() as session:
             contract = session.execute(
                 select(Contract)
-                .options(joinedload(Contract.details), joinedload(Contract.client))
+                .options(
+                    joinedload(Contract.details),
+                    joinedload(Contract.client),
+                )
                 .where(Contract.uid == contract_uid)
             ).scalar_one_or_none()
 
@@ -104,20 +116,6 @@ def compute_contract_invoice_snapshot(self, contract_uid, gateway_id, site_uid):
                 tzinfo=timezone.utc,
             )
 
-            is_lease = contract.contract_type == ContractTypeEnum.LEASE.value
-            is_ppa = contract.contract_type == ContractTypeEnum.PPA.value
-            is_ppa_off_grid = is_ppa and contract.system_mode == ContractSystemModeEnum.OFF_GRID.value
-            is_ppa_on_grid_with_battery = (
-                is_ppa
-                and contract.system_mode == ContractSystemModeEnum.ON_GRID.value
-                and contract.details.with_battery == "yes"
-            )
-            is_ppa_on_grid_no_battery = (
-                is_ppa
-                and contract.system_mode == ContractSystemModeEnum.ON_GRID.value
-                and contract.details.with_battery == "no"
-            )
-
             try:
                 logger.info(f"{snapshot_start} -> {snapshot_end}")
 
@@ -129,10 +127,6 @@ def compute_contract_invoice_snapshot(self, contract_uid, gateway_id, site_uid):
                     gateway_id=gateway_id,
                     snapshot_start=snapshot_start,
                     snapshot_end=snapshot_end,
-                    is_lease=is_lease,
-                    is_ppa_off_grid=is_ppa_off_grid,
-                    is_ppa_on_grid_with_battery=is_ppa_on_grid_with_battery,
-                    is_ppa_on_grid_no_battery=is_ppa_on_grid_no_battery,
                 )
 
                 logger.info("Completed period")
@@ -152,10 +146,6 @@ def _handle_snapshot(
     gateway_id: str,
     snapshot_start: datetime,
     snapshot_end: datetime,
-    is_lease: bool,
-    is_ppa_off_grid: bool,
-    is_ppa_on_grid_with_battery: bool,
-    is_ppa_on_grid_no_battery: bool,
 ):
     existing_snapshot = session.execute(
         select(InvoiceSnapshot).where(
@@ -183,12 +173,12 @@ def _handle_snapshot(
     invoice_meter_data = None
     invoice_line_items = None
 
-    if is_lease:
+    if is_lease(contract=contract):
         # WIP: Factory under construction.
         pass
 
-    if is_ppa_on_grid_with_battery:
-        ppa_on_grid_with_battery_factory = PPAOnGridWithBatteryFactory.factory(
+    if is_ppa_on_grid_with_battery(contract=contract):
+        ppa_on_grid_with_battery_wizard = PPAOnGridWithBatteryContractWizard.factory(
             telemetry_start_reading=telemetry_start_reading,
             telemetry_end_reading=telemetry_end_reading,
             contract=contract,
@@ -196,14 +186,14 @@ def _handle_snapshot(
             contract_settings=contract_settings,
         )
 
-        snapshot = ppa_on_grid_with_battery_factory.invoice_snapshot(
+        snapshot = ppa_on_grid_with_battery_wizard.invoice_snapshot(
             period_start_at=snapshot_start, period_end_at=snapshot_end
         )
-        invoice_meter_data = ppa_on_grid_with_battery_factory.invoice_meter_data
-        invoice_line_items = ppa_on_grid_with_battery_factory.invoice_line_items
+        invoice_meter_data = ppa_on_grid_with_battery_wizard.invoice_meter_data
+        invoice_line_items = ppa_on_grid_with_battery_wizard.invoice_line_items
 
-    if is_ppa_off_grid:
-        ppa_off_grid_factory = PPAOffGridFactory.factory(
+    if is_ppa_off_grid(contract=contract):
+        ppa_off_grid_wizard = PPAOffGridContractWizard.factory(
             telemetry_start_reading=telemetry_start_reading,
             telemetry_end_reading=telemetry_end_reading,
             contract=contract,
@@ -211,12 +201,12 @@ def _handle_snapshot(
             contract_settings=contract_settings,
         )
 
-        snapshot = ppa_off_grid_factory.invoice_snapshot(period_start_at=snapshot_start, period_end_at=snapshot_end)
-        invoice_meter_data = ppa_off_grid_factory.invoice_meter_data
-        invoice_line_items = ppa_off_grid_factory.invoice_line_items
+        snapshot = ppa_off_grid_wizard.invoice_snapshot(period_start_at=snapshot_start, period_end_at=snapshot_end)
+        invoice_meter_data = ppa_off_grid_wizard.invoice_meter_data
+        invoice_line_items = ppa_off_grid_wizard.invoice_line_items
 
-    if is_ppa_on_grid_no_battery:
-        ppa_on_grid_no_battery_factory = PPAOnGridNoBatteryFactory(
+    if is_ppa_on_grid_no_battery(contract=contract):
+        ppa_on_grid_no_battery_wizard = PPAOnGridNoBatteryContractWizard(
             telemetry_start_reading=telemetry_start_reading,
             telemetry_end_reading=telemetry_end_reading,
             contract=contract,
@@ -224,11 +214,11 @@ def _handle_snapshot(
             contract_settings=contract_settings,
         )
 
-        snapshot = ppa_on_grid_no_battery_factory.invoice_snapshot(
+        snapshot = ppa_on_grid_no_battery_wizard.invoice_snapshot(
             period_start_at=snapshot_start, period_end_at=snapshot_end
         )
-        invoice_meter_data = ppa_on_grid_no_battery_factory.invoice_meter_data
-        invoice_line_items = ppa_on_grid_no_battery_factory.invoice_line_items
+        invoice_meter_data = ppa_on_grid_no_battery_wizard.invoice_meter_data
+        invoice_line_items = ppa_on_grid_no_battery_wizard.invoice_line_items
 
     if not snapshot:
         logger.warning(f"Error creating invoice snapshot {gateway_id}")

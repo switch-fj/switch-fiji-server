@@ -5,7 +5,7 @@ from uuid import UUID
 
 from fastapi.encoders import jsonable_encoder
 
-from app.modules.billing.base_contract_factory import BaseContractFactory
+from app.core.logger import setup_logger
 from app.modules.billing.schema import (
     OnGridEnergyItem,
     OnGridNoBatteryEnergyData,
@@ -19,6 +19,7 @@ from app.modules.contracts.schema import (
     TariffIndexedRuleTypeEnum,
     TariffSlotTypeEnum,
 )
+from app.modules.contracts.wizard.base import BaseContractWizard
 from app.modules.devices.model import Device
 from app.modules.devices.schema import MeterRoleEnum
 from app.modules.invoices.model import InvoiceSnapshot
@@ -29,8 +30,10 @@ from app.modules.invoices.schema import (
 )
 from app.modules.settings.model import ContractSettings
 
+logger = setup_logger(__name__)
 
-class PPAOnGridNoBatteryFactory(BaseContractFactory):
+
+class PPAOnGridNoBatteryContractWizard(BaseContractWizard):
     def __init__(
         self,
         energy_data: OnGridNoBatteryEnergyData,
@@ -261,9 +264,10 @@ class PPAOnGridNoBatteryFactory(BaseContractFactory):
 
         energy_data = OnGridNoBatteryEnergyData(solar=solar, grid_import=grid_import, grid_export=grid_export)
 
-        contract_tariffs: list[OnGridNoBatteryTariffSlotModel] = json.loads(
-            contract.details.ppa_on_grid_no_battery_tariffs
-        )
+        contract_tariffs = [
+            OnGridNoBatteryTariffSlotModel.model_validate(tariff)
+            for tariff in json.loads(contract.details.ppa_on_grid_no_battery_tariffs)
+        ]
 
         for tariff in contract_tariffs:
             if tariff.slot == OnGridNoBatterySlotEnum.SOLAR.value:
