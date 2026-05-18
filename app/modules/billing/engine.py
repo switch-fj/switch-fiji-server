@@ -8,15 +8,6 @@ from fastapi.encoders import jsonable_encoder
 
 from app.core.logger import setup_logger
 from app.database.celery import celery_dynamo_client
-from app.jobs.billing.schema import (
-    ComputePPAOnGridNoBatteryInvoiceResp,
-    MeterImportUsage,
-    OnGridMeterImportReading,
-    OnGridNoBatteryEnergyMix,
-    OnGridNoBatteryMeterImportData,
-    OnGridNoBatteryUsage,
-    OnGridPeriodicEnergyData,
-)
 from app.modules.contracts.model import Contract
 from app.modules.contracts.schema import (
     ContractBillingFrequencyEnum,
@@ -24,6 +15,15 @@ from app.modules.contracts.schema import (
     OnGridNoBatteryTariffSlotModel,
     TariffIndexedRuleTypeEnum,
     TariffSlotTypeEnum,
+)
+from app.modules.contracts.wizard.schema import (
+    ComputePPAOnGridNoBatteryInvoiceResp,
+    MeterImportUsage,
+    OnGridMeterImportReading,
+    OnGridNoBatteryEnergyMix,
+    OnGridNoBatteryMeterImportData,
+    OnGridNoBatteryUsage,
+    OnGridPeriodicEnergyData,
 )
 from app.modules.devices.model import Device
 from app.modules.devices.schema import MeterRoleEnum
@@ -112,12 +112,14 @@ class BillingEngine:
         as_of: datetime,
     ) -> list[tuple[datetime, datetime]]:
         """Returns all billing periods from commissioned_at up to as_of."""
-        try:
-            freq = ContractBillingFrequencyEnum(billing_frequency.lower())
-        except ValueError:
-            raise ValueError(f"Unsupported billing frequency: {billing_frequency}")
+        # try:
+        #     freq = ContractBillingFrequencyEnum(billing_frequency.lower())
+        # except ValueError:
+        #     raise ValueError(f"Unsupported billing frequency: {billing_frequency}")
 
-        match freq:
+        match billing_frequency:
+            case "daily":
+                delta = relativedelta(days=1)
             case ContractBillingFrequencyEnum.WEEKLY:
                 delta = relativedelta(weeks=1)
             case ContractBillingFrequencyEnum.BI_WEEKLY:
@@ -267,9 +269,9 @@ class BillingEngine:
     def compute_ppa_off_grid_energy_mix(usage: dict[str, Any]):
 
         solar_energy_kwh = usage.get("site_meter_day_usage", 0) + usage.get("site_meter_night_usage", 0)
-        gen_energy_kwh = usage.get("gen_meter_day_usage", 0) + usage.get("gen_meter_night_usage", 0)
+        gen = usage.get("gen_meter_day_usage", 0) + usage.get("gen_meter_night_usage", 0)
 
-        return (solar_energy_kwh, gen_energy_kwh)
+        return (solar_energy_kwh, gen)
 
     @staticmethod
     def _resolve_off_grid_slot_rate(
@@ -435,7 +437,7 @@ class BillingEngine:
             period_end_meter_tariff_reading=period_end_meter,
         )
         on_solar_energy_kwh, off_solar_energy_kwh = BillingEngine.compute_ppa_off_grid_line_items(usage=usage)
-        solar_energy_kwh, gen_energy_kwh = BillingEngine.compute_ppa_off_grid_energy_mix(usage=usage)
+        solar_energy_kwh, gen = BillingEngine.compute_ppa_off_grid_energy_mix(usage=usage)
         subtotal, on_solar_energy_amount, off_solar_energy_amount = (
             BillingEngine.compute_ppa_off_grid_subtotal_and_vat_rate(
                 on_solar_energy_kwh=on_solar_energy_kwh,
@@ -448,7 +450,7 @@ class BillingEngine:
         energy_mix = json.dumps(
             {
                 "solar": f"{float(solar_energy_kwh):.2f}",
-                "gen": f"{float(gen_energy_kwh):.2f}",
+                "gen": f"{float(gen):.2f}",
             }
         )
 
@@ -459,13 +461,13 @@ class BillingEngine:
                     [
                         BaseInvoiceMeterDataModel(
                             device_uid=device.uid,
-                            label=InvoiceMeterLabelEnum.SITE_METER_1_DAY.value,
+                            label=InvoiceMeterLabelEnum.SITE_METER_DAY.value,
                             period_start_reading=Decimal(period_start_meter[0][0]),
                             period_end_reading=Decimal(period_end_meter[0][0]),
                         ),
                         BaseInvoiceMeterDataModel(
                             device_uid=device.uid,
-                            label=InvoiceMeterLabelEnum.SITE_METER_1_NIGHT.value,
+                            label=InvoiceMeterLabelEnum.SITE_METER_NIGHT.value,
                             period_start_reading=Decimal(period_start_meter[0][1]),
                             period_end_reading=Decimal(period_end_meter[0][1]),
                         ),
@@ -477,13 +479,13 @@ class BillingEngine:
                     [
                         BaseInvoiceMeterDataModel(
                             device_uid=device.uid,
-                            label=InvoiceMeterLabelEnum.GEN_METER_1_DAY.value,
+                            label=InvoiceMeterLabelEnum.GEN_METER_DAY.value,
                             period_start_reading=Decimal(period_start_meter[1][0]),
                             period_end_reading=Decimal(period_end_meter[1][0]),
                         ),
                         BaseInvoiceMeterDataModel(
                             device_uid=device.uid,
-                            label=InvoiceMeterLabelEnum.GEN_METER_1_NIGHT.value,
+                            label=InvoiceMeterLabelEnum.GEN_METER_NIGHT.value,
                             period_start_reading=Decimal(period_start_meter[1][1]),
                             period_end_reading=Decimal(period_end_meter[1][1]),
                         ),
@@ -549,7 +551,7 @@ class BillingEngine:
             period_end_meter_tariff_reading=period_end_meter,
         )
         on_solar_energy_kwh, off_solar_energy_kwh = BillingEngine.compute_ppa_off_grid_line_items(usage=usage)
-        solar_energy_kwh, gen_energy_kwh = BillingEngine.compute_ppa_off_grid_energy_mix(usage=usage)
+        solar_energy_kwh, gen = BillingEngine.compute_ppa_off_grid_energy_mix(usage=usage)
         subtotal, _, _ = BillingEngine.compute_ppa_off_grid_subtotal_and_vat_rate(
             on_solar_energy_kwh=on_solar_energy_kwh,
             off_solar_energy_kwh=off_solar_energy_kwh,
@@ -560,7 +562,7 @@ class BillingEngine:
         energy_mix = json.dumps(
             {
                 "solar": f"{float(solar_energy_kwh):.2f}",
-                "gen": f"{float(gen_energy_kwh):.2f}",
+                "gen": f"{float(gen):.2f}",
             }
         )
 

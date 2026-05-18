@@ -10,7 +10,7 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 from app.core.logger import setup_logger
 from app.database.postgres import get_session
 from app.database.redis import async_redis_client
-from app.jobs.billing.engine import BillingEngine
+from app.modules.billing.engine import BillingEngine
 from app.modules.clients.model import Client
 from app.modules.contracts.model import Contract
 from app.modules.devices.model import Device
@@ -335,7 +335,7 @@ class SiteRepository:
         )
         last_invoice = last_invoice_result.one_or_none()
         last_invoice_date = last_invoice.period_end_at.isoformat() if last_invoice else None
-        last_invoice_amount = float(last_invoice.subtotal) if last_invoice else None
+        last_invoice_amount = float(last_invoice.total) if last_invoice else None
 
         return SiteDailyStatsRespModel.model_validate(
             {

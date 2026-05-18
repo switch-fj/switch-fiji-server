@@ -7,7 +7,7 @@ from fastapi.responses import RedirectResponse
 from app.core.config import Config
 from app.core.logger import setup_logger
 from app.core.security import AccessTokenBearer
-from app.jobs.billing.engine import BillingEngine
+from app.modules.billing.engine import BillingEngine
 from app.modules.invoices.schema import (
     InvoiceDetailedRespModel,
     InvoiceHistoryRespModel,
