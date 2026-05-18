@@ -169,6 +169,7 @@ def _handle_invoice(
         gateway_id=gateway_id,
         period_start=period_start,
         period_end=period_end,
+        is_multi_day=True,
     )
 
     if not readings:
@@ -176,7 +177,7 @@ def _handle_invoice(
         return
 
     telemetry_start_reading, telemetry_end_reading = readings
-    new_invoice = None
+    create_invoice = None
     invoice_meter_data = None
     invoice_line_items = None
 
@@ -193,7 +194,7 @@ def _handle_invoice(
             contract_settings=contract_settings,
         )
 
-        new_invoice = ppa_on_grid_with_battery_wizard.invoice(
+        create_invoice = ppa_on_grid_with_battery_wizard.invoice(
             period_start_at=period_start,
             period_end_at=period_end,
             contract_uid=contract.uid,
@@ -211,7 +212,7 @@ def _handle_invoice(
             contract_settings=contract_settings,
         )
 
-        new_invoice = ppa_off_grid_wizard.invoice(
+        create_invoice = ppa_off_grid_wizard.invoice(
             period_start_at=period_start,
             period_end_at=period_end,
             contract_uid=contract.uid,
@@ -221,7 +222,7 @@ def _handle_invoice(
         invoice_line_items = ppa_off_grid_wizard.invoice_line_items
 
     if is_ppa_on_grid_no_battery(contract=contract):
-        ppa_on_grid_no_battery_wizard = PPAOnGridNoBatteryContractWizard(
+        ppa_on_grid_no_battery_wizard = PPAOnGridNoBatteryContractWizard.factory(
             telemetry_start_reading=telemetry_start_reading,
             telemetry_end_reading=telemetry_end_reading,
             contract=contract,
@@ -229,7 +230,7 @@ def _handle_invoice(
             contract_settings=contract_settings,
         )
 
-        new_invoice = ppa_on_grid_no_battery_wizard.invoice(
+        create_invoice = ppa_on_grid_no_battery_wizard.invoice(
             period_start_at=period_start,
             period_end_at=period_end,
             contract_uid=contract.uid,
@@ -238,34 +239,40 @@ def _handle_invoice(
         invoice_meter_data = ppa_on_grid_no_battery_wizard.invoice_meter_data
         invoice_line_items = ppa_on_grid_no_battery_wizard.invoice_line_items
 
-    if not new_invoice:
+    if not create_invoice:
         logger.warning(f"Error creating invoice {gateway_id}")
         return
 
-    session.add(new_invoice)
-    session.flush()
+    try:
+        new_invoice = Invoice(**create_invoice)
+        session.add(new_invoice)
+        session.flush()
 
-    session.add_all(
-        [InvoiceMeterData(**{**d.model_dump(), "invoice_uid": new_invoice.uid}) for d in invoice_meter_data]
-    )
-    session.add_all([InvoiceLineItem(**{**d.model_dump(), "invoice_uid": new_invoice.uid}) for d in invoice_line_items])
-    session.add(
-        InvoiceHistory(
-            **CreateInvoiceHistoryModel(
-                invoice_uid=new_invoice.uid,
-                sent_to=contract.client.client_email,
-                sent_at=datetime.now(timezone.utc),
-                was_successful=True,
-            ).model_dump()
+        session.add_all(
+            [InvoiceMeterData(**{**d.model_dump(), "invoice_uid": new_invoice.uid}) for d in invoice_meter_data]
         )
-    )
-    session.commit()
+        session.add_all(
+            [InvoiceLineItem(**{**d.model_dump(), "invoice_uid": new_invoice.uid}) for d in invoice_line_items]
+        )
+        session.add(
+            InvoiceHistory(
+                **CreateInvoiceHistoryModel(
+                    invoice_uid=new_invoice.uid,
+                    sent_to=contract.client.client_email,
+                    sent_at=datetime.now(timezone.utc),
+                    was_successful=True,
+                ).model_dump()
+            )
+        )
+        session.commit()
 
-    pdf_bytes, key = BillingEngine.generate_pdf(
-        contract=contract,
-        contract_settings=contract_settings,
-        result=(new_invoice, invoice_meter_data, invoice_line_items),
-    )
-    BillingEngine.store_pdf_in_s3(pdf_bytes=pdf_bytes, key=key, invoice_ref=new_invoice.invoice_ref)
-    session.execute(update(Invoice).where(Invoice.uid == new_invoice.uid).values(pdf_s3_key=key))
-    session.commit()
+        pdf_bytes, key = BillingEngine.generate_pdf(
+            contract=contract,
+            contract_settings=contract_settings,
+            result=(new_invoice, invoice_meter_data, invoice_line_items),
+        )
+        BillingEngine.store_pdf_in_s3(pdf_bytes=pdf_bytes, key=key, invoice_ref=new_invoice.invoice_ref)
+        session.execute(update(Invoice).where(Invoice.uid == new_invoice.uid).values(pdf_s3_key=key))
+        session.commit()
+    except Exception:
+        session.rollback()

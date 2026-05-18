@@ -121,7 +121,7 @@ class ContractDetails(MyAbstractSQLModel, table=True):
     tariff_slots: Optional[str] = Field(
         nullable=True,
         description="""
-            This tariff slot applies to only ppa off-grid.
+            This tariff slot applies to ppa off-grid, ppa on-grid no battery.
         """,
     )
 

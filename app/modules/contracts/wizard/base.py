@@ -27,7 +27,7 @@ class BaseContractWizard(ABC):
 
     @property
     @abstractmethod
-    def subtotal(self) -> Decimal: ...
+    def energy_cost(self) -> Decimal: ...
 
     @property
     @abstractmethod

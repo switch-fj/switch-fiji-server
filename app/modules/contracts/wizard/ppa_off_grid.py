@@ -6,15 +6,15 @@ from uuid import UUID
 from fastapi.encoders import jsonable_encoder
 
 from app.core.logger import setup_logger
-from app.modules.billing.schema import (
+from app.modules.contracts.model import Contract
+from app.modules.contracts.schema import TariffIndexedRuleTypeEnum, TariffSlotTypeEnum
+from app.modules.contracts.wizard.base import BaseContractWizard
+from app.modules.contracts.wizard.schema import (
     PPAOffGridEnergyData,
     PPAOffGridEnergyMix,
     PPAOffGridExtractedMeters,
     PPAOnAndOffGridEnergyItem,
 )
-from app.modules.contracts.model import Contract
-from app.modules.contracts.schema import TariffIndexedRuleTypeEnum, TariffSlotTypeEnum
-from app.modules.contracts.wizard.base import BaseContractWizard
 from app.modules.devices.model import Device
 from app.modules.devices.schema import MeterRoleEnum
 from app.modules.invoices.model import InvoiceSnapshot
@@ -158,30 +158,30 @@ class PPAOffGridContractWizard(BaseContractWizard):
         return self.contract.details.active_tariff_slots[1]
 
     @property
-    def on_solar_energy_kwh(self) -> float:
+    def on_kwh_solar_energy(self) -> float:
         value = self.energy_data.load.day_usage - self.energy_data.backup_gen.day_usage
         if value < 0:
             logger.warning("log warning: metering anomaly, backup_gen > load for day period")
         return max(0.0, value)
 
     @property
-    def off_solar_energy_kwh(self):
+    def off_kwh_solar_energy(self):
         return self.energy_data.load.night_usage - self.energy_data.backup_gen.night_usage
 
     @property
     def on_solar_energy_amount(self):
         day_rate = self.calculate_slot_rate(tariff_slot=self.day_tariff)
 
-        return two_decimal_place(self.on_solar_energy_kwh * day_rate)
+        return two_decimal_place(self.on_kwh_solar_energy * day_rate)
 
     @property
     def off_solar_energy_amount(self):
         night_rate = self.calculate_slot_rate(tariff_slot=self.night_tariff)
 
-        return two_decimal_place(self.off_solar_energy_kwh * night_rate)
+        return two_decimal_place(self.off_kwh_solar_energy * night_rate)
 
     @property
-    def subtotal(self):
+    def energy_cost(self):
         return two_decimal_place(self.on_solar_energy_amount + self.off_solar_energy_amount)
 
     def invoice(
@@ -196,7 +196,7 @@ class PPAOffGridContractWizard(BaseContractWizard):
             period_end_at=period_end_at,
             period_start_telemetry_data=json.dumps(jsonable_encoder(self.telemetry_start_reading)),
             period_end_telemetry_data=json.dumps(jsonable_encoder(self.telemetry_end_reading)),
-            subtotal=self.subtotal,
+            subtotal=self.energy_cost,
             vat_rate=self.contract_settings.vat_rate,
             efl_standard_rate_kwh=self.contract_settings.efl_standard_rate_kwh,
             energy_mix=self.energy_mix.model_dump_json(),
@@ -228,7 +228,7 @@ class PPAOffGridContractWizard(BaseContractWizard):
         create_invoice_line_items = [
             BaseInvoiceLineItemModel(
                 description=InvoiceLineItemEnum.ON_SOLAR_ENERGY_SUPPLIED.value,
-                energy_kwh=Decimal(self.on_solar_energy_kwh),
+                energy_kwh=Decimal(self.on_kwh_solar_energy),
                 tariff_rate=self.calculate_slot_rate(tariff_slot=self.day_tariff),
                 tariff_slot=self.day_tariff["slot"],
                 tariff_period=int(self.day_tariff["period_number"]),
@@ -236,7 +236,7 @@ class PPAOffGridContractWizard(BaseContractWizard):
             ),
             BaseInvoiceLineItemModel(
                 description=InvoiceLineItemEnum.OFF_SOLAR_ENERGY_SUPPLIED.value,
-                energy_kwh=Decimal(self.off_solar_energy_kwh),
+                energy_kwh=Decimal(self.off_kwh_solar_energy),
                 tariff_rate=self.calculate_slot_rate(tariff_slot=self.night_tariff),
                 tariff_slot=self.night_tariff["slot"],
                 tariff_period=int(self.night_tariff["period_number"]),

@@ -107,9 +107,7 @@ class SiteStatsWizard:
                 devices=self.devices,
                 contract_settings=self.contract_settings,
             )
-            generated_energy_kwh = (
-                ppa_on_grid_with_battery_wizard.energy_mix.battery + ppa_on_grid_with_battery_wizard.energy_mix.solar
-            )
+            generated_energy_kwh = ppa_on_grid_with_battery_wizard.energy_mix.solar
 
         return generated_energy_kwh
 

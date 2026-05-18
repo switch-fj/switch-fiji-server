@@ -6,12 +6,6 @@ from uuid import UUID
 from fastapi.encoders import jsonable_encoder
 
 from app.core.logger import setup_logger
-from app.modules.billing.schema import (
-    OnGridEnergyItem,
-    OnGridNoBatteryEnergyData,
-    OnGridNoBatteryEnergyMix,
-    OnGridNoBatteryExtractedMeters,
-)
 from app.modules.contracts.model import Contract
 from app.modules.contracts.schema import (
     OnGridNoBatterySlotEnum,
@@ -20,6 +14,12 @@ from app.modules.contracts.schema import (
     TariffSlotTypeEnum,
 )
 from app.modules.contracts.wizard.base import BaseContractWizard
+from app.modules.contracts.wizard.schema import (
+    OnGridEnergyItem,
+    OnGridNoBatteryEnergyData,
+    OnGridNoBatteryEnergyMix,
+    OnGridNoBatteryExtractedMeters,
+)
 from app.modules.devices.model import Device
 from app.modules.devices.schema import MeterRoleEnum
 from app.modules.invoices.model import InvoiceSnapshot
@@ -101,7 +101,7 @@ class PPAOnGridNoBatteryContractWizard(BaseContractWizard):
         else:
             rate = Decimal(str(self.solar_tariff.rate))
 
-            if tariff_indexed_rule_type == TariffIndexedRuleTypeEnum.EFL_LINKED:  # ✅
+            if tariff_indexed_rule_type == TariffIndexedRuleTypeEnum.EFL_LINKED:
                 multiplier = (Decimal(100) + rate) / Decimal(100)
                 solar_rate = Decimal(efl_standard_rate_kwh * multiplier).quantize(Decimal("0.01"))
             elif tariff_indexed_rule_type == TariffIndexedRuleTypeEnum.FIXED_ANNUAL_ESCALATOR:
@@ -112,10 +112,19 @@ class PPAOnGridNoBatteryContractWizard(BaseContractWizard):
         return solar_rate.quantize(Decimal("0.01"))
 
     @property
-    def subtotal(self):
-        solar_meters_subtotal = Decimal("0")
+    def billable_kwh_energy(self):
+        solar_meters_total_energy_kwh = Decimal("0")
         for m in self.energy_data.solar:
-            solar_meters_subtotal += Decimal(str(m.usage)) * self.solar_rate
+            solar_meters_total_energy_kwh += Decimal(str(m.usage))
+
+        total_energy_kwh = solar_meters_total_energy_kwh - Decimal(self.energy_data.grid_export.usage)
+
+        return total_energy_kwh.quantize(Decimal("0.01"))
+
+    @property
+    def energy_cost(self):
+        billable_kwh_energy = self.billable_kwh_energy
+        solar_meters_subtotal = billable_kwh_energy * self.solar_rate
 
         return solar_meters_subtotal.quantize(Decimal("0.01"))
 
@@ -126,17 +135,17 @@ class PPAOnGridNoBatteryContractWizard(BaseContractWizard):
         contract_uid: UUID,
         invoice_ref: str,
     ):
-        subtotal = self.subtotal
+        energy_cost = self.energy_cost
         energy_mix = self.energy_mix
         vat_rate = self.contract_settings.vat_rate
         efl_standard_rate_kwh = self.contract_settings.efl_standard_rate_kwh
 
-        create_invoice_model: CreateInvoiceModel = CreateInvoiceModel(
+        create_invoice_model = CreateInvoiceModel(
             period_start_at=period_start_at,
             period_end_at=period_end_at,
             period_start_telemetry_data=json.dumps(jsonable_encoder(self.telemetry_start_reading)),
             period_end_telemetry_data=json.dumps(jsonable_encoder(self.telemetry_end_reading)),
-            subtotal=subtotal,
+            subtotal=energy_cost,
             vat_rate=vat_rate,
             efl_standard_rate_kwh=efl_standard_rate_kwh,
             energy_mix=energy_mix.model_dump_json(),
@@ -153,11 +162,12 @@ class PPAOnGridNoBatteryContractWizard(BaseContractWizard):
         period_end_at: datetime,
     ):
         return InvoiceSnapshot(
+            contract_uid=self.contract.uid,
             period_start_at=period_start_at,
             period_end_at=period_end_at,
             period_start_telemetry_data=json.dumps(jsonable_encoder(self.telemetry_start_reading)),
             period_end_telemetry_data=json.dumps(jsonable_encoder(self.telemetry_end_reading)),
-            subtotal=self.subtotal,
+            subtotal=self.energy_cost,
             vat_rate=self.contract_settings.vat_rate,
             efl_standard_rate_kwh=self.contract_settings.efl_standard_rate_kwh,
             energy_mix=self.energy_mix.model_dump_json(),
@@ -173,7 +183,7 @@ class PPAOnGridNoBatteryContractWizard(BaseContractWizard):
                 tariff_slot=self.grid_tariff.slot,
                 tariff_period=int(self.grid_tariff.period_number),
                 amount=Decimal("0.0"),
-            )
+            ),
         ]
 
         for solar_meter in self.energy_data.solar:
@@ -203,19 +213,27 @@ class PPAOnGridNoBatteryContractWizard(BaseContractWizard):
                         BaseInvoiceMeterDataModel(
                             device_uid=device.uid,
                             label=f"Solar meter {device.slave_id}",
-                            period_telemetry_start_reading=Decimal(solar.start_kwh),
-                            period_telemetry_end_reading=Decimal(solar.end_kwh),
+                            period_start_reading=Decimal(solar.start_kwh),
+                            period_end_reading=Decimal(solar.end_kwh),
                         )
                     )
 
             if device.slave_id == self.energy_data.grid_import.slave_id:
-                create_invoice_meter_data.append(
-                    BaseInvoiceMeterDataModel(
-                        device_uid=device.uid,
-                        label="Grid meter",
-                        period_telemetry_start_reading=Decimal(self.energy_data.grid_import.start_kwh),
-                        period_telemetry_end_reading=Decimal(self.energy_data.grid_import.end_kwh),
-                    )
+                create_invoice_meter_data.extend(
+                    [
+                        BaseInvoiceMeterDataModel(
+                            device_uid=device.uid,
+                            label="Grid meter",
+                            period_start_reading=Decimal(self.energy_data.grid_import.start_kwh),
+                            period_end_reading=Decimal(self.energy_data.grid_import.end_kwh),
+                        ),
+                        BaseInvoiceMeterDataModel(
+                            device_uid=device.uid,
+                            label="Fed to Grid",
+                            period_start_reading=Decimal(self.energy_data.grid_export.start_kwh),
+                            period_end_reading=Decimal(self.energy_data.grid_export.end_kwh),
+                        ),
+                    ]
                 )
 
         return create_invoice_meter_data
@@ -250,7 +268,7 @@ class PPAOnGridNoBatteryContractWizard(BaseContractWizard):
         ]
 
         grid_import = OnGridEnergyItem(
-            slave_id=end_grid_meter["slave_id"],
+            slave_id=start_grid_meter["slave_id"],
             description="Grid Meter",
             start_kwh=start_grid_meter["kwh_import"],
             end_kwh=end_grid_meter["kwh_import"],

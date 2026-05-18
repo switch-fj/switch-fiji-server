@@ -6,13 +6,6 @@ from uuid import UUID
 from fastapi.encoders import jsonable_encoder
 
 from app.core.logger import setup_logger
-from app.modules.billing.schema import (
-    OnGridEnergyItem,
-    OnGridWithBatterExtractedMeters,
-    OnGridWithBatteryEnergyData,
-    OnGridWithBatteryEnergyMix,
-    PPAOnAndOffGridEnergyItem,
-)
 from app.modules.contracts.model import Contract
 from app.modules.contracts.schema import (
     TariffIndexedRuleTypeEnum,
@@ -20,6 +13,12 @@ from app.modules.contracts.schema import (
     TariffSlotTypeEnum,
 )
 from app.modules.contracts.wizard.base import BaseContractWizard
+from app.modules.contracts.wizard.schema import (
+    OnGridWithBatterExtractedMeters,
+    OnGridWithBatteryEnergyData,
+    OnGridWithBatteryEnergyMix,
+    PPAOnAndOffGridEnergyItem,
+)
 from app.modules.devices.model import Device
 from app.modules.devices.schema import MeterRoleEnum
 from app.modules.invoices.model import InvoiceSnapshot
@@ -27,11 +26,9 @@ from app.modules.invoices.schema import (
     BaseInvoiceLineItemModel,
     BaseInvoiceMeterDataModel,
     CreateInvoiceModel,
-    InvoiceLineItemEnum,
     InvoiceMeterLabelEnum,
 )
 from app.modules.settings.model import ContractSettings
-from app.utils import two_decimal_place
 
 logger = setup_logger(__name__)
 
@@ -135,29 +132,37 @@ class PPAOnGridWithBatteryContractWizard(BaseContractWizard):
         cls._validate_meters(extracted_meters_t1, period="T1 (start)")
         cls._validate_meters(extracted_meters_t2, period="T2 (end)")
 
-        essesntial = OnGridEnergyItem(
+        essential = PPAOnAndOffGridEnergyItem(
             slave_id=essential_loads_meter_t1["slave_id"],
             description="Essential Energy",
-            start_kwh=essential_loads_meter_t1["kwh_total"],
-            end_kwh=essential_loads_meter_t2["kwh_total"],
+            start_day_tariff=essential_loads_meter_t1["kwh_t1"],
+            start_night_tariff=essential_loads_meter_t1["kwh_t2"],
+            end_day_tariff=essential_loads_meter_t2["kwh_t1"],
+            end_night_tariff=essential_loads_meter_t2["kwh_t2"],
         )
-        non_essential = OnGridEnergyItem(
+        non_essential = PPAOnAndOffGridEnergyItem(
             slave_id=non_essential_loads_meter_t1["slave_id"],
             description="Non-Essential Energy",
-            start_kwh=non_essential_loads_meter_t1["kwh_total"],
-            end_kwh=non_essential_loads_meter_t2["kwh_total"],
+            start_day_tariff=non_essential_loads_meter_t1["kwh_t1"],
+            start_night_tariff=non_essential_loads_meter_t1["kwh_t2"],
+            end_day_tariff=non_essential_loads_meter_t2["kwh_t1"],
+            end_night_tariff=non_essential_loads_meter_t2["kwh_t2"],
         )
-        grid_import = OnGridEnergyItem(
+        grid_import = PPAOnAndOffGridEnergyItem(
             slave_id=grid_meter_t1["slave_id"],
             description="Grid Energy",
-            start_kwh=grid_meter_t1["kwh_import"],
-            end_kwh=grid_meter_t2["kwh_import"],
+            start_day_tariff=grid_meter_t1["kwh_import_t1"],
+            start_night_tariff=grid_meter_t1["kwh_import_t2"],
+            end_day_tariff=grid_meter_t2["kwh_import_t1"],
+            end_night_tariff=grid_meter_t2["kwh_import_t2"],
         )
-        grid_export = OnGridEnergyItem(
+        grid_export = PPAOnAndOffGridEnergyItem(
             slave_id=grid_meter_t1["slave_id"],
             description="Fed to Grid",
-            start_kwh=grid_meter_t1["kwh_export"],
-            end_kwh=grid_meter_t2["kwh_export"],
+            start_day_tariff=grid_meter_t1["kwh_export_t1"],
+            start_night_tariff=grid_meter_t1["kwh_export_t2"],
+            end_day_tariff=grid_meter_t2["kwh_export_t1"],
+            end_night_tariff=grid_meter_t2["kwh_export_t2"],
         )
         generator = PPAOnAndOffGridEnergyItem(
             slave_id=generator_meter_t1["slave_id"],
@@ -169,7 +174,7 @@ class PPAOnGridWithBatteryContractWizard(BaseContractWizard):
         )
 
         energy_data = OnGridWithBatteryEnergyData(
-            essential=essesntial,
+            essential=essential,
             non_essential=non_essential,
             grid_import=grid_import,
             grid_export=grid_export,
@@ -187,82 +192,20 @@ class PPAOnGridWithBatteryContractWizard(BaseContractWizard):
             contract_settings=contract_settings,
         )
 
-    def calculate_rate(self, tariff_slot: dict):
+    def calculate_rate(self, tariff_slot: TariffSlotModel):
         tariff_indexed_rule_type = self.contract.details.tariff_indexed_rule_type
         efl_standard_rate_kwh = self.contract_settings.efl_standard_rate_kwh
 
-        if tariff_slot["slot_type"] == TariffSlotTypeEnum.FIXED:
-            return Decimal(str(tariff_slot["rate"]))
+        if tariff_slot.slot_type == TariffSlotTypeEnum.FIXED:
+            return Decimal(str(tariff_slot.rate))
 
-        rate = Decimal(str(tariff_slot["rate"]))
+        rate = Decimal(str(tariff_slot.rate))
         if tariff_indexed_rule_type == TariffIndexedRuleTypeEnum.EFL_LINKED:
             multiplier = (Decimal(100) + rate) / Decimal(100)
             return Decimal(efl_standard_rate_kwh * multiplier).quantize(Decimal("0.01"))
-        if tariff_indexed_rule_type == TariffIndexedRuleTypeEnum.FIXED_ANNUAL_ESCALATOR:
+        elif tariff_indexed_rule_type == TariffIndexedRuleTypeEnum.FIXED_ANNUAL_ESCALATOR:
             raise NotImplementedError("FIXED_ANNUAL_ESCALATOR is not yet supported for PPA off-grid tariff")
         raise ValueError(f"Unsupported tariff_indexed_rule_type: {tariff_indexed_rule_type}")
-
-    def _total_facility_consumption(self, essential_loads_meter: dict, non_essential_loads_meter: dict):
-        essential_load_kwh = essential_loads_meter.get("kwh_total", 0)
-        non_essential_load_kwh = non_essential_loads_meter.get("kwh_total", 0)
-
-        return float(essential_load_kwh + non_essential_load_kwh)
-
-    def _net_grid_contribution(self, grid_meter: dict):
-
-        kwh_import = grid_meter.get("kwh_import", 0)
-        kwh_export = grid_meter.get("kwh_export", 0)
-
-        return float(kwh_import - kwh_export)
-
-    def _net_grid_import(self, kwh_import_t1: int, kwh_import_t2: int):
-        return float(kwh_import_t2 - kwh_import_t1)
-
-    def _net_grid_export(self, kwh_export_t1: int, kwh_export_t2: int):
-        return float(kwh_export_t2 - kwh_export_t1)
-
-    def _delta_facility_consumption(self, fc_t1: float, fc_t2: float):
-        return fc_t2 - fc_t1
-
-    def _delta_net_grid_contribution(self, ngc_t1: float, ngc_t2: float):
-        return ngc_t2 - ngc_t1
-
-    def billable_energy_kwh(self):
-        extracted_meters_t1 = self.extracted_meters_t1
-        grid_meter_t1 = extracted_meters_t1.grid_meter
-        extracted_meters_t1
-        essential_loads_meter_t1 = extracted_meters_t1.essential_loads_meter
-        non_essential_loads_meter_t1 = extracted_meters_t1.non_essential_loads_meter
-
-        fc_t1 = self._total_facility_consumption(
-            essential_loads_meter=essential_loads_meter_t1,
-            non_essential_loads_meter=non_essential_loads_meter_t1,
-        )
-        ngc_t1 = self._net_grid_contribution(grid_meter=grid_meter_t1)
-
-        # end period (T2)
-        extracted_meters_t2 = self.extracted_meters_t2
-        grid_meter_t2 = extracted_meters_t2.grid_meter
-        essential_loads_meter_t2 = extracted_meters_t2.essential_loads_meter
-        non_essential_loads_meter_t2 = extracted_meters_t2.non_essential_loads_meter
-
-        fc_t2 = self._total_facility_consumption(
-            essential_loads_meter=essential_loads_meter_t2,
-            non_essential_loads_meter=non_essential_loads_meter_t2,
-        )
-        ngc_t2 = self._net_grid_contribution(grid_meter=grid_meter_t2)
-
-        # 3. Compute Deltas
-        delta_fc = self._delta_facility_consumption(fc_t1=fc_t1, fc_t2=fc_t2)
-        delta_ngc = self._delta_net_grid_contribution(ngc_t1=ngc_t1, ngc_t2=ngc_t2)
-
-        energy_used_kwh = max(0.0, delta_fc - delta_ngc)
-
-        # Data integrity check (e.g., if a meter was swapped out/reset to 0)
-        if delta_fc < 0 or grid_meter_t2["kwh_import"] < grid_meter_t1["kwh_import"]:
-            raise ValueError("Negative consumption detected. Meter may have been reset.")
-
-        return energy_used_kwh
 
     def invoice(
         self,
@@ -276,7 +219,7 @@ class PPAOnGridWithBatteryContractWizard(BaseContractWizard):
             period_end_at=period_end_at,
             period_start_telemetry_data=json.dumps(jsonable_encoder(self.telemetry_start_reading)),
             period_end_telemetry_data=json.dumps(jsonable_encoder(self.telemetry_end_reading)),
-            subtotal=self.subtotal,
+            subtotal=self.energy_cost,
             vat_rate=self.contract_settings.vat_rate,
             efl_standard_rate_kwh=self.contract_settings.efl_standard_rate_kwh,
             energy_mix=self.energy_mix.model_dump_json(),
@@ -297,7 +240,7 @@ class PPAOnGridWithBatteryContractWizard(BaseContractWizard):
             period_end_at=period_end_at,
             period_start_telemetry_data=json.dumps(jsonable_encoder(self.telemetry_start_reading)),
             period_end_telemetry_data=json.dumps(jsonable_encoder(self.telemetry_end_reading)),
-            subtotal=self.subtotal,
+            subtotal=self.energy_cost,
             vat_rate=self.contract_settings.vat_rate,
             efl_standard_rate_kwh=self.contract_settings.efl_standard_rate_kwh,
             energy_mix=self.energy_mix.model_dump_json(),
@@ -305,117 +248,96 @@ class PPAOnGridWithBatteryContractWizard(BaseContractWizard):
 
     @property
     def energy_mix(self):
-        solar_usage = self.energy_data.essential.usage
-        battery_usage = self.energy_data.non_essential.usage
+        solar_usage = self.energy_data.non_essential.usage + self.energy_data.essential.usage
         grid_import_usage = self.energy_data.grid_import.usage
+        generator_usage = self.energy_data.generator.usage
 
         return OnGridWithBatteryEnergyMix(
             solar=solar_usage,
+            generator=generator_usage,
             grid=grid_import_usage,
-            battery=battery_usage,
         )
 
     @property
-    def tariff_slots(self):
-        tariffs: list[TariffSlotModel] = json.loads(self.contract.details.tariff_slots)
+    def active_tariff_slots(self):
+        active_tariff_slots = self.contract.details.active_tariff_slots
 
-        return tariffs
-
-    @property
-    def solar_tariff(self):
-        return self.tariff_slots[2]
+        return [TariffSlotModel.model_validate(tariff) for tariff in active_tariff_slots]
 
     @property
-    def solar_rate(self):
-        return self.calculate_rate(tariff_slot=self.solar_tariff)
+    def day_tariff(self):
+        return self.active_tariff_slots[0]
 
     @property
-    def day_utility_tariff(self):
-        return self.tariff_slots[0]
+    def night_tariff(self):
+        return self.active_tariff_slots[1]
 
     @property
-    def day_utility_rate(self):
-        return self.calculate_rate(tariff_slot=self.day_utility_tariff)
+    def night_energy_rate(self):
+        return self.calculate_rate(tariff_slot=self.night_tariff)
 
     @property
-    def night_utility_tariff(self):
-        return self.tariff_slots[1]
+    def day_energy_rate(self):
+        return self.calculate_rate(tariff_slot=self.day_tariff)
 
     @property
-    def night_utility_rate(self):
-        return self.calculate_rate(tariff_slot=self.night_utility_tariff)
-
-    @property
-    def battery_utility_tariff(self):
-        return self.tariff_slots[3]
-
-    @property
-    def battery_rate(self):
-        return self.calculate_rate(tariff_slot=self.battery_utility_tariff)
-
-    @property
-    def solar_energy_cost(self):
-        return two_decimal_place(self.energy_data.essential.usage * self.solar_rate)
-
-    @property
-    def battery_energy_cost(self):
-        return two_decimal_place(self.energy_data.non_essential.usage * self.battery_rate)
-
-    @property
-    def generator_day_energy_cost(self):
-        day_usage_cost = self.energy_data.generator.day_usage * self.day_utility_rate
-
-        return two_decimal_place(day_usage_cost)
-
-    @property
-    def generator_night_energy_cost(self):
-        night_usage_cost = self.energy_data.generator.night_usage * self.night_utility_rate
-
-        return two_decimal_place(night_usage_cost)
-
-    @property
-    def subtotal(self):
+    def billable_day_energy_kwh(self):
         return (
-            self.battery_energy_cost
-            + self.solar_energy_cost
-            + self.generator_day_energy_cost
-            + self.generator_night_energy_cost
+            self.energy_data.essential.day_usage
+            + self.energy_data.non_essential.day_usage
+            - (self.energy_data.generator.day_usage + self.energy_data.grid_import.day_usage)
         )
+
+    @property
+    def billable_night_energy_kwh(self):
+        return (
+            self.energy_data.essential.night_usage
+            + self.energy_data.non_essential.night_usage
+            - (self.energy_data.generator.night_usage + self.energy_data.grid_import.night_usage)
+        )
+
+    @property
+    def day_energy_cost(self):
+        return (Decimal(self.billable_day_energy_kwh) * self.day_energy_rate).quantize(Decimal("0.01"))
+
+    @property
+    def night_energy_cost(self):
+        return (Decimal(self.billable_night_energy_kwh) * self.night_energy_rate).quantize(Decimal("0.01"))
+
+    @property
+    def energy_cost(self):
+        return self.day_energy_cost + self.night_energy_cost
+
+    @property
+    def billable_energy_kwh(self):
+        solar_consumed_kwh = self.billable_day_energy_kwh + self.billable_night_energy_kwh
+
+        grid_import_usage = self.energy_data.grid_import.usage
+        generator_usage = self.energy_data.generator.usage
+
+        if solar_consumed_kwh < 0 or grid_import_usage < 0 or generator_usage < 0:
+            raise ValueError("Negative energy delta detected. Potential meter reset event.")
+
+        return max(0.0, solar_consumed_kwh)
 
     @property
     def invoice_line_items(self):
         create_invoice_line_items = [
             BaseInvoiceLineItemModel(
-                description=InvoiceLineItemEnum.ESSENTIAL_ENERGY_SUPPLIED.value,
-                energy_kwh=Decimal(self.energy_data.essential.usage),
-                tariff_rate=Decimal(self.solar_tariff.rate),
-                tariff_slot=self.solar_tariff.slot,
-                tariff_period=int(self.solar_tariff.period_number),
-                amount=Decimal(self.solar_energy_cost),
+                description="Billable Day Energy",
+                energy_kwh=Decimal(self.billable_day_energy_kwh),
+                tariff_rate=self.day_energy_rate,
+                tariff_slot=self.day_tariff.slot,
+                tariff_period=int(self.day_tariff.period_number),
+                amount=Decimal(self.day_energy_cost),
             ),
             BaseInvoiceLineItemModel(
-                description=InvoiceLineItemEnum.NON_ESSENTIAL_ENERGY_SUPPLIED.value,
-                energy_kwh=Decimal(self.energy_data.non_essential.usage),
-                tariff_rate=Decimal(self.battery_utility_tariff.rate),
-                tariff_slot=self.battery_utility_tariff.slot,
-                tariff_period=int(self.battery_utility_tariff.period_number),
-                amount=Decimal(self.battery_energy_cost),
-            ),
-            BaseInvoiceLineItemModel(
-                description=f"{InvoiceLineItemEnum.GENERATOR_ENERGY_SUPPLIED.value} Day",
-                energy_kwh=Decimal(self.energy_data.generator.day_usage),
-                tariff_rate=Decimal(self.day_utility_tariff.rate),
-                tariff_slot=self.day_utility_tariff.slot,
-                tariff_period=int(self.day_utility_tariff.period_number),
-                amount=Decimal(self.generator_day_energy_cost),
-            ),
-            BaseInvoiceLineItemModel(
-                description=f"{InvoiceLineItemEnum.GENERATOR_ENERGY_SUPPLIED.value} Night",
-                energy_kwh=Decimal(self.energy_data.generator.night_usage),
-                tariff_rate=Decimal(self.night_utility_tariff.rate),
-                tariff_slot=self.night_utility_tariff.slot,
-                tariff_period=int(self.night_utility_tariff.period_number),
-                amount=Decimal(self.generator_night_energy_cost),
+                description="Billable Night Energy",
+                energy_kwh=Decimal(self.billable_night_energy_kwh),
+                tariff_rate=Decimal(self.night_energy_rate),
+                tariff_slot=self.night_tariff.slot,
+                tariff_period=int(self.night_tariff.period_number),
+                amount=Decimal(self.night_energy_cost),
             ),
         ]
 
@@ -428,23 +350,39 @@ class PPAOnGridWithBatteryContractWizard(BaseContractWizard):
         create_invoice_meter_data: list[BaseInvoiceMeterDataModel] = []
         for device in self.devices:
             if device.slave_id == self.energy_data.essential.slave_id:
-                create_invoice_meter_data.append(
-                    BaseInvoiceMeterDataModel(
-                        device_uid=device.uid,
-                        label=InvoiceMeterLabelEnum.ESSENTIAL_LOAD_GENRATION.value,
-                        period_start_reading=Decimal(self.energy_data.essential.start_kwh),
-                        period_end_reading=Decimal(self.energy_data.essential.end_kwh),
-                    ),
+                create_invoice_meter_data.extend(
+                    [
+                        BaseInvoiceMeterDataModel(
+                            device_uid=device.uid,
+                            label=f"{InvoiceMeterLabelEnum.ESSENTIAL_LOAD_GENRATION.value} Day",
+                            period_start_reading=Decimal(self.energy_data.essential.start_day_tariff),
+                            period_end_reading=Decimal(self.energy_data.essential.end_day_tariff),
+                        ),
+                        BaseInvoiceMeterDataModel(
+                            device_uid=device.uid,
+                            label=f"{InvoiceMeterLabelEnum.ESSENTIAL_LOAD_GENRATION.value} Night",
+                            period_start_reading=Decimal(self.energy_data.essential.start_night_tariff),
+                            period_end_reading=Decimal(self.energy_data.essential.end_night_tariff),
+                        ),
+                    ]
                 )
 
             if device.slave_id == self.energy_data.non_essential.slave_id:
-                create_invoice_meter_data.append(
-                    BaseInvoiceMeterDataModel(
-                        device_uid=device.uid,
-                        label=InvoiceMeterLabelEnum.NON_ESSENTIAL_LOAD_GENRATION.value,
-                        period_start_reading=Decimal(self.energy_data.non_essential.start_kwh),
-                        period_end_reading=Decimal(self.energy_data.non_essential.end_kwh),
-                    ),
+                create_invoice_meter_data.extend(
+                    [
+                        BaseInvoiceMeterDataModel(
+                            device_uid=device.uid,
+                            label=f"{InvoiceMeterLabelEnum.NON_ESSENTIAL_LOAD_GENRATION.value} Day",
+                            period_start_reading=Decimal(self.energy_data.non_essential.start_day_tariff),
+                            period_end_reading=Decimal(self.energy_data.non_essential.end_day_tariff),
+                        ),
+                        BaseInvoiceMeterDataModel(
+                            device_uid=device.uid,
+                            label=f"{InvoiceMeterLabelEnum.NON_ESSENTIAL_LOAD_GENRATION.value} Night",
+                            period_start_reading=Decimal(self.energy_data.non_essential.start_night_tariff),
+                            period_end_reading=Decimal(self.energy_data.non_essential.end_night_tariff),
+                        ),
+                    ]
                 )
 
             if device.slave_id == self.energy_data.generator.slave_id:
@@ -452,13 +390,13 @@ class PPAOnGridWithBatteryContractWizard(BaseContractWizard):
                     [
                         BaseInvoiceMeterDataModel(
                             device_uid=device.uid,
-                            label=InvoiceMeterLabelEnum.GEN_METER_DAY.value,
+                            label=f"{InvoiceMeterLabelEnum.GEN_METER_DAY.value} (Not billed)",
                             period_start_reading=Decimal(self.energy_data.generator.start_day_tariff),
                             period_end_reading=Decimal(self.energy_data.generator.end_day_tariff),
                         ),
                         BaseInvoiceMeterDataModel(
                             device_uid=device.uid,
-                            label=InvoiceMeterLabelEnum.GEN_METER_NIGHT.value,
+                            label=f"{InvoiceMeterLabelEnum.GEN_METER_NIGHT.value} (Not billed)",
                             period_start_reading=Decimal(self.energy_data.generator.start_night_tariff),
                             period_end_reading=Decimal(self.energy_data.generator.end_night_tariff),
                         ),

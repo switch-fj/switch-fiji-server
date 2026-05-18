@@ -195,9 +195,8 @@ def compute_site_stat(self, site_uid: str, gateway_id: str):
                 period_end=end_of_month,
             )
 
-            projected_generation_kwh = site_stats_wizard.hybrid_projected_generation_kwh(
-                actual_generation_kwh_for_reading=mtd_generation_kwh,
-                period_end=end_of_month,
+            projected_generation_kwh = site_stats_wizard.linear_projected_generation_kwh(
+                actual_generation_kwh_for_reading=mtd_generation_kwh
             )
 
             projected_invoice_value = site_stats_wizard.projected_invoice_value(

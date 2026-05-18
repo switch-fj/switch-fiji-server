@@ -206,7 +206,7 @@ def _handle_snapshot(
         invoice_line_items = ppa_off_grid_wizard.invoice_line_items
 
     if is_ppa_on_grid_no_battery(contract=contract):
-        ppa_on_grid_no_battery_wizard = PPAOnGridNoBatteryContractWizard(
+        ppa_on_grid_no_battery_wizard = PPAOnGridNoBatteryContractWizard.factory(
             telemetry_start_reading=telemetry_start_reading,
             telemetry_end_reading=telemetry_end_reading,
             contract=contract,
@@ -224,13 +224,18 @@ def _handle_snapshot(
         logger.warning(f"Error creating invoice snapshot {gateway_id}")
         return
 
-    session.add(snapshot)
-    session.flush()
+    try:
+        session.add(snapshot)
+        session.flush()
 
-    session.add_all(
-        [InvoiceSnapshotMeterData(**{**d.model_dump(), "snapshot_uid": snapshot.uid}) for d in invoice_meter_data]
-    )
-    session.add_all(
-        [InvoiceSnapshotLineItem(**{**d.model_dump(), "snapshot_uid": snapshot.uid}) for d in invoice_line_items]
-    )
-    session.commit()
+        session.add_all(
+            [InvoiceSnapshotMeterData(**{**d.model_dump(), "snapshot_uid": snapshot.uid}) for d in invoice_meter_data]
+        )
+        session.add_all(
+            [InvoiceSnapshotLineItem(**{**d.model_dump(), "snapshot_uid": snapshot.uid}) for d in invoice_line_items]
+        )
+        session.commit()
+    except Exception as e:
+        session.rollback()
+        logger.error(e)
+        raise e

@@ -8,15 +8,6 @@ from fastapi.encoders import jsonable_encoder
 
 from app.core.logger import setup_logger
 from app.database.celery import celery_dynamo_client
-from app.modules.billing.schema import (
-    ComputePPAOnGridNoBatteryInvoiceResp,
-    MeterImportUsage,
-    OnGridMeterImportReading,
-    OnGridNoBatteryEnergyMix,
-    OnGridNoBatteryMeterImportData,
-    OnGridNoBatteryUsage,
-    OnGridPeriodicEnergyData,
-)
 from app.modules.contracts.model import Contract
 from app.modules.contracts.schema import (
     ContractBillingFrequencyEnum,
@@ -24,6 +15,15 @@ from app.modules.contracts.schema import (
     OnGridNoBatteryTariffSlotModel,
     TariffIndexedRuleTypeEnum,
     TariffSlotTypeEnum,
+)
+from app.modules.contracts.wizard.schema import (
+    ComputePPAOnGridNoBatteryInvoiceResp,
+    MeterImportUsage,
+    OnGridMeterImportReading,
+    OnGridNoBatteryEnergyMix,
+    OnGridNoBatteryMeterImportData,
+    OnGridNoBatteryUsage,
+    OnGridPeriodicEnergyData,
 )
 from app.modules.devices.model import Device
 from app.modules.devices.schema import MeterRoleEnum
