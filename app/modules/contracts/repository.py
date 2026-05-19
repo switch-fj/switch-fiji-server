@@ -318,7 +318,7 @@ class ContractRepository:
 
         meter_subq = (
             select(
-                InvoiceMeterData.invoice_uid,
+                InvoiceMeterData.invoice_uid.label("invoice_uid"),
                 func.sum(InvoiceMeterData.period_end_reading - InvoiceMeterData.period_start_reading).label(
                     "produced_kwh"
                 ),
@@ -337,7 +337,7 @@ class ContractRepository:
                 func.count(Invoice.uid).label("invoice_count"),
             )
             .select_from(Invoice)
-            .join(meter_subq, meter_subq.c.uid == Invoice.uid)
+            .join(meter_subq, meter_subq.c.invoice_uid == Invoice.uid)
             .where(func.extract("month", Invoice.period_start_at) >= now.month)
         )
 
