@@ -1,6 +1,5 @@
 import json
 from datetime import datetime, timezone
-from decimal import Decimal
 from uuid import UUID
 
 from fastapi import Depends
@@ -330,10 +329,7 @@ class ContractRepository:
         invoice_stmt = (
             select(
                 func.coalesce(func.sum(meter_subq.c.produced_kwh), 0).label("produced_kwh"),
-                func.coalesce(
-                    func.sum((Invoice.subtotal * (Invoice.vat_rate / Decimal(100))) + Invoice.subtotal),
-                    0,
-                ).label("invoice_total"),
+                func.coalesce(func.sum(Invoice.total), 0).label("invoice_total"),
                 func.count(Invoice.uid).label("invoice_count"),
             )
             .select_from(Invoice)
