@@ -18,7 +18,10 @@ from app.modules.contracts.schema import (
     CreateContractModel,
     EnergyPortfolioRespModel,
 )
-from app.modules.invoices.model import InvoiceSnapshot, InvoiceSnapshotMeterData
+from app.modules.invoices.model import (
+    Invoice,
+    InvoiceSnapshotMeterData,
+)
 from app.modules.settings.repository import SettingsRepository
 from app.modules.sites.model import Site
 
@@ -328,17 +331,14 @@ class ContractRepository:
             select(
                 func.coalesce(func.sum(meter_subq.c.produced_kwh), 0).label("produced_kwh"),
                 func.coalesce(
-                    func.sum(
-                        (InvoiceSnapshot.subtotal * (InvoiceSnapshot.vat_rate / Decimal(100)))
-                        + InvoiceSnapshot.subtotal
-                    ),
+                    func.sum((Invoice.subtotal * (Invoice.vat_rate / Decimal(100))) + Invoice.subtotal),
                     0,
                 ).label("invoice_total"),
-                func.count(InvoiceSnapshot.uid).label("invoice_count"),
+                func.count(Invoice.uid).label("invoice_count"),
             )
-            .select_from(InvoiceSnapshot)
-            .join(meter_subq, meter_subq.c.snapshot_uid == InvoiceSnapshot.uid)
-            .where(func.extract("month", InvoiceSnapshot.period_start_at) >= now.month)
+            .select_from(Invoice)
+            .join(meter_subq, meter_subq.c.uid == Invoice.uid)
+            .where(func.extract("month", Invoice.period_start_at) >= now.month)
         )
 
         invoice_result = await self.session.exec(invoice_stmt)
