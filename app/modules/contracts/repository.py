@@ -20,7 +20,7 @@ from app.modules.contracts.schema import (
 )
 from app.modules.invoices.model import (
     Invoice,
-    InvoiceSnapshotMeterData,
+    InvoiceMeterData,
 )
 from app.modules.settings.repository import SettingsRepository
 from app.modules.sites.model import Site
@@ -318,12 +318,12 @@ class ContractRepository:
 
         meter_subq = (
             select(
-                InvoiceSnapshotMeterData.snapshot_uid,
-                func.sum(
-                    InvoiceSnapshotMeterData.period_end_reading - InvoiceSnapshotMeterData.period_start_reading
-                ).label("produced_kwh"),
+                InvoiceMeterData.invoice_uid,
+                func.sum(InvoiceMeterData.period_end_reading - InvoiceMeterData.period_start_reading).label(
+                    "produced_kwh"
+                ),
             )
-            .group_by(InvoiceSnapshotMeterData.snapshot_uid)
+            .group_by(InvoiceMeterData.invoice_uid)
             .subquery()
         )
 
