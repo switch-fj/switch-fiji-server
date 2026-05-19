@@ -9,8 +9,6 @@ from pydantic import (
     BaseModel,
     ConfigDict,
     Field,
-    PrivateAttr,
-    computed_field,
     field_serializer,
     field_validator,
     model_validator,
@@ -97,9 +95,18 @@ class OnGridNoBatteryTariffSlotModel(BaseModel):
     slot: OnGridNoBatterySlotEnum = Field(...)
     slot_type: TariffSlotTypeEnum = Field(...)
     rate: float = Field(...)
+    start_time: str = Field(...)
+    end_time: str = Field(...)
 
     @model_validator(mode="after")
     def validate(self):
+        self._validate_rate()
+        start = self._parse_time("start_time", self.start_time)
+        end = self._parse_time("end_time", self.end_time)
+        self._validate_time_range(start, end)
+        return self
+
+    def _validate_rate(self):
         if self.slot_type == TariffSlotTypeEnum.FIXED:
             if not (0 <= self.rate <= 1):
                 raise BadRequest(f"Slot {self.slot.value} (FIXED) rate must be between 0 and 1, got {self.rate}")
@@ -108,81 +115,63 @@ class OnGridNoBatteryTariffSlotModel(BaseModel):
                 raise BadRequest(
                     f"Slot {self.slot.value} (VARIABLE) rate must be between -100 and 100, got {self.rate}"
                 )
-        return self
 
-    @computed_field
-    @property
-    def start_time(self) -> str:
-        """Return the start time for this tariff slot.
+    @staticmethod
+    def _parse_time(field_name: str, value: str) -> datetime.time:
+        try:
+            return datetime.strptime(value, "%H:%M").time()
+        except ValueError:
+            raise BadRequest(f"'{field_name}' must be in HH:MM format (00:00–23:59), got '{value}'")
 
-        Returns:
-            07:30
-        """
-        return "07:30"
-
-    @computed_field
-    @property
-    def end_time(self) -> str:
-        """Return the end time for this tariff slot.
-
-        Returns:
-            16:30
-        """
-        return "16:30"
+    @staticmethod
+    def _validate_time_range(start: datetime.time, end: datetime.time):
+        if start >= end:
+            raise BadRequest(f"'start_time' ({start}) must be earlier than 'end_time' ({end})")
 
 
 class TariffSlotModel(BaseModel):
     """Model representing a single tariff slot within a PPA contract period."""
 
-    _start_time: str = PrivateAttr("")
-    _end_time: str = PrivateAttr("")
-
     period_number: int = Field(ge=1, le=4)
     slot: TariffSlotEnum = Field(...)
     slot_type: TariffSlotTypeEnum = Field(...)
     rate: float = Field(...)
+    start_time: str = Field(...)
+    end_time: str = Field(...)
+    duration_years: Optional[int] = Field(
+        default=None,
+        title="Tariff slot duration in years",
+    )
 
     @model_validator(mode="after")
     def validate(self):
-        """Validate that the rate is within the allowed range for its slot type.
+        self._validate_rate()
+        start = self._parse_time("start_time", self.start_time)
+        end = self._parse_time("end_time", self.end_time)
+        self._validate_time_range(start, end)
+        return self
 
-        Returns:
-            The validated TariffSlotModel instance.
-
-        Raises:
-            BadRequest: If the rate is outside the valid range for its slot type.
-        """
+    def _validate_rate(self):
         if self.slot_type == TariffSlotTypeEnum.FIXED:
             if not (0 <= self.rate <= 1):
                 raise BadRequest(f"Slot {self.slot.value} (FIXED) rate must be between 0 and 1, got {self.rate}")
-
         elif self.slot_type == TariffSlotTypeEnum.VARIABLE:
             if not (-100 <= self.rate <= 100):
                 raise BadRequest(
                     f"Slot {self.slot.value} (VARIABLE) rate must be between -100 and 100, got {self.rate}"
                 )
 
-        return self
+    @staticmethod
+    def _parse_time(field_name: str, value: str) -> datetime.time:
+        try:
+            return datetime.strptime(value, "%H:%M").time()
+        except ValueError:
+            raise BadRequest(f"'{field_name}' must be in HH:MM format (00:00–23:59), got '{value}'")
 
-    @computed_field
-    @property
-    def start_time(self) -> str:
-        """Return the start time for this tariff slot.
-
-        Returns:
-            "07:30" for slot A, "16:30" for slot B.
-        """
-        return "07:30" if self.slot == TariffSlotEnum.A else "16:30"
-
-    @computed_field
-    @property
-    def end_time(self) -> str:
-        """Return the end time for this tariff slot.
-
-        Returns:
-            "16:30" for slot A, "07:30" for slot B.
-        """
-        return "16:30" if self.slot == TariffSlotEnum.A else "07:30"
+    @staticmethod
+    def _validate_time_range(start: datetime.time, end: datetime.time):
+        if start >= end:
+            raise BadRequest(f"'start_time' ({start}) must be earlier than 'end_time' ({end})")
 
 
 class CreateContractModel(BaseModel):
@@ -246,6 +235,7 @@ class CreateContractDetailsModel(BaseModel):
     minimum_consumption_monthly_kwh: Optional[float] = Field(default=None, title="Minimum consumptions monthly kwh")
     minimum_spend: Optional[float] = Field(default=None, title="Minimum spend")
     tariff_periods: Optional[int] = Field(default=None, le=4, ge=1, title="Tariff periods")
+
     tariff_indexed_rule_type: Optional[TariffIndexedRuleTypeEnum] = Field(default=None)
     tariffs: Optional[list[TariffSlotModel]] = Field(default=None, title="Tariffs")
 
@@ -363,9 +353,20 @@ class CreateContractDetailsModel(BaseModel):
         from collections import defaultdict
 
         period_slots: dict[int, set[str]] = defaultdict(set)
+        period_durations: set[int] = set()
 
         for tariff in self.tariffs:
             period_slots[tariff.period_number].add(tariff.slot.value)
+
+            if tariff.duration_years:
+                period_durations.add(tariff.duration_years)
+
+        if period_durations:
+            if len(period_durations) != self.tariff_periods:
+                raise BadRequest("Some tariffs have empty duration in years")
+
+            if sum(period_durations) != self.term_years:
+                raise BadRequest("Some tariffs have empty duration in years.")
 
         for period_num in range(1, self.tariff_periods + 1):
             slots = period_slots.get(period_num, set())
@@ -411,7 +412,6 @@ class ContractDetailsRespModel(DBModel):
     contract_uid: UUID
     term_years: Optional[int] = None
     term_months: Optional[int] = None
-    months_per_period: Optional[int] = None
     status: ContractDetailsStatus
     billing_frequency: Optional[ContractBillingFrequencyEnum] = None
     implementation_period: Optional[int] = None

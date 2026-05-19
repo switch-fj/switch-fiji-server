@@ -19,3 +19,6 @@ class MeterRoleEnum(StrEnum):
     MICRO_INV = "micro_inv"
     SOLAR_METER = "solar_meter"
     GRID_METER = "grid_meter"
+    ESSENTIAL_LOAD = "essential_loads_meter"
+    NON_ESSENTIAL_LOAD = "non_essential_loads_meter"
+    GENERATOR_METER = "generator_meter"

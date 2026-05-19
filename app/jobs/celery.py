@@ -23,9 +23,9 @@ celery_app.conf.update(
 celery_app.conf.beat_schedule = {
     "trigger_site_stats_every_5_minutes": {
         "task": "compute_site_stats",
-        "schedule": crontab(minute="*/5"),
+        "schedule": crontab(minute="*/1"),
     },
-    "trigger_compute_active_contracts_every_1_hour": {
+    "trigger_compute_active_contracts_every_hour": {
         "task": "compute_active_contracts",
         "schedule": crontab(minute=0),
     },
@@ -46,5 +46,5 @@ celery_app.autodiscover_tasks(["app.jobs"])
 
 from app.jobs import auth  # noqa
 from app.jobs.sites import stats  # noqa
-from app.jobs.contracts import invoice  # noqa
-from app.jobs.contracts import invoice_snapshot  # noqa
+from app.jobs.invoicing import invoice  # noqa
+from app.jobs.invoicing import snapshot  # noqa
