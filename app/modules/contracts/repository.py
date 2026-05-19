@@ -332,7 +332,7 @@ class ContractRepository:
                 func.coalesce(func.sum(meter_subq.c.produced_kwh), 0).label("produced_kwh"),
                 func.coalesce(
                     func.sum(
-                        ((Invoice.subtotal * (Invoice.vat_rate / Decimal(100))) + Invoice.subtotal).quantize(
+                        (Decimal(Invoice.subtotal * (Invoice.vat_rate / Decimal(100))) + Invoice.subtotal).quantize(
                             Decimal("0.01")
                         )
                     ),
