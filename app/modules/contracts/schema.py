@@ -138,6 +138,10 @@ class TariffSlotModel(BaseModel):
     rate: float = Field(...)
     start_time: str = Field(...)
     end_time: str = Field(...)
+    duration_years: Optional[int] = Field(
+        default=None,
+        title="Tariff slot duration in years",
+    )
 
     @model_validator(mode="after")
     def validate(self):
@@ -231,6 +235,7 @@ class CreateContractDetailsModel(BaseModel):
     minimum_consumption_monthly_kwh: Optional[float] = Field(default=None, title="Minimum consumptions monthly kwh")
     minimum_spend: Optional[float] = Field(default=None, title="Minimum spend")
     tariff_periods: Optional[int] = Field(default=None, le=4, ge=1, title="Tariff periods")
+
     tariff_indexed_rule_type: Optional[TariffIndexedRuleTypeEnum] = Field(default=None)
     tariffs: Optional[list[TariffSlotModel]] = Field(default=None, title="Tariffs")
 
@@ -348,9 +353,20 @@ class CreateContractDetailsModel(BaseModel):
         from collections import defaultdict
 
         period_slots: dict[int, set[str]] = defaultdict(set)
+        period_durations: set[int] = set()
 
         for tariff in self.tariffs:
             period_slots[tariff.period_number].add(tariff.slot.value)
+
+            if tariff.duration_years:
+                period_durations.add(tariff.duration_years)
+
+        if period_durations:
+            if len(period_durations) != self.tariff_periods:
+                raise BadRequest("Some tariffs have empty duration in years")
+
+            if sum(period_durations) != self.term_years:
+                raise BadRequest("Some tariffs have empty duration in years.")
 
         for period_num in range(1, self.tariff_periods + 1):
             slots = period_slots.get(period_num, set())
@@ -396,7 +412,6 @@ class ContractDetailsRespModel(DBModel):
     contract_uid: UUID
     term_years: Optional[int] = None
     term_months: Optional[int] = None
-    months_per_period: Optional[int] = None
     status: ContractDetailsStatus
     billing_frequency: Optional[ContractBillingFrequencyEnum] = None
     implementation_period: Optional[int] = None

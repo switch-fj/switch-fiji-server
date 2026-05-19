@@ -14,6 +14,8 @@ from app.modules.contracts.schema import (
     ContractSystemModeEnum,
     ContractTypeEnum,
     TariffIndexedRuleTypeEnum,
+    TariffSlotModel,
+    TariffSlotTypeEnum,
 )
 from app.shared.model import MyAbstractSQLModel
 from app.shared.schema import CurrencyEnum
@@ -180,40 +182,98 @@ class ContractDetails(MyAbstractSQLModel, table=True):
         """
         if not self.tariff_periods:
             return None
+
         return self.term_months // self.tariff_periods
 
     @property
-    def active_tariff_slots(self) -> Optional[list[dict]]:
-        """Determine the currently active tariff slots based on the elapsed contract time.
+    def slot_period_durations_in_months(self) -> dict[int, int]:
+        """Return an ordered mapping of period_number -> duration_in_months.
+
+        Only populated when *every* slot carries a ``duration_years`` value.
+        Slots sharing the same ``period_number`` must have identical
+        ``duration_years``; we deduplicate and take the first one encountered.
 
         Returns:
-            A list of tariff slot dicts for the current period, or None if the required fields are missing.
+            ``{}`` when no ``duration_years`` values are present (callers should
+            then fall back to ``months_per_period``).
         """
-        if not self.tariff_slots or not self.commissioned_at or not self.months_per_period:
+        if not self.tariff_slots:
+            return {}
+
+        slots = [TariffSlotModel.model_validate(slot) for slot in json.loads(self.tariff_slots)]
+
+        seen: dict[int, int] = {}
+        for slot in slots:
+            if slot.duration_years is not None and slot.period_number not in seen:
+                seen[slot.period_number] = slot.duration_years
+
+        if not seen:
+            return {}
+
+        return {period: years * 12 for period, years in sorted(seen.items())}
+
+    @property
+    def active_tariff_slots(self) -> Optional[list[dict]]:
+        """Determine the currently active tariff slots.
+
+        Priority:
+        1. ``duration_years`` path  — uses ``slot_period_durations_in_months``
+        2. Uniform-period fallback  — uses ``months_per_period``
+
+        Returns:
+            List of :class:`TariffSlotModel` instances for the current period,
+            or ``None`` when required fields are missing.
+        """
+        if not self.tariff_slots or not self.commissioned_at:
             return None
 
         tz = ZoneInfo(self.contract.timezone)
-
         now = datetime.now(tz=tz)
         commissioned_local = (self.actual_commissioned_at or self.commissioned_at).astimezone(tz)
 
         diff = relativedelta(now, commissioned_local)
         months_elapsed = diff.years * 12 + diff.months
-        current_period = (months_elapsed // self.months_per_period) + 1
 
-        slots = json.loads(self.tariff_slots)
-        active = [s for s in slots if s["period_number"] == current_period]
+        slots = [TariffSlotModel.model_validate(slot) for slot in json.loads(self.tariff_slots)]
+
+        current_period = None
+        period_durations = self.slot_period_durations_in_months
+        if period_durations:
+            running_months = 0
+            for period_number, duration in period_durations.items():
+                running_months += duration
+                if months_elapsed < running_months:
+                    current_period = period_number
+                    break
+            if current_period is None:
+                current_period = max(period_durations.keys())
+
+        elif self.months_per_period:
+            current_period = (months_elapsed // self.months_per_period) + 1
+
+        if current_period is None:
+            return None
+
+        active = [s for s in slots if s.period_number == current_period]
         return active if active else None
 
     @property
     def tariff_fixed_to_indexed_at(self) -> Optional[datetime]:
-        """Derive the exact date the tariff switched from fixed to indexed
+        """Derive the exact datetime the tariff switches from Fixed to Variable/Indexed.
+
+        We walk the *full* period schedule (not just the active period) to find
+        the end of the last consecutive Fixed period, which is the switch point.
+
+        Priority:
+        1. ``duration_years`` path  — uses ``slot_period_durations_in_months``
+        2. Uniform-period fallback  — uses ``months_per_period`` (period 1 = Fixed)
 
         Returns:
-            A datetime value.
+            A UTC :class:`datetime`, or ``None`` when the contract has no
+            multi-period tariff or has no battery (on-grid without battery has no
+            fixed→indexed transition managed here).
         """
-
-        if not self.tariff_periods or not self.months_per_period:
+        if not self.tariff_periods:
             return None
 
         if self.with_battery == "no":
@@ -222,9 +282,35 @@ class ContractDetails(MyAbstractSQLModel, table=True):
         tz = ZoneInfo(self.contract.timezone)
         start = (self.actual_commissioned_at or self.commissioned_at).astimezone(tz)
         start = start.replace(hour=0, minute=0, second=0, microsecond=0)
-        switch_date = start + relativedelta(months=self.months_per_period)
 
-        return switch_date.astimezone(timezone.utc)
+        period_durations = self.slot_period_durations_in_months
+        if period_durations and self.tariff_slots:
+            slots = [TariffSlotModel.model_validate(slot) for slot in json.loads(self.tariff_slots)]
+
+            representative: dict[int, TariffSlotModel] = {}
+            for slot in slots:
+                if slot.period_number not in representative:
+                    representative[slot.period_number] = slot
+
+            fixed_months = 0
+            for period_number, duration in sorted(period_durations.items()):
+                slot = representative.get(period_number)
+                if slot and slot.slot_type == TariffSlotTypeEnum.FIXED:
+                    fixed_months += duration
+                else:
+                    break
+
+            if fixed_months == 0:
+                return None
+
+            switch_date = start + relativedelta(months=fixed_months)
+            return switch_date.astimezone(timezone.utc)
+
+        if self.months_per_period:
+            switch_date = start + relativedelta(months=self.months_per_period)
+            return switch_date.astimezone(timezone.utc)
+
+        return None
 
     @property
     def status(self) -> ContractDetailsStatus:
