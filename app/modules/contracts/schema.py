@@ -353,20 +353,25 @@ class CreateContractDetailsModel(BaseModel):
         from collections import defaultdict
 
         period_slots: dict[int, set[str]] = defaultdict(set)
-        period_durations: set[int] = set()
+        seen: dict[int, int] = {}
 
         for tariff in self.tariffs:
             period_slots[tariff.period_number].add(tariff.slot.value)
+            if tariff.duration_years is not None:
+                if tariff.period_number not in seen:
+                    seen[tariff.period_number] = tariff.duration_years
+                elif seen[tariff.period_number] != tariff.duration_years:
+                    raise BadRequest(f"Period {tariff.period_number} has conflicting durations in years")
+            else:
+                if tariff.period_number in seen:
+                    raise BadRequest(f"Period {tariff.period_number} has tariffs with missing duration in years")
 
-            if tariff.duration_years:
-                period_durations.add(tariff.duration_years)
-
-        if period_durations:
-            if len(period_durations) != self.tariff_periods:
+        if seen:
+            if len(seen.keys()) != self.tariff_periods:
                 raise BadRequest("Some tariffs have empty duration in years")
 
-            if sum(period_durations) != self.term_years:
-                raise BadRequest("Some tariffs have empty duration in years.")
+            if sum(seen.values()) != self.term_years:
+                raise BadRequest("Sum of durations in years must equal term of years.")
 
         for period_num in range(1, self.tariff_periods + 1):
             slots = period_slots.get(period_num, set())
