@@ -21,18 +21,18 @@ celery_app.conf.update(
 
 
 celery_app.conf.beat_schedule = {
-    "trigger_site_stats_every_5_minutes": {
-        "task": "compute_site_stats",
-        "schedule": crontab(minute="*/1"),
-    },
+    # "trigger_site_stats_every_5_minutes": {
+    #     "task": "compute_site_stats",
+    #     "schedule": crontab(minute="*/1"),
+    # },
     "trigger_compute_active_contracts_every_hour": {
         "task": "compute_active_contracts",
-        "schedule": crontab(minute=0),
+        "schedule": crontab(minute="*/1"),
     },
-    "trigger_snapshot_active_contracts_at_00_30": {
-        "task": "snapshot_active_contracts",
-        "schedule": crontab(hour=0, minute=30),
-    },
+    # "trigger_snapshot_active_contracts_at_00_30": {
+    #     "task": "snapshot_active_contracts",
+    #     "schedule": crontab(minute="*/1"),
+    # },
 }
 
 

@@ -114,17 +114,18 @@ def compute_contract_invoice(self, contract_uid, gateway_id, site_uid):
 
             commissioned_at = contract.details.actual_commissioned_at or contract.details.commissioned_at
 
-            period_start, period_end = BillingEngine.get_current_billing_period(
+            all_periods = BillingEngine.get_all_billing_periods(
                 commissioned_at=commissioned_at,
                 billing_frequency=contract.details.billing_frequency,
                 as_of=now_local,
             )
 
-            is_billing_date = now_local >= period_end.astimezone(tz)
+            # is_billing_date = now_local >= period_end.astimezone(tz)
 
-            if is_billing_date:
+            # if is_billing_date:
+            for idx, (period_start, period_end) in enumerate(all_periods):
                 try:
-                    logger.info(f"Processing period {period_start} -> {period_end}")
+                    logger.info(f"Processing period {idx}: {period_start} -> {period_end}")
 
                     _handle_invoice(
                         session=session,
@@ -139,7 +140,7 @@ def compute_contract_invoice(self, contract_uid, gateway_id, site_uid):
                     logger.info("Completed period")
 
                 except Exception as exc:
-                    logger.exception(f"Failed processing period {period_start} -> {period_end}. Error: {exc}")
+                    logger.exception(f"Failed processing period {idx}: {period_start} -> {period_end}. Error: {exc}")
 
     except Exception as exc:
         raise self.retry(exc=exc)

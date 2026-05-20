@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 from typing import Optional
 
 from sqlalchemy.orm import joinedload, selectinload
@@ -8,7 +8,9 @@ from app.core.logger import setup_logger
 from app.database.celery import celery_dynamo_client, get_celery_db_session
 from app.jobs.celery import celery_app
 from app.jobs.invoicing.shared import _get_active_contracts
+from app.modules.billing.engine import BillingEngine
 from app.modules.contracts.model import Contract
+from app.modules.contracts.schema import ContractBillingFrequencyEnum
 from app.modules.contracts.wizard.ppa_off_grid import PPAOffGridContractWizard
 from app.modules.contracts.wizard.ppa_on_grid_no_battery import (
     PPAOnGridNoBatteryContractWizard,
@@ -95,44 +97,52 @@ def compute_contract_invoice_snapshot(self, contract_uid, gateway_id, site_uid):
                 return
 
             now_utc = datetime.now(timezone.utc)
-            yesterday = (now_utc - timedelta(days=1)).date()
-            snapshot_start = datetime(
-                yesterday.year,
-                yesterday.month,
-                yesterday.day,
-                0,
-                0,
-                0,
-                tzinfo=timezone.utc,
+            # yesterday = (now_utc - timedelta(days=1)).date()
+            commissioned_at = contract.details.actual_commissioned_at or contract.details.commissioned_at
+            # snapshot_start = datetime(
+            #     yesterday.year,
+            #     yesterday.month,
+            #     yesterday.day,
+            #     0,
+            #     0,
+            #     0,
+            #     tzinfo=timezone.utc,
+            # )
+            # snapshot_end = datetime(
+            #     yesterday.year,
+            #     yesterday.month,
+            #     yesterday.day,
+            #     23,
+            #     59,
+            #     59,
+            #     999999,
+            #     tzinfo=timezone.utc,
+            # )
+
+            all_periods = BillingEngine.get_all_billing_periods(
+                commissioned_at=commissioned_at,
+                billing_frequency=ContractBillingFrequencyEnum.DAILY.value,
+                as_of=now_utc,
             )
-            snapshot_end = datetime(
-                yesterday.year,
-                yesterday.month,
-                yesterday.day,
-                23,
-                59,
-                59,
-                999999,
-                tzinfo=timezone.utc,
-            )
 
-            try:
-                logger.info(f"{snapshot_start} -> {snapshot_end}")
+            for idx, (period_start, period_end) in enumerate(all_periods):
+                try:
+                    logger.info(f"{idx}: {period_start} -> {period_end}")
 
-                _handle_snapshot(
-                    session=session,
-                    contract=contract,
-                    contract_settings=contract_settings,
-                    devices=devices,
-                    gateway_id=gateway_id,
-                    snapshot_start=snapshot_start,
-                    snapshot_end=snapshot_end,
-                )
+                    _handle_snapshot(
+                        session=session,
+                        contract=contract,
+                        contract_settings=contract_settings,
+                        devices=devices,
+                        gateway_id=gateway_id,
+                        snapshot_start=period_start,
+                        snapshot_end=period_end,
+                    )
 
-                logger.info("Completed period")
+                    logger.info("Completed period")
 
-            except Exception as exc:
-                logger.exception(f"Failed processing period {snapshot_start} -> {snapshot_end}. Error: {exc}")
+                except Exception as exc:
+                    logger.exception(f"Failed processing period {idx}: {period_start} -> {period_end}. Error: {exc}")
 
     except Exception as exc:
         raise self.retry(exc=exc)
