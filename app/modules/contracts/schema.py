@@ -102,9 +102,6 @@ class OnGridNoBatteryTariffSlotModel(BaseModel):
     @model_validator(mode="after")
     def validate(self):
         self._validate_rate()
-        start = self._parse_time("start_time", self.start_time)
-        end = self._parse_time("end_time", self.end_time)
-        self._validate_time_range(start, end)
         return self
 
     def _validate_rate(self):
@@ -123,11 +120,6 @@ class OnGridNoBatteryTariffSlotModel(BaseModel):
             return datetime.strptime(value, "%H:%M").time()
         except ValueError:
             raise BadRequest(f"'{field_name}' must be in HH:MM format (00:00–23:59), got '{value}'")
-
-    @staticmethod
-    def _validate_time_range(start: datetime.time, end: datetime.time):
-        if start >= end:
-            raise BadRequest(f"'start_time' ({start}) must be earlier than 'end_time' ({end})")
 
 
 class TariffSlotModel(BaseModel):
@@ -147,9 +139,6 @@ class TariffSlotModel(BaseModel):
     @model_validator(mode="after")
     def validate(self):
         self._validate_rate()
-        start = self._parse_time("start_time", self.start_time)
-        end = self._parse_time("end_time", self.end_time)
-        self._validate_time_range(start, end)
         return self
 
     def _validate_rate(self):
@@ -168,11 +157,6 @@ class TariffSlotModel(BaseModel):
             return datetime.strptime(value, "%H:%M").time()
         except ValueError:
             raise BadRequest(f"'{field_name}' must be in HH:MM format (00:00–23:59), got '{value}'")
-
-    @staticmethod
-    def _validate_time_range(start: datetime.time, end: datetime.time):
-        if start >= end:
-            raise BadRequest(f"'start_time' ({start}) must be earlier than 'end_time' ({end})")
 
 
 class CreateContractModel(BaseModel):
