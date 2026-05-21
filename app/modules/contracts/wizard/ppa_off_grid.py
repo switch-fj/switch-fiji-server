@@ -7,7 +7,11 @@ from fastapi.encoders import jsonable_encoder
 
 from app.core.logger import setup_logger
 from app.modules.contracts.model import Contract
-from app.modules.contracts.schema import TariffIndexedRuleTypeEnum, TariffSlotTypeEnum
+from app.modules.contracts.schema import (
+    TariffIndexedRuleTypeEnum,
+    TariffSlotModel,
+    TariffSlotTypeEnum,
+)
 from app.modules.contracts.wizard.base import BaseContractWizard
 from app.modules.contracts.wizard.schema import (
     PPAOffGridEnergyData,
@@ -124,14 +128,20 @@ class PPAOffGridContractWizard(BaseContractWizard):
             contract_settings=contract_settings,
         )
 
-    def calculate_slot_rate(self, tariff_slot: dict):
+    @property
+    def active_tariff_slots(self):
+        active_tariff_slots = self.contract.details.active_tariff_slots
+
+        return [TariffSlotModel.model_validate(tariff) for tariff in active_tariff_slots]
+
+    def calculate_slot_rate(self, tariff_slot: TariffSlotModel):
         tariff_indexed_rule_type = self.contract.details.tariff_indexed_rule_type
         efl_standard_rate_kwh = self.contract_settings.efl_standard_rate_kwh
 
-        if tariff_slot["slot_type"] == TariffSlotTypeEnum.FIXED:
-            return Decimal(str(tariff_slot["rate"]))
+        if tariff_slot.slot_type == TariffSlotTypeEnum.FIXED:
+            return Decimal(str(tariff_slot.rate))
 
-        rate = Decimal(str(tariff_slot["rate"]))
+        rate = Decimal(str(tariff_slot.rate))
         if tariff_indexed_rule_type == TariffIndexedRuleTypeEnum.EFL_LINKED:
             multiplier = (Decimal(100) + rate) / Decimal(100)
             return Decimal(efl_standard_rate_kwh * multiplier).quantize(Decimal("0.01"))
@@ -151,11 +161,11 @@ class PPAOffGridContractWizard(BaseContractWizard):
 
     @property
     def day_tariff(self):
-        return self.contract.details.active_tariff_slots[0]
+        return self.active_tariff_slots[0]
 
     @property
     def night_tariff(self):
-        return self.contract.details.active_tariff_slots[1]
+        return self.active_tariff_slots[1]
 
     @property
     def on_kwh_solar_energy(self) -> float:
@@ -172,13 +182,13 @@ class PPAOffGridContractWizard(BaseContractWizard):
     def on_solar_energy_amount(self):
         day_rate = self.calculate_slot_rate(tariff_slot=self.day_tariff)
 
-        return two_decimal_place(self.on_kwh_solar_energy * day_rate)
+        return two_decimal_place(Decimal(self.on_kwh_solar_energy) * day_rate)
 
     @property
     def off_solar_energy_amount(self):
         night_rate = self.calculate_slot_rate(tariff_slot=self.night_tariff)
 
-        return two_decimal_place(self.off_kwh_solar_energy * night_rate)
+        return two_decimal_place(Decimal(self.off_kwh_solar_energy) * night_rate)
 
     @property
     def energy_cost(self):
@@ -213,11 +223,12 @@ class PPAOffGridContractWizard(BaseContractWizard):
         period_end_at: datetime,
     ):
         return InvoiceSnapshot(
+            contract_uid=self.contract.uid,
             period_start_at=period_start_at,
             period_end_at=period_end_at,
             period_start_telemetry_data=json.dumps(jsonable_encoder(self.telemetry_start_reading)),
             period_end_telemetry_data=json.dumps(jsonable_encoder(self.telemetry_end_reading)),
-            subtotal=self.subtotal,
+            subtotal=self.energy_cost,
             vat_rate=self.contract_settings.vat_rate,
             efl_standard_rate_kwh=self.contract_settings.efl_standard_rate_kwh,
             energy_mix=self.energy_mix.model_dump_json(),
@@ -230,16 +241,16 @@ class PPAOffGridContractWizard(BaseContractWizard):
                 description=InvoiceLineItemEnum.ON_SOLAR_ENERGY_SUPPLIED.value,
                 energy_kwh=Decimal(self.on_kwh_solar_energy),
                 tariff_rate=self.calculate_slot_rate(tariff_slot=self.day_tariff),
-                tariff_slot=self.day_tariff["slot"],
-                tariff_period=int(self.day_tariff["period_number"]),
+                tariff_slot=self.day_tariff.slot,
+                tariff_period=int(self.day_tariff.period_number),
                 amount=Decimal(self.on_solar_energy_amount),
             ),
             BaseInvoiceLineItemModel(
                 description=InvoiceLineItemEnum.OFF_SOLAR_ENERGY_SUPPLIED.value,
                 energy_kwh=Decimal(self.off_kwh_solar_energy),
                 tariff_rate=self.calculate_slot_rate(tariff_slot=self.night_tariff),
-                tariff_slot=self.night_tariff["slot"],
-                tariff_period=int(self.night_tariff["period_number"]),
+                tariff_slot=self.night_tariff.slot,
+                tariff_period=int(self.night_tariff.period_number),
                 amount=Decimal(self.off_solar_energy_amount),
             ),
         ]
