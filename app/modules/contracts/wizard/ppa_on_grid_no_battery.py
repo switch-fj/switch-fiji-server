@@ -29,6 +29,7 @@ from app.modules.invoices.schema import (
     CreateInvoiceModel,
 )
 from app.modules.settings.model import ContractSettings
+from app.utils import two_decimal_place
 
 logger = setup_logger(__name__)
 
@@ -146,7 +147,7 @@ class PPAOnGridNoBatteryContractWizard(BaseContractWizard):
             period_start_telemetry_data=json.dumps(jsonable_encoder(self.telemetry_start_reading)),
             period_end_telemetry_data=json.dumps(jsonable_encoder(self.telemetry_end_reading)),
             subtotal=energy_cost,
-            vat_rate=vat_rate,
+            vat_rate=two_decimal_place(vat_rate),
             efl_standard_rate_kwh=efl_standard_rate_kwh,
             energy_mix=energy_mix.model_dump_json(),
         ).model_dump()
@@ -168,7 +169,7 @@ class PPAOnGridNoBatteryContractWizard(BaseContractWizard):
             period_start_telemetry_data=json.dumps(jsonable_encoder(self.telemetry_start_reading)),
             period_end_telemetry_data=json.dumps(jsonable_encoder(self.telemetry_end_reading)),
             subtotal=self.energy_cost,
-            vat_rate=self.contract_settings.vat_rate,
+            vat_rate=two_decimal_place(self.contract_settings.vat_rate),
             efl_standard_rate_kwh=self.contract_settings.efl_standard_rate_kwh,
             energy_mix=self.energy_mix.model_dump_json(),
         )
@@ -256,6 +257,9 @@ class PPAOnGridNoBatteryContractWizard(BaseContractWizard):
         end_meters: OnGridNoBatteryExtractedMeters = cls._extract_meters(telemetry_data=telemetry_end_reading)
         end_grid_meter = end_meters.grid_meter
         end_solar_meter = end_meters.solar_meters
+
+        logger.info(f"start: {start_solar_meter}")
+        logger.info(f"end: {end_solar_meter}")
 
         solar = [
             OnGridEnergyItem(

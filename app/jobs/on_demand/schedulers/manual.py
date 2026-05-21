@@ -1,16 +1,14 @@
 from datetime import datetime, timezone
-from typing import Optional
 
 from sqlalchemy.orm import joinedload, selectinload
-from sqlmodel import Session, select
+from sqlmodel import Session, select, update
 
 from app.core.logger import setup_logger
 from app.database.celery import celery_dynamo_client, get_celery_db_session
 from app.jobs.celery import celery_app
-from app.jobs.invoicing.shared import _get_active_contracts
+from app.jobs.shared import _get_active_contracts
 from app.modules.billing.engine import BillingEngine
 from app.modules.contracts.model import Contract
-from app.modules.contracts.schema import ContractBillingFrequencyEnum
 from app.modules.contracts.wizard.ppa_off_grid import PPAOffGridContractWizard
 from app.modules.contracts.wizard.ppa_on_grid_no_battery import (
     PPAOnGridNoBatteryContractWizard,
@@ -21,10 +19,13 @@ from app.modules.contracts.wizard.ppa_on_grid_with_battery import (
 from app.modules.devices.model import Device
 from app.modules.devices.schema import DeviceType
 from app.modules.invoices.model import (
-    InvoiceSnapshot,
-    InvoiceSnapshotLineItem,
-    InvoiceSnapshotMeterData,
+    Invoice,
+    InvoiceHistory,
+    InvoiceLineItem,
+    InvoiceMeterData,
 )
+from app.modules.invoices.repository import InvoiceRepository
+from app.modules.invoices.schema import CreateInvoiceHistoryModel
 from app.modules.settings.model import ContractSettings
 from app.utils.contracts import (
     is_lease,
@@ -36,29 +37,40 @@ from app.utils.contracts import (
 logger = setup_logger(__name__)
 
 
-@celery_app.task(name="snapshot_active_contracts", bind=True, max_retries=3, default_retry_delay=5)
-def snapshot_active_contracts(self):
+@celery_app.task(
+    name="trigger_compute_contract_invoice_on_demand",
+    bind=True,
+    max_retries=3,
+    default_retry_delay=5,
+)
+def trigger_compute_contract_invoice_on_demand(self):
+    """
+    This is triggered manually based on demand from user.
+    Fetches all active contracts and dispatches
+    one compute task per contract to the worker pool.
+    """
     try:
         with get_celery_db_session() as session:
-            ctive_contracts = _get_active_contracts(session)
+            active_contracts = _get_active_contracts(session)
 
-        for datum in ctive_contracts:
-            compute_contract_invoice_snapshot.delay(
-                contract_uid=str(datum.contract_uid),
+        for datum in active_contracts:
+            compute_contract_invoice_on_demand.delay(
+                contract_uid=datum.contract_uid,
                 gateway_id=datum.gateway_id,
-                site_uid=str(datum.site_uid),
+                site_uid=datum.site_uid,
             )
+
     except Exception as exc:
         raise self.retry(exc=exc)
 
 
 @celery_app.task(
-    name="compute_contract_invoice_snapshot",
+    name="compute_contract_invoice",
     bind=True,
-    max_retries=0,
+    max_retries=3,
     default_retry_delay=5,
 )
-def compute_contract_invoice_snapshot(self, contract_uid, gateway_id, site_uid):
+def compute_contract_invoice_on_demand(self, contract_uid, gateway_id, site_uid):
     try:
         celery_dynamo_client.init()
         with get_celery_db_session() as session:
@@ -96,47 +108,28 @@ def compute_contract_invoice_snapshot(self, contract_uid, gateway_id, site_uid):
             if not contract or not devices:
                 return
 
-            now_utc = datetime.now(timezone.utc)
-            # yesterday = (now_utc - timedelta(days=1)).date()
+            now_local = datetime.now(tz=timezone.utc)
+
             commissioned_at = contract.details.actual_commissioned_at or contract.details.commissioned_at
-            # snapshot_start = datetime(
-            #     yesterday.year,
-            #     yesterday.month,
-            #     yesterday.day,
-            #     0,
-            #     0,
-            #     0,
-            #     tzinfo=timezone.utc,
-            # )
-            # snapshot_end = datetime(
-            #     yesterday.year,
-            #     yesterday.month,
-            #     yesterday.day,
-            #     23,
-            #     59,
-            #     59,
-            #     999999,
-            #     tzinfo=timezone.utc,
-            # )
 
             all_periods = BillingEngine.get_all_billing_periods(
                 commissioned_at=commissioned_at,
-                billing_frequency=ContractBillingFrequencyEnum.DAILY.value,
-                as_of=now_utc,
+                billing_frequency=contract.details.billing_frequency,
+                as_of=now_local,
             )
 
             for idx, (period_start, period_end) in enumerate(all_periods):
                 try:
-                    logger.info(f"{idx}: {period_start} -> {period_end}")
+                    logger.info(f"Processing period {idx}: {period_start} -> {period_end}")
 
-                    _handle_snapshot(
+                    _handle_invoice(
                         session=session,
                         contract=contract,
                         contract_settings=contract_settings,
                         devices=devices,
                         gateway_id=gateway_id,
-                        snapshot_start=period_start,
-                        snapshot_end=period_end,
+                        period_start=period_start,
+                        period_end=period_end,
                     )
 
                     logger.info("Completed period")
@@ -148,30 +141,31 @@ def compute_contract_invoice_snapshot(self, contract_uid, gateway_id, site_uid):
         raise self.retry(exc=exc)
 
 
-def _handle_snapshot(
+def _handle_invoice(
     session: Session,
     contract: Contract,
     contract_settings: ContractSettings,
     devices: Device,
     gateway_id: str,
-    snapshot_start: datetime,
-    snapshot_end: datetime,
+    period_start: datetime,
+    period_end: datetime,
 ):
-    existing_snapshot = session.execute(
-        select(InvoiceSnapshot).where(
-            InvoiceSnapshot.contract_uid == contract.uid,
-            InvoiceSnapshot.period_start_at == snapshot_start,
-            InvoiceSnapshot.period_end_at == snapshot_end,
+    already_invoiced = session.execute(
+        select(Invoice).where(
+            Invoice.contract_uid == contract.uid,
+            Invoice.period_start_at == period_start,
+            Invoice.period_end_at == period_end,
         )
     ).scalar_one_or_none()
 
-    if existing_snapshot:
+    if already_invoiced:
         return
 
     readings = celery_dynamo_client.get_readings_for_billing_period(
         gateway_id=gateway_id,
-        period_start=snapshot_start,
-        period_end=snapshot_end,
+        period_start=period_start,
+        period_end=period_end,
+        is_multi_day=True,
     )
 
     if not readings:
@@ -179,12 +173,12 @@ def _handle_snapshot(
         return
 
     telemetry_start_reading, telemetry_end_reading = readings
-    snapshot: Optional[InvoiceSnapshot] = None
+    create_invoice = None
     invoice_meter_data = None
     invoice_line_items = None
 
     if is_lease(contract=contract):
-        # WIP: Factory under construction.
+        # Pending
         pass
 
     if is_ppa_on_grid_with_battery(contract=contract):
@@ -196,8 +190,11 @@ def _handle_snapshot(
             contract_settings=contract_settings,
         )
 
-        snapshot = ppa_on_grid_with_battery_wizard.invoice_snapshot(
-            period_start_at=snapshot_start, period_end_at=snapshot_end
+        create_invoice = ppa_on_grid_with_battery_wizard.invoice(
+            period_start_at=period_start,
+            period_end_at=period_end,
+            contract_uid=contract.uid,
+            invoice_ref=InvoiceRepository._build_invoice_ref(),
         )
         invoice_meter_data = ppa_on_grid_with_battery_wizard.invoice_meter_data
         invoice_line_items = ppa_on_grid_with_battery_wizard.invoice_line_items
@@ -211,7 +208,12 @@ def _handle_snapshot(
             contract_settings=contract_settings,
         )
 
-        snapshot = ppa_off_grid_wizard.invoice_snapshot(period_start_at=snapshot_start, period_end_at=snapshot_end)
+        create_invoice = ppa_off_grid_wizard.invoice(
+            period_start_at=period_start,
+            period_end_at=period_end,
+            contract_uid=contract.uid,
+            invoice_ref=InvoiceRepository._build_invoice_ref(),
+        )
         invoice_meter_data = ppa_off_grid_wizard.invoice_meter_data
         invoice_line_items = ppa_off_grid_wizard.invoice_line_items
 
@@ -224,28 +226,49 @@ def _handle_snapshot(
             contract_settings=contract_settings,
         )
 
-        snapshot = ppa_on_grid_no_battery_wizard.invoice_snapshot(
-            period_start_at=snapshot_start, period_end_at=snapshot_end
+        create_invoice = ppa_on_grid_no_battery_wizard.invoice(
+            period_start_at=period_start,
+            period_end_at=period_end,
+            contract_uid=contract.uid,
+            invoice_ref=InvoiceRepository._build_invoice_ref(),
         )
         invoice_meter_data = ppa_on_grid_no_battery_wizard.invoice_meter_data
         invoice_line_items = ppa_on_grid_no_battery_wizard.invoice_line_items
 
-    if not snapshot:
-        logger.warning(f"Error creating invoice snapshot {gateway_id}")
+    if not create_invoice:
+        logger.warning(f"Error creating invoice {gateway_id}")
         return
 
     try:
-        session.add(snapshot)
+        new_invoice = Invoice(**create_invoice)
+        session.add(new_invoice)
         session.flush()
 
         session.add_all(
-            [InvoiceSnapshotMeterData(**{**d.model_dump(), "snapshot_uid": snapshot.uid}) for d in invoice_meter_data]
+            [InvoiceMeterData(**{**d.model_dump(), "invoice_uid": new_invoice.uid}) for d in invoice_meter_data]
         )
         session.add_all(
-            [InvoiceSnapshotLineItem(**{**d.model_dump(), "snapshot_uid": snapshot.uid}) for d in invoice_line_items]
+            [InvoiceLineItem(**{**d.model_dump(), "invoice_uid": new_invoice.uid}) for d in invoice_line_items]
+        )
+        session.add(
+            InvoiceHistory(
+                **CreateInvoiceHistoryModel(
+                    invoice_uid=new_invoice.uid,
+                    sent_to=contract.client.client_email,
+                    sent_at=datetime.now(timezone.utc),
+                    was_successful=True,
+                ).model_dump()
+            )
         )
         session.commit()
-    except Exception as e:
+
+        pdf_bytes, key = BillingEngine.generate_pdf(
+            contract=contract,
+            contract_settings=contract_settings,
+            result=(new_invoice, invoice_meter_data, invoice_line_items),
+        )
+        BillingEngine.store_pdf_in_s3(pdf_bytes=pdf_bytes, key=key, invoice_ref=new_invoice.invoice_ref)
+        session.execute(update(Invoice).where(Invoice.uid == new_invoice.uid).values(pdf_s3_key=key))
+        session.commit()
+    except Exception:
         session.rollback()
-        logger.error(e)
-        raise e

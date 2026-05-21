@@ -22,7 +22,7 @@ class UpdateContractSettingsModel(BaseModel):
     date_format: Optional[DateFormatEnum] = Field(default=None)
 
     efl_standard_rate_kwh: Optional[Decimal] = Field(default=None)
-    vat_rate: Optional[int] = Field(default=None)
+    vat_rate: Optional[float] = Field(default=None)
 
     asset_performance: Optional[bool] = Field(default=None)
     invoice_generated: Optional[bool] = Field(default=None)
@@ -39,7 +39,7 @@ class CreateContractEFLRateModel(BaseModel):
 class CreateContractVATRateModel(BaseModel):
     """Request model for setting a new VAT rate (time-series, never overwritten)."""
 
-    vat_rate: Optional[int] = Field(default=None)
+    vat_rate: Optional[float] = Field(default=None)
     effective_from: datetime = Field(...)
 
 
@@ -51,7 +51,7 @@ class ContractSettingsModel(DBModel):
     date_format: str
 
     efl_standard_rate_kwh: Optional[Decimal]
-    vat_rate: Optional[int]
+    vat_rate: Optional[float]
 
     asset_performance: bool
     invoice_generated: bool
@@ -78,7 +78,7 @@ class VATRateHistoryRespModel(DBModel):
     """Response model for a single VAT rate history entry."""
 
     contract_settings_uid: UUID
-    vat_rate: Optional[int]
+    vat_rate: Optional[float]
     effective_from: datetime
     effective_to: Optional[datetime]
     created_by_uid: Optional[UUID]

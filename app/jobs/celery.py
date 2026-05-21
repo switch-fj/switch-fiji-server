@@ -22,15 +22,15 @@ celery_app.conf.update(
 
 celery_app.conf.beat_schedule = {
     "trigger_site_stats_every_5_minutes": {
-        "task": "compute_site_stats",
-        "schedule": crontab(minute="*/1"),
+        "task": "trigger_site_stats_computation_on_auto",
+        "schedule": crontab(minute="*/5"),
     },
     "trigger_compute_active_contracts_every_hour": {
-        "task": "compute_active_contracts",
+        "task": "trigger_compute_contract_invoice_on_auto",
         "schedule": crontab(minute=0),
     },
     "trigger_snapshot_active_contracts_at_00_30": {
-        "task": "snapshot_active_contracts",
+        "task": "trigger_compute_contract_invoice_snapshot_on_auto",
         "schedule": crontab(hour=0, minute=30),
     },
 }
@@ -44,7 +44,11 @@ def setup_sync_redis(sender, **kwargs):
 celery_app.conf.timezone = "UTC"
 celery_app.autodiscover_tasks(["app.jobs"])
 
-from app.jobs import auth  # noqa
-from app.jobs.sites import stats  # noqa
-from app.jobs.invoicing import invoice  # noqa
-from app.jobs.invoicing import snapshot  # noqa
+from app.jobs.on_demand.schedulers import auth  # noqa
+
+from app.jobs.automatic.schedulers import site_stats as site_stats_scheduler  # noqa
+from app.jobs.automatic.triggers import site_stats as site_stats_trigger  # noqa
+from app.jobs.automatic.schedulers import invoice as invoice_scheduler  # noqa
+from app.jobs.automatic.triggers import invoice as invoice_trigger  # noqa
+from app.jobs.automatic.schedulers import snapshot as snapshot_scheduler  # noqa
+from app.jobs.automatic.triggers import snapshot as snapshot_trigger  # noqa

@@ -1,5 +1,4 @@
 from datetime import datetime, timezone
-from decimal import Decimal
 from typing import Optional
 from uuid import UUID
 
@@ -27,6 +26,7 @@ from app.modules.invoices.schema import (
     CreateInvoiceModel,
 )
 from app.modules.settings.repository import SettingsRepository
+from app.utils import two_decimal_place
 from app.utils.pagination import Pagination
 
 logger = setup_logger(__name__)
@@ -73,11 +73,11 @@ class InvoiceRepository:
 
         try:
             settings_repo = SettingsRepository(session=self.session)
-            current_rate = await settings_repo.get_current_rate()
+            current_rate = await settings_repo.get_contract_settings()
 
             if current_rate:
-                data_dict.__setattr__("efl_standard_rate_kwh", Decimal(current_rate.efl_standard_rate_kwh))
-                data_dict.__setattr__("vat_rate", Decimal(current_rate.vat_rate))
+                data_dict.__setattr__("efl_standard_rate_kwh", current_rate.efl_standard_rate_kwh)
+                data_dict.__setattr__("vat_rate", two_decimal_place(current_rate.vat_rate))
 
             new_invoice = Invoice(**data_dict)
             self.session.add(new_invoice)

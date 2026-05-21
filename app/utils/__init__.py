@@ -81,5 +81,5 @@ def build_redis_url(db: int = 0) -> str:
     return f"redis://{Config.REDIS_HOST}:{Config.REDIS_PORT}/{db}"
 
 
-def two_decimal_place(val: Decimal, decimal_places: str = "0.01"):
-    return val.quantize(Decimal(decimal_places))
+def two_decimal_place(val: Union[Decimal, float, int], decimal_places: str = "0.01"):
+    return Decimal(val).quantize(Decimal(decimal_places))

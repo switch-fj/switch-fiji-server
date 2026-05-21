@@ -14,7 +14,10 @@ from app.core.exceptions import (
 )
 from app.core.logger import setup_logger
 from app.database.redis import async_redis_client
-from app.jobs.auth import send_email_verification_task, send_verify_login_task
+from app.jobs.on_demand.schedulers.auth import (
+    send_email_verification_task,
+    send_verify_login_task,
+)
 from app.modules.clients.repository import ClientRepository, get_client_repo
 from app.modules.clients.schema import CreateClientModel, UpdateClientModel
 from app.shared.schema import (

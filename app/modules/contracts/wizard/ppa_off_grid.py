@@ -207,7 +207,7 @@ class PPAOffGridContractWizard(BaseContractWizard):
             period_start_telemetry_data=json.dumps(jsonable_encoder(self.telemetry_start_reading)),
             period_end_telemetry_data=json.dumps(jsonable_encoder(self.telemetry_end_reading)),
             subtotal=self.energy_cost,
-            vat_rate=self.contract_settings.vat_rate,
+            vat_rate=two_decimal_place(self.contract_settings.vat_rate),
             efl_standard_rate_kwh=self.contract_settings.efl_standard_rate_kwh,
             energy_mix=self.energy_mix.model_dump_json(),
         ).model_dump()
@@ -229,7 +229,7 @@ class PPAOffGridContractWizard(BaseContractWizard):
             period_start_telemetry_data=json.dumps(jsonable_encoder(self.telemetry_start_reading)),
             period_end_telemetry_data=json.dumps(jsonable_encoder(self.telemetry_end_reading)),
             subtotal=self.energy_cost,
-            vat_rate=self.contract_settings.vat_rate,
+            vat_rate=two_decimal_place(self.contract_settings.vat_rate),
             efl_standard_rate_kwh=self.contract_settings.efl_standard_rate_kwh,
             energy_mix=self.energy_mix.model_dump_json(),
         )

@@ -40,7 +40,7 @@ class ContractVATRateHistory(MyAbstractSQLModel, table=True):
     __tablename__ = "contract_vat_rate_history"
 
     contract_settings_uid: UUID = Field(foreign_key="contract_settings.uid", nullable=False)
-    vat_rate: Optional[int] = Field(nullable=True, default=None)
+    vat_rate: Optional[float] = Field(nullable=True, default=None)
     effective_from: datetime = Field(
         nullable=False,
         sa_type=DateTime(timezone=True),
@@ -89,7 +89,7 @@ class ContractSettings(MyAbstractSQLModel, table=True):
         return active.efl_standard_rate_kwh if active else None
 
     @property
-    def vat_rate(self) -> int | None:
+    def vat_rate(self) -> float | None:
         """Return the active VAT rate or None if no active rate exists."""
         active = next((r for r in self.vat_rate_history if r.effective_to is None), None)
         return active.vat_rate if active else None

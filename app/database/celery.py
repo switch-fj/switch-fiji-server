@@ -108,7 +108,7 @@ class CeleryDynamoClient:
             second=59,
             microsecond=999999,
         )
-        return int(start_of_day.timestamp()) * 1000, int(end_of_day.timestamp()) * 1000
+        return int(start_of_day.timestamp() * 1000), int(end_of_day.timestamp() * 1000)
 
     def get_readings_for_billing_period(
         self,
@@ -139,18 +139,17 @@ class CeleryDynamoClient:
             if is_multi_day:
                 _, end_day_ts = self._get_day_epoch_range(period_end)
 
+            logger.info(f"start: {start_day_ts}")
+            logger.info(f"end: {end_day_ts}")
+
             start_response = self._table.query(
-                KeyConditionExpression=(
-                    Key("gateway_id").eq(gateway_id) & Key("ts_epoch_ms").between(start_day_ts, end_day_ts)
-                ),
+                KeyConditionExpression=(Key("gateway_id").eq(gateway_id) & Key("ts_epoch_ms").gte(start_day_ts)),
                 ScanIndexForward=True,
                 Limit=1,
             )
 
             end_response = self._table.query(
-                KeyConditionExpression=(
-                    Key("gateway_id").eq(gateway_id) & Key("ts_epoch_ms").between(start_day_ts, end_day_ts)
-                ),
+                KeyConditionExpression=(Key("gateway_id").eq(gateway_id) & Key("ts_epoch_ms").lte(end_day_ts)),
                 ScanIndexForward=False,
                 Limit=1,
             )

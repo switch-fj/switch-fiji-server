@@ -72,7 +72,7 @@ class SettingsRepository:
         await self.create_vat_rate(
             contract_settings_uid=new_contract_settings.uid,
             data=CreateContractVATRateModel(
-                vat_rate=15,
+                vat_rate=float(15.0),
                 effective_from=datetime.now(),
             ),
         )

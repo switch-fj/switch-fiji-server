@@ -2,7 +2,6 @@ import calendar
 import json
 from datetime import datetime, timezone
 
-from sqlalchemy import text
 from sqlalchemy.orm import joinedload, selectinload
 from sqlmodel import desc, select
 
@@ -22,37 +21,8 @@ from app.shared.constants import Constants
 logger = setup_logger(__name__)
 
 
-@celery_app.task(name="compute_site_stats", bind=True, max_retries=3, default_retry_delay=5)
-def compute_site_stats(self):
-    """
-    Beat triggers this every 5 mins.
-    Fetches all sites and dispatches
-    one compute task per site to the worker pool.
-    """
-    try:
-        with get_celery_db_session() as session:
-            result = session.execute(
-                text("""
-                SELECT
-                    s.uid::text AS site_uid,
-                    s.gateway_id AS gateway_id
-                FROM sites s
-            """)
-            )
-            sites = result.fetchall()
-
-        for site in sites:
-            compute_site_stat.delay(
-                site_uid=site.site_uid,
-                gateway_id=site.gateway_id,
-            )
-
-    except Exception as exc:
-        raise self.retry(exc=exc)
-
-
-@celery_app.task(name="compute_site_stat", bind=True, max_retries=3, default_retry_delay=5)
-def compute_site_stat(self, site_uid: str, gateway_id: str):
+@celery_app.task(name="compute_site_stat_on_auto", bind=True, max_retries=3, default_retry_delay=5)
+def compute_site_stat_on_auto(self, site_uid: str, gateway_id: str):
     """
     Computes all site stats variables for a single site
     and writes the result to Redis.
