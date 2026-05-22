@@ -66,10 +66,10 @@ class JobRunRespository:
         prev_cursor_out = None
 
         if items:
-            prev_cursor_out = Pagination.encrypt_cursor(items[0].Client.id)
+            prev_cursor_out = Pagination.encrypt_cursor(items[0].id)
 
         if has_more:
-            next_cursor_out = Pagination.encrypt_cursor(items[-1].Client.id)
+            next_cursor_out = Pagination.encrypt_cursor(items[-1].id)
 
         return PaginatedRespModel.model_validate(
             {

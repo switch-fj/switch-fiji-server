@@ -91,8 +91,8 @@ def trigger_compute_contract_invoice_for_period_on_demand(
         compute_contract_invoice_for_period_on_demand.delay(
             job_run_task_id=self.request.id,
             contract_uid=contract_uid,
-            gateway_id=active_contract.gateway_id,
-            site_uid=active_contract.site_uid,
+            gateway_id=active_contract.get("gateway_id"),
+            site_uid=active_contract.get("site_uid"),
             period_start=period_start,
             period_end=period_end,
         )

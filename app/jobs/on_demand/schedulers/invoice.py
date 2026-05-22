@@ -97,4 +97,10 @@ def compute_contract_invoice_for_period_on_demand(
             )
 
     except Exception as exc:
+        update_job_run(
+            reference_uid=contract_uid,
+            task_id=job_run_task_id,
+            status=JobRunStatus.FAILED,
+            error=str(exc),
+        )
         raise self.retry(exc=exc)

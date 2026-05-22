@@ -47,7 +47,7 @@ def _get_active_contract(session: Session, contract_uid):
         """),
         {"contract_uid": contract_uid},
     )
-    return result.scalar_one_or_none()
+    return result.mappings().one_or_none()
 
 
 def update_job_run(
