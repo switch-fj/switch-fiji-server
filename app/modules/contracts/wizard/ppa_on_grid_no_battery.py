@@ -258,15 +258,12 @@ class PPAOnGridNoBatteryContractWizard(BaseContractWizard):
         end_grid_meter = end_meters.grid_meter
         end_solar_meter = end_meters.solar_meters
 
-        logger.info(f"start: {start_solar_meter}")
-        logger.info(f"end: {end_solar_meter}")
-
         solar = [
             OnGridEnergyItem(
                 slave_id=start["slave_id"],
                 description=start["description"],
-                start_kwh=start["kwh_import"],
-                end_kwh=end["kwh_import"],
+                start_kwh=start["kwh_import"] or 0,
+                end_kwh=end["kwh_import"] or 0,
             )
             for start, end in zip(start_solar_meter, end_solar_meter)
         ]
@@ -274,14 +271,15 @@ class PPAOnGridNoBatteryContractWizard(BaseContractWizard):
         grid_import = OnGridEnergyItem(
             slave_id=start_grid_meter["slave_id"],
             description="Grid Meter",
-            start_kwh=start_grid_meter["kwh_import"],
-            end_kwh=end_grid_meter["kwh_import"],
+            start_kwh=start_grid_meter["kwh_import"] or 0,
+            end_kwh=end_grid_meter["kwh_import"] or 0,
         )
+
         grid_export = OnGridEnergyItem(
             slave_id=start_grid_meter["slave_id"],
             description="Fed to Grid",
-            start_kwh=start_grid_meter["kwh_export"],
-            end_kwh=end_grid_meter["kwh_export"],
+            start_kwh=start_grid_meter["kwh_export"] or 0,
+            end_kwh=end_grid_meter["kwh_export"] or 0,
         )
 
         energy_data = OnGridNoBatteryEnergyData(solar=solar, grid_import=grid_import, grid_export=grid_export)

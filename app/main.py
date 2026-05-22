@@ -10,6 +10,7 @@ from app.api.v1.client.routes import client_router
 from app.api.v1.contract.routes import contract_router
 from app.api.v1.engineer.routes import engineer_router
 from app.api.v1.invoice.routes import invoice_router
+from app.api.v1.jobrun.routes import jobrun_router
 from app.api.v1.misc.routes import misc_router
 from app.api.v1.settings.routes import settings_router
 from app.api.v1.site.routes import site_router
@@ -80,5 +81,6 @@ def create_app(*, use_lifespan: bool = True, enable_middlewares: bool = True):
     app.include_router(invoice_router, prefix=f"{api_version}")
     app.include_router(misc_router, prefix=f"{api_version}")
     app.include_router(site_router, prefix=f"{api_version}")
+    app.include_router(jobrun_router, prefix=f"{api_version}")
 
     return app

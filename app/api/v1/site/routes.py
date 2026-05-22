@@ -80,7 +80,6 @@ async def stream_site_stats(
         headers={
             "Cache-Control": "no-cache",
             "X-Accel-Buffering": "no",
-            "Connection": "keep-alive",
         },
     )
 

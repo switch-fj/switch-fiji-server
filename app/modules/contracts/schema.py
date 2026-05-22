@@ -1,6 +1,6 @@
 from datetime import datetime, timezone
 from decimal import Decimal
-from enum import StrEnum
+from enum import IntEnum, StrEnum
 from typing import Optional
 from uuid import UUID
 
@@ -56,6 +56,16 @@ class ContractBillingFrequencyEnum(StrEnum):
     QUARTERLY = "quarterly"
     SEMI_ANNUALLY = "semi-annually"
     ANNUALLY = "annually"
+
+
+class DayOfWeekEnum(IntEnum):
+    MONDAY = 0
+    TUESDAY = 1
+    WEDNESDAY = 2
+    THURSDAY = 3
+    FRIDAY = 4
+    SATURDAY = 5
+    SUNDAY = 6
 
 
 class TariffIndexedRuleTypeEnum(StrEnum):
@@ -193,6 +203,9 @@ class CreateContractDetailsModel(BaseModel):
 
     term_years: int = Field(..., ge=0, le=10, title="Contract term years")
     billing_frequency: ContractBillingFrequencyEnum = Field(..., title="Billing Frequency")
+    weekly_billing_start_day: Optional[DayOfWeekEnum] = Field(
+        default=DayOfWeekEnum.MONDAY, title="Weekly billing start day"
+    )
     implementation_period: int = Field(..., title="Contract Implementation")
     signed_at: datetime = Field(..., title="Contract signed at")
     commissioned_at: datetime = Field(..., title="expected commission date")
@@ -253,15 +266,24 @@ class CreateContractDetailsModel(BaseModel):
         return value
 
     @model_validator(mode="after")
-    def validate_contract_dates_and_tariffs(self) -> "CreateContractDetailsModel":
+    def validate_contract_details(self) -> "CreateContractDetailsModel":
         """Run date consistency and tariff alignment checks after all fields are populated.
 
         Returns:
             The validated CreateContractDetailsModel instance.
         """
+        self._validate_weekly_start_day()
         self._validate_dates()
         self._validate_tariffs_align_with_periods()
         self._validate_ppa_on_grid_no_battery()
+        return self
+
+    def _validate_weekly_start_day(self):
+        if self.billing_frequency == ContractBillingFrequencyEnum.WEEKLY:
+            if self.weekly_billing_start_day is None:
+                raise ValueError("weekly_billing_start_day is required when billing_frequency is WEEKLY.")
+            if self.weekly_billing_start_day == DayOfWeekEnum.SUNDAY:
+                raise ValueError("weekly_billing_start_day cannot be Sunday — periods always end on Sunday.")
         return self
 
     def _validate_dates(self):
