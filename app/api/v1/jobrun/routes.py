@@ -1,9 +1,11 @@
 import asyncio
 import json
+from typing import Optional
 
-from fastapi import APIRouter, Depends, Request, status
+from fastapi import APIRouter, Depends, Query, Request, status
 from fastapi.responses import StreamingResponse
 
+from app.core.config import Config
 from app.core.logger import setup_logger
 from app.core.security import AccessTokenBearer
 from app.modules.job_run.schema import (
@@ -13,11 +15,38 @@ from app.modules.job_run.schema import (
     JobRunStatus,
 )
 from app.services.job_run import JobRunService, get_jobrun_service
-from app.shared.schema import ServerRespModel
+from app.shared.schema import CursorPaginationModel, PaginatedRespModel, ServerRespModel
 
 jobrun_router = APIRouter(prefix="/jobrun", tags=["jobrun"])
 
 logger = setup_logger(__name__)
+
+
+@jobrun_router.get(
+    "/user",
+    status_code=status.HTTP_200_OK,
+    response_model=ServerRespModel[PaginatedRespModel[JobRunResp, CursorPaginationModel]],
+)
+async def get_all_jobs(
+    status: Optional[JobRunStatus] = Query(default=None),
+    limit: int = Query(default=Config.DEFAULT_PAGE_LIMIT),
+    next_cursor: Optional[str] = Query(default=None),
+    prev_cursor: Optional[str] = Query(default=None),
+    token_payload: dict = Depends(AccessTokenBearer()),
+    jobrun_service: JobRunService = Depends(get_jobrun_service),
+):
+
+    result = await jobrun_service.get_user_jobs(
+        token_payload=token_payload,
+        status=status,
+        limit=limit,
+        next_cursor=next_cursor,
+        prev_cursor=prev_cursor,
+    )
+
+    return ServerRespModel[PaginatedRespModel[JobRunResp, CursorPaginationModel]](
+        data=result, message="User jobs retrieved"
+    )
 
 
 @jobrun_router.post(

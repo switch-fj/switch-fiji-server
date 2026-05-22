@@ -1,9 +1,11 @@
 from datetime import timezone
+from typing import Optional
 from uuid import UUID
 
 from fastapi import Depends
 
-from app.core.exceptions import NotFound
+from app.core.config import Config
+from app.core.exceptions import BadRequest, NotFound
 from app.jobs.on_demand.triggers.invoice import (
     trigger_compute_contract_invoice_for_period_on_demand,
 )
@@ -12,6 +14,7 @@ from app.modules.job_run.schema import (
     JobComputeContractInvoice,
     JobComputeContractInvoiceResp,
     JobRunResp,
+    JobRunStatus,
 )
 
 
@@ -44,6 +47,29 @@ class JobRunService:
             raise NotFound("Job not found!")
 
         return JobRunResp.model_validate(jobrun)
+
+    async def get_user_jobs(
+        self,
+        token_payload: dict,
+        limit: int = Config.DEFAULT_PAGE_LIMIT,
+        status: Optional[JobRunStatus] = None,
+        next_cursor: Optional[str] = None,
+        prev_cursor: Optional[str] = None,
+    ):
+        if next_cursor and prev_cursor:
+            raise BadRequest("Provide either next_cursor or prev_cursor, not both")
+
+        token_user = token_payload.get("user")
+        user_uid = token_user.get("uid")
+        resp = await self.jobrun_repo.get_jobs(
+            user_uid=user_uid,
+            limit=limit,
+            status=status,
+            next_cursor=next_cursor,
+            prev_cursor=prev_cursor,
+        )
+
+        return resp
 
 
 def get_jobrun_service(

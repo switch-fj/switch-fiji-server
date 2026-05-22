@@ -31,8 +31,7 @@ def _get_active_contracts(session: Session) -> list:
 
 def _get_active_contract(session: Session, contract_uid):
     result = session.execute(
-        text(
-            """
+        text("""
         SELECT DISTINCT
             c.uid::text AS contract_uid,
             s.uid::text AS site_uid,
@@ -40,14 +39,13 @@ def _get_active_contract(session: Session, contract_uid):
         FROM sites s
         JOIN contracts c ON c.site_uid = s.uid
         JOIN contract_details cd ON cd.contract_uid = c.uid
-        WHERE c.uid = %(contract_uid)s
+        WHERE c.uid = :contract_uid
             AND COALESCE(cd.actual_commissioned_at, cd.commissioned_at) IS NOT NULL
             AND NOW() > COALESCE(cd.actual_commissioned_at, cd.commissioned_at)
             AND NOW() < COALESCE(cd.actual_end_at, cd.end_at)
         LIMIT 1      
-        """,
-            {"contract_uid": contract_uid},
-        )
+        """),
+        {"contract_uid": contract_uid},
     )
     return result.scalar_one_or_none()
 

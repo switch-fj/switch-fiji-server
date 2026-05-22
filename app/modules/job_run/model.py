@@ -3,7 +3,7 @@ from datetime import datetime
 from typing import Optional
 from uuid import UUID
 
-from sqlmodel import DateTime, Enum, Field, UniqueConstraint
+from sqlmodel import Column, DateTime, Enum, Field, Identity, Integer, UniqueConstraint
 
 from app.modules.job_run.schema import JobReferenceType, JobRunStatus, JobType
 from app.shared.model import MyAbstractSQLModel
@@ -24,6 +24,14 @@ class JobRun(MyAbstractSQLModel, table=True):
         ),
     )
 
+    id: int = Field(
+        sa_column=Column(
+            Integer,
+            Identity(always=True),
+            unique=True,
+            nullable=False,
+        )
+    )
     task_id: str = Field(index=True, nullable=False)
     job_type: JobType = Field(nullable=False, sa_type=Enum(JobType))
     reference_type: JobReferenceType = Field(nullable=False, sa_type=Enum(JobReferenceType))
