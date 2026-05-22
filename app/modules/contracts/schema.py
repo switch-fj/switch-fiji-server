@@ -450,6 +450,7 @@ class ContractDetailsRespModel(DBModel):
     minimum_consumption_monthly_kwh: Optional[float] = None
     minimum_spend: Optional[float] = None
     tariff_periods: Optional[int] = None
+    tariff_indexed_rule_type: Optional[TariffIndexedRuleTypeEnum] = None
     tariff_slots: Optional[str] = None
     tariff_fixed_to_indexed_at: Optional[datetime] = None
 
