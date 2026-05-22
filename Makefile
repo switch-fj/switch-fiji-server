@@ -14,7 +14,7 @@ beat:
 alembic-gen:
 	uv run alembic revision --autogenerate -m "$(m)"
 
-alembic-up:
+alembic-upgrade:
 	uv run alembic upgrade head
 
 alembic-stamp:

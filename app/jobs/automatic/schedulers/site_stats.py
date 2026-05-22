@@ -110,6 +110,7 @@ def compute_site_stat_on_auto(self, site_uid: str, gateway_id: str):
             commissioned_at=commissioned_at,
             billing_frequency=contract.details.billing_frequency,
             as_of=now,
+            weekly_billing_start_day=contract.details.weekly_billing_start_day,
         )
 
         billing_period_progress_percentage = site_stats_wizard.billing_period_progress_percentage(

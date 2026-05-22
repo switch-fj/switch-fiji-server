@@ -9,6 +9,7 @@ from app.database.celery import celery_dynamo_client
 from app.modules.contracts.model import Contract
 from app.modules.contracts.schema import (
     ContractBillingFrequencyEnum,
+    DayOfWeekEnum,
 )
 from app.modules.contracts.wizard.ppa_off_grid import PPAOffGridContractWizard
 from app.modules.contracts.wizard.ppa_on_grid_no_battery import (
@@ -56,6 +57,7 @@ class BillingEngine:
         commissioned_at: datetime,
         billing_frequency: str,
         as_of: datetime,
+        weekly_billing_start_day: Optional[DayOfWeekEnum],
     ):
 
         try:
@@ -63,29 +65,43 @@ class BillingEngine:
         except ValueError:
             raise ValueError(f"Unsupported billing frequency: {billing_frequency}")
 
-        diff = relativedelta(as_of, commissioned_at)
+        if as_of < commissioned_at:
+            raise ValueError("as_of cannot be before commissioned_at")
+
+        if freq == ContractBillingFrequencyEnum.WEEKLY:
+            if weekly_billing_start_day is None:
+                weekly_billing_start_day = commissioned_at.weekday()
+            periods = BillingEngine.get_all_billing_periods(
+                commissioned_at=commissioned_at,
+                billing_frequency=billing_frequency,
+                as_of=as_of,
+                weekly_billing_start_day=weekly_billing_start_day,
+            )
+            return periods[-1] if periods else None
+
         match freq:
-            case ContractBillingFrequencyEnum.WEEKLY:
-                total_days = (as_of - commissioned_at).days
-                n = total_days // 7
-                delta = relativedelta(weeks=1)
+            case ContractBillingFrequencyEnum.DAILY:
+                n = (as_of - commissioned_at).days
+                delta = relativedelta(days=1)
             case ContractBillingFrequencyEnum.BI_WEEKLY:
-                total_days = (as_of - commissioned_at).days
-                n = total_days // 14
+                n = (as_of - commissioned_at).days // 14
                 delta = relativedelta(weeks=2)
             case ContractBillingFrequencyEnum.MONTHLY:
-                total_months = diff.years * 12 + diff.months
-                n = total_months // 1
+                diff = relativedelta(as_of, commissioned_at)
+                n = diff.years * 12 + diff.months
                 delta = relativedelta(months=1)
             case ContractBillingFrequencyEnum.QUARTERLY:
+                diff = relativedelta(as_of, commissioned_at)
                 total_months = diff.years * 12 + diff.months
                 n = total_months // 3
                 delta = relativedelta(months=3)
             case ContractBillingFrequencyEnum.SEMI_ANNUALLY:
+                diff = relativedelta(as_of, commissioned_at)
                 total_months = diff.years * 12 + diff.months
                 n = total_months // 6
                 delta = relativedelta(months=6)
             case ContractBillingFrequencyEnum.ANNUALLY:
+                diff = relativedelta(as_of, commissioned_at)
                 n = diff.years
                 delta = relativedelta(years=1)
 
@@ -99,6 +115,7 @@ class BillingEngine:
         commissioned_at: datetime,
         billing_frequency: str,
         as_of: datetime,
+        weekly_billing_start_day: Optional[DayOfWeekEnum] = None,
     ) -> list[tuple[datetime, datetime]]:
         """Returns all billing periods from commissioned_at up to as_of."""
         try:
@@ -106,11 +123,21 @@ class BillingEngine:
         except ValueError:
             raise ValueError(f"Unsupported billing frequency: {billing_frequency}")
 
+        if as_of < commissioned_at:
+            raise ValueError("as_of cannot be before commissioned_at")
+
+        if freq == ContractBillingFrequencyEnum.WEEKLY:
+            if weekly_billing_start_day is None:
+                weekly_billing_start_day = commissioned_at.weekday()
+            return BillingEngine._get_weekly_billing_periods(
+                commissioned_at=commissioned_at,
+                start_day=weekly_billing_start_day,
+                as_of=as_of,
+            )
+
         match freq:
             case ContractBillingFrequencyEnum.DAILY:
                 delta = relativedelta(days=1)
-            case ContractBillingFrequencyEnum.WEEKLY:
-                delta = relativedelta(weeks=1)
             case ContractBillingFrequencyEnum.BI_WEEKLY:
                 delta = relativedelta(weeks=2)
             case ContractBillingFrequencyEnum.MONTHLY:
@@ -130,6 +157,49 @@ class BillingEngine:
                 break
             periods.append((period_start, period_end))
             period_start = period_end + relativedelta(seconds=1)
+
+        return periods
+
+    @staticmethod
+    def _get_weekly_billing_periods(
+        commissioned_at: datetime,
+        start_day: DayOfWeekEnum,
+        as_of: datetime,
+    ) -> list[tuple[datetime, datetime]]:
+        """
+        Builds weekly billing periods where:
+        - The first period starts on commissioned_at (which should fall on start_day).
+        - Every period ends at end-of-day Sunday (23:59:59).
+        - The next period starts on the configured start_day
+        the following week, i.e. the day after Sunday + (start_day) days.
+        """
+        SUNDAY = DayOfWeekEnum.SUNDAY.value
+
+        def next_sunday_eod(dt: datetime) -> datetime:
+            """Return end-of-day (23:59:59) of the Sunday on or after dt."""
+            days_until_sunday = (SUNDAY - dt.weekday()) % 7
+            sunday = dt + relativedelta(days=days_until_sunday)
+            return sunday.replace(hour=23, minute=59, second=59, microsecond=0)
+
+        periods = []
+        period_start = commissioned_at.replace(hour=0, minute=0, second=0, microsecond=0)
+
+        # Align the first period_start to the configured start_day
+        # if commissioned_at doesn't already land on it
+        if period_start.weekday() != start_day:
+            days_ahead = (start_day - period_start.weekday()) % 7
+            period_start = period_start + relativedelta(days=days_ahead)
+
+        while True:
+            period_end = next_sunday_eod(period_start)
+            if period_end > as_of:
+                break
+            periods.append((period_start, period_end))
+            # Next period starts on the same weekday the following week (day after Sunday)
+            period_start = period_end + relativedelta(days=1)  # Monday
+            # Advance to the configured start_day of that same week
+            days_to_start = (start_day - period_start.weekday()) % 7
+            period_start = period_start + relativedelta(days=days_to_start)
 
         return periods
 
@@ -400,5 +470,6 @@ class BillingEngine:
             BillingEngine.store_pdf_in_s3(pdf_bytes=pdf_bytes, key=key, invoice_ref=new_invoice.invoice_ref)
             session.execute(update(Invoice).where(Invoice.uid == new_invoice.uid).values(pdf_s3_key=key))
             session.commit()
+            return new_invoice.uid
         except Exception:
             session.rollback()

@@ -6,13 +6,14 @@ from uuid import UUID
 from zoneinfo import ZoneInfo
 
 from dateutil.relativedelta import relativedelta
-from sqlmodel import Column, DateTime, Enum, Field, Relationship, String
+from sqlmodel import Column, DateTime, Enum, Field, Integer, Relationship, String
 
 from app.modules.contracts.schema import (
     ContractBillingFrequencyEnum,
     ContractDetailsStatus,
     ContractSystemModeEnum,
     ContractTypeEnum,
+    DayOfWeekEnum,
     TariffIndexedRuleTypeEnum,
     TariffSlotModel,
     TariffSlotTypeEnum,
@@ -68,6 +69,15 @@ class ContractDetails(MyAbstractSQLModel, table=True):
     # applies to all contract types
     term_years: int = Field()
     billing_frequency: ContractBillingFrequencyEnum = Field(sa_type=Enum(ContractBillingFrequencyEnum))
+    weekly_billing_start_day: Optional[DayOfWeekEnum] = Field(
+        default=DayOfWeekEnum.MONDAY,
+        sa_column=Column(Integer, nullable=True),
+        description="""
+            Required when billing_frequency is WEEKLY.
+            The day of the week the billing period starts (e.g. WEDNESDAY = 2).
+            The period always ends on Sunday, and the invoice is dispatched the following Monday.
+        """,
+    )
     implementation_period: int = Field()
     signed_at: datetime = Field(
         default=None,

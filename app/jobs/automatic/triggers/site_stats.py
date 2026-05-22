@@ -1,9 +1,10 @@
-from sqlalchemy import text
+from sqlmodel import select
 
 from app.core.logger import setup_logger
 from app.database.celery import get_celery_db_session
 from app.jobs.automatic.schedulers.site_stats import compute_site_stat_on_auto
 from app.jobs.celery import celery_app
+from app.modules.sites.model import Site
 
 logger = setup_logger(__name__)
 
@@ -22,20 +23,13 @@ def trigger_site_stats_computation_on_auto(self):
     """
     try:
         with get_celery_db_session() as session:
-            result = session.execute(
-                text("""
-                SELECT
-                    s.uid::text AS site_uid,
-                    s.gateway_id AS gateway_id
-                FROM sites s
-            """)
-            )
-            sites = result.fetchall()
+            result = session.execute(select(Site))
+            sites = result.scalars().all()
 
         for site in sites:
             compute_site_stat_on_auto.delay(
-                site_uid=site.site_uid,
-                gateway_id=site.gateway_id,
+                site_uid=str(site.uid),
+                gateway_id=str(site.gateway_id),
             )
 
     except Exception as exc:

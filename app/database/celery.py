@@ -1,5 +1,5 @@
 from contextlib import contextmanager
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional
 
 import boto3
@@ -95,14 +95,14 @@ class CeleryDynamoClient:
         Returns:
             A tuple of (start_of_day_ms, end_of_day_ms) as integer millisecond timestamps.
         """
-        start_of_day = date.replace(
+        start_of_day = date.astimezone(tz=timezone.utc).replace(
             hour=0,
             minute=0,
             second=0,
             microsecond=0,
         )
 
-        end_of_day = date.replace(
+        end_of_day = date.astimezone(tz=timezone.utc).replace(
             hour=23,
             minute=59,
             second=59,
@@ -138,9 +138,6 @@ class CeleryDynamoClient:
 
             if is_multi_day:
                 _, end_day_ts = self._get_day_epoch_range(period_end)
-
-            logger.info(f"start: {start_day_ts}")
-            logger.info(f"end: {end_day_ts}")
 
             start_response = self._table.query(
                 KeyConditionExpression=(Key("gateway_id").eq(gateway_id) & Key("ts_epoch_ms").gte(start_day_ts)),
