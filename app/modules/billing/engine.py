@@ -1,5 +1,6 @@
 from datetime import datetime, timezone
 from typing import Optional
+from zoneinfo import ZoneInfo
 
 from dateutil.relativedelta import relativedelta
 from sqlmodel import Session, select, update
@@ -363,8 +364,8 @@ class BillingEngine:
 
         readings = celery_dynamo_client.get_readings_for_billing_period(
             gateway_id=gateway_id,
-            period_start=period_start,
-            period_end=period_end,
+            period_start=period_start.astimezone(tz=ZoneInfo(contract.timezone)),
+            period_end=period_end.astimezone(tz=ZoneInfo(contract.timezone)),
             is_multi_day=True,
         )
 
