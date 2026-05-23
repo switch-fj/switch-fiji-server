@@ -100,19 +100,19 @@ class PPAOffGridContractWizard(BaseContractWizard):
         load = PPAOnAndOffGridEnergyItem(
             slave_id=start_load_meter["slave_id"],
             description="Site Meter",
-            start_day_tariff=start_load_meter.get("tariff", 0)["kwh_t1"],
-            start_night_tariff=start_load_meter.get("tariff", 0)["kwh_t2"],
-            end_day_tariff=end_load_meter.get("tariff", 0)["kwh_t1"],
-            end_night_tariff=end_load_meter.get("tariff", 0)["kwh_t2"],
+            start_day_tariff=start_load_meter.get("tariff", 0)["kwh_t2"],
+            start_night_tariff=start_load_meter.get("tariff", 0)["kwh_t1"],
+            end_day_tariff=end_load_meter.get("tariff", 0)["kwh_t2"],
+            end_night_tariff=end_load_meter.get("tariff", 0)["kwh_t1"],
         )
 
         backup_gen = PPAOnAndOffGridEnergyItem(
             slave_id=start_gen_meter["slave_id"],
             description="Generator Meter",
-            start_day_tariff=start_gen_meter.get("tariff", 0)["kwh_t1"],
-            start_night_tariff=start_gen_meter.get("tariff", 0)["kwh_t2"],
-            end_day_tariff=end_gen_meter.get("tariff", 0)["kwh_t1"],
-            end_night_tariff=end_gen_meter.get("tariff", 0)["kwh_t2"],
+            start_day_tariff=start_gen_meter.get("tariff", 0)["kwh_t2"],
+            start_night_tariff=start_gen_meter.get("tariff", 0)["kwh_t1"],
+            end_day_tariff=end_gen_meter.get("tariff", 0)["kwh_t2"],
+            end_night_tariff=end_gen_meter.get("tariff", 0)["kwh_t1"],
         )
 
         energy_data = PPAOffGridEnergyData(load=load, backup_gen=backup_gen)
