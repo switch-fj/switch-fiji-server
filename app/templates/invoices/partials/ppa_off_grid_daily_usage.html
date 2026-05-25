@@ -1,0 +1,23 @@
+<div class="ppa-off-grid-daily-usage-section">
+    <table class="meter-table">
+        <thead>
+            <tr>
+                <th>Dates</th>
+                <th>Days</th>
+                <th>Solar Day usage</th>
+                <th>Solar Night usage</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for datum in ppa_off_grid_daily_data %}
+            <tr>
+                <td>{{ datum.dates }}</td>
+                <td>{{ datum.day }}</td>
+                <td>{{ datum.day_end_usage }}</td>
+                <td>{{ datum.night_end_usage }}</td>
+                <td>{{ datum.usage }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>

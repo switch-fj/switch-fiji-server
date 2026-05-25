@@ -85,16 +85,19 @@ def compute_contract_invoice_for_period_on_demand(
                 period_end=period_end,
             )
 
-            if not invoice_uid:
-                logger.error(f"Unable to create invoice: for task {job_run_task_id}")
+            logger.info(f"invoice uid: {invoice_uid}")
 
-            update_job_run(
-                reference_uid=contract_uid,
-                task_id=job_run_task_id,
-                status=JobRunStatus.COMPLETED,
-                completed_at=datetime.now(timezone.utc),
-                result_uid=invoice_uid,
-            )
+            if invoice_uid:
+                update_job_run(
+                    reference_uid=contract_uid,
+                    task_id=job_run_task_id,
+                    status=JobRunStatus.COMPLETED,
+                    completed_at=datetime.now(timezone.utc),
+                    result_uid=invoice_uid,
+                )
+            else:
+                logger.error(f"Unable to create invoice: for task {job_run_task_id}")
+                return
 
     except Exception as exc:
         update_job_run(

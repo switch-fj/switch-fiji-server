@@ -3,7 +3,7 @@ from typing import Optional
 from zoneinfo import ZoneInfo
 
 from dateutil.relativedelta import relativedelta
-from sqlmodel import Session, select, update
+from sqlmodel import Session, select
 
 from app.core.logger import setup_logger
 from app.database.celery import celery_dynamo_client
@@ -208,6 +208,7 @@ class BillingEngine:
     def generate_pdf(
         contract: Contract,
         result: tuple[Invoice, list[InvoiceMeterData], list[InvoiceLineItem]],
+        invoice_snapshots: list[InvoiceSnapshot],
         contract_settings: ContractSettings,
     ):
         invoice, meter_data, line_items = result
@@ -217,6 +218,7 @@ class BillingEngine:
             contract=contract,
             line_items=line_items,
             meter_data=meter_data,
+            invoice_snapshots=invoice_snapshots,
             contract_settings=contract_settings,
         )
 
@@ -255,8 +257,8 @@ class BillingEngine:
 
         readings = celery_dynamo_client.get_readings_for_billing_period(
             gateway_id=gateway_id,
-            snapshot_start=snapshot_start,
-            snapshot_end=snapshot_end,
+            period_start=snapshot_start,
+            period_end=snapshot_end,
         )
 
         if not readings:
@@ -336,6 +338,7 @@ class BillingEngine:
                 ]
             )
             session.commit()
+
         except Exception as e:
             session.rollback()
             logger.error(e)
@@ -360,6 +363,7 @@ class BillingEngine:
         ).scalar_one_or_none()
 
         if already_invoiced:
+            logger.warning("Invoice already exists!")
             return
 
         readings = celery_dynamo_client.get_readings_for_billing_period(
@@ -462,15 +466,10 @@ class BillingEngine:
                 )
             )
             session.commit()
-
-            pdf_bytes, key = BillingEngine.generate_pdf(
-                contract=contract,
-                contract_settings=contract_settings,
-                result=(new_invoice, invoice_meter_data, invoice_line_items),
-            )
-            BillingEngine.store_pdf_in_s3(pdf_bytes=pdf_bytes, key=key, invoice_ref=new_invoice.invoice_ref)
-            session.execute(update(Invoice).where(Invoice.uid == new_invoice.uid).values(pdf_s3_key=key))
-            session.commit()
-            return new_invoice.uid
+            session.refresh(new_invoice)
+            invoice_uid = new_invoice.uid
         except Exception:
             session.rollback()
+            raise
+
+        return invoice_uid

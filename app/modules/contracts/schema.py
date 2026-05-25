@@ -426,6 +426,7 @@ class ContractDetailsRespModel(DBModel):
     term_months: Optional[int] = None
     status: ContractDetailsStatus
     billing_frequency: Optional[ContractBillingFrequencyEnum] = None
+    weekly_billing_start_day: Optional[DayOfWeekEnum] = None
     implementation_period: Optional[int] = None
     signed_at: Optional[datetime] = None
     commissioned_at: Optional[datetime] = None

@@ -65,6 +65,34 @@ def compute_contract_invoice_on_auto(self, contract_uid, gateway_id, site_uid):
 
             commissioned_at = contract.details.actual_commissioned_at or contract.details.commissioned_at
 
+            # all_periods = BillingEngine.get_all_billing_periods(
+            #     commissioned_at=commissioned_at,
+            #     billing_frequency=contract.details.billing_frequency,
+            #     as_of=now_local,
+            #     weekly_billing_start_day=contract.details.weekly_billing_start_day,
+            # )
+
+            # for idx, (period_start, period_end) in enumerate(all_periods):
+            #     try:
+            #         logger.info(f"Processing period {period_start} -> {period_end}")
+
+            #         BillingEngine.handle_invoice_bill(
+            #             session=session,
+            #             contract=contract,
+            #             contract_settings=contract_settings,
+            #             devices=devices,
+            #             gateway_id=gateway_id,
+            #             period_start=period_start,
+            #             period_end=period_end,
+            #         )
+
+            #         logger.info("Completed period")
+
+            #     except Exception as exc:
+            #         logger.exception(
+            #             f"Failed processing period {period_start} -> {period_end}. Error: {exc}"
+            #         )
+
             period_start, period_end = BillingEngine.get_current_billing_period(
                 commissioned_at=commissioned_at,
                 billing_frequency=contract.details.billing_frequency,

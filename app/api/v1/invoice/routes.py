@@ -130,6 +130,12 @@ async def download_invoice_pdf(
 ):
     resp = await invoice_service.get_invoice_details_by_uid(invoice_uid=invoice_uid, token_payload=token_payload)
     invoice, contract, line_items, meter_data = resp
+    invoice_snapshots = await invoice_service.get_snapshots_by_period_range(
+        contract_uid=contract.uid,
+        token_payload=token_payload,
+        period_start_date=invoice.period_start_at,
+        period_end_date=invoice.period_end_at,
+    )
     presigned_url = ""
 
     if not invoice.pdf_s3_key:
@@ -137,6 +143,7 @@ async def download_invoice_pdf(
         pdf_bytes, key = BillingEngine.generate_pdf(
             contract=contract,
             result=(invoice, meter_data, line_items),
+            invoice_snapshots=invoice_snapshots,
             contract_settings=contract_settings,
         )
         BillingEngine.store_pdf_in_s3(pdf_bytes=pdf_bytes, key=key, invoice_ref=invoice.invoice_ref)
