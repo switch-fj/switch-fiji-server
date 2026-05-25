@@ -306,6 +306,42 @@ class InvoiceRepository:
 
         return items, next_cursor_out, prev_cursor_out
 
+    async def get_snapshots_by_contract_uid_and_period_range(
+        self,
+        contract_uid: UUID,
+        period_start_date: datetime,
+        period_end_date: datetime,
+    ):
+        """Retrieve a list of invoice snapshots for a contract within a particular period.
+
+        Ordered by snapshotted_at descending (most recent first).
+
+        Args:
+            contract_uid: The UUID of the contract whose snapshots to retrieve.
+            period_start_date: Start date of the invoice snapshot.
+            period_end_date: End date of the invoice snapshot.
+
+        Returns:
+            A list of invoice snapshots.
+        """
+        statement = (
+            select(InvoiceSnapshot)
+            .options(
+                joinedload(InvoiceSnapshot.line_items),
+                joinedload(InvoiceSnapshot.meter_data),
+            )
+            .where(
+                InvoiceSnapshot.contract_uid == contract_uid,
+                InvoiceSnapshot.period_start_at >= period_start_date,
+                InvoiceSnapshot.period_start_at <= period_end_date,
+            )
+            .order_by(InvoiceSnapshot.snapshotted_at.asc())
+        )
+
+        result = await self.session.exec(statement=statement)
+
+        return result
+
     async def update_pdf_s3_key(self, invoice_uid: UUID, key: str) -> None:
         """Update the pdf_s3_key field for an invoice after PDF upload.
 

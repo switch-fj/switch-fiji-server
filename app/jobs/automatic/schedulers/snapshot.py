@@ -81,6 +81,38 @@ def compute_contract_invoice_snapshot_on_auto(self, contract_uid, gateway_id, si
                 tzinfo=timezone.utc,
             )
 
+            # commissioned_at = (
+            #     contract.details.actual_commissioned_at
+            #     or contract.details.commissioned_at
+            # )
+            # all_periods = BillingEngine.get_all_billing_periods(
+            #     commissioned_at=commissioned_at,
+            #     billing_frequency="daily",
+            #     as_of=now_utc,
+            #     weekly_billing_start_day=contract.details.weekly_billing_start_day,
+            # )
+
+            # for idx, (period_start, period_end) in enumerate(all_periods):
+            #     try:
+            #         logger.info(f" {idx}: {period_start} -> {period_end}")
+
+            #         BillingEngine.handle_invoice_snapshot_bill(
+            #             session=session,
+            #             contract=contract,
+            #             contract_settings=contract_settings,
+            #             devices=devices,
+            #             gateway_id=gateway_id,
+            #             snapshot_start=period_start,
+            #             snapshot_end=period_end,
+            #         )
+
+            #         logger.info("Completed period")
+
+            #     except Exception as exc:
+            #         logger.exception(
+            #             f"Failed processing period: {idx} -> {period_start} -> {period_end}. Error: {exc}"
+            #         )
+
             try:
                 logger.info(f" {snapshot_start} -> {snapshot_end}")
 
