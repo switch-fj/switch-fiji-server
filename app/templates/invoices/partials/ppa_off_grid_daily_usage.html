@@ -4,20 +4,33 @@
             <tr>
                 <th>Dates</th>
                 <th>Days</th>
-                <th>Solar Day usage</th>
-                <th>Solar Night usage</th>
+                <th>Solar Day usage (kwh)</th>
+                <th>Solar Night usage (kwh)</th>
             </tr>
         </thead>
         <tbody>
-            {% for datum in ppa_off_grid_daily_data %}
+            {% for datum in ppa_off_grid_daily_usage.meter %}
             <tr>
-                <td>{{ datum.dates }}</td>
+                <td>{{ datum.date }}</td>
                 <td>{{ datum.day }}</td>
-                <td>{{ datum.day_end_usage }}</td>
-                <td>{{ datum.night_end_usage }}</td>
-                <td>{{ datum.usage }}</td>
+                <td>{{ datum.meter_data.day_usage }}</td>
+                <td>{{ datum.meter_data.night_usage }}</td>
             </tr>
             {% endfor %}
+
+            <tr>
+                <td></td>
+                <td>Total</td>
+                <td>{{ ppa_off_grid_daily_usage.day_item.total }}</td>
+                <td>{{ ppa_off_grid_daily_usage.night_item.total }}</td>
+            </tr>
+
+            <tr class="total-row">
+                <td></td>
+                <td>Bill</td>
+                <td>$ {{ ppa_off_grid_daily_usage.day_item.amount }} {{ currency }}</td>
+                <td>$ {{ ppa_off_grid_daily_usage.night_item.amount }} {{ currency }}</td>
+            </tr>
         </tbody>
     </table>
 </div>

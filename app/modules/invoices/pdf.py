@@ -8,6 +8,7 @@ from zoneinfo import ZoneInfo
 
 import matplotlib
 import matplotlib.pyplot as plt
+import numpy as np
 from jinja2 import Environment, FileSystemLoader
 from weasyprint import CSS
 
@@ -20,7 +21,7 @@ from app.modules.invoices.model import (
     InvoiceMeterData,
     InvoiceSnapshot,
 )
-from app.modules.invoices.schema import InvoiceMeterLabelEnum
+from app.modules.invoices.schema import InvoiceLineItemEnum, InvoiceMeterLabelEnum
 from app.modules.settings.model import ContractSettings
 from app.shared.schema import DateFormatEnum, TimeFormatEnum
 from app.templates.libs.context import get_template_context
@@ -50,7 +51,14 @@ def fetch_logo_base64() -> str:
 class InvoicePDF:
     """Utility class for rendering invoice data into a PDF via Jinja2 and WeasyPrint."""
 
-    def _fmt_date(self, dt: datetime, date_fmt: str, time_fmt: str, show_time: bool = False) -> str:
+    @staticmethod
+    def _fmt_date(
+        dt: datetime,
+        date_fmt: str,
+        time_fmt: str,
+        show_time: bool = False,
+        show_year: bool = True,
+    ) -> str:
         """Format a datetime object according to the configured date and time format settings.
 
         Args:
@@ -63,8 +71,8 @@ class InvoicePDF:
             A formatted date (and optionally time) string.
         """
         date_formats = {
-            DateFormatEnum.DMY: "%-d %b %Y",
-            DateFormatEnum.MDY: "%b %-d %Y",
+            DateFormatEnum.DMY: "%-d %b %Y" if show_year else "%-d %b",
+            DateFormatEnum.MDY: "%b %-d %Y" if show_year else "%b %-d",
         }
         time_formats = {
             TimeFormatEnum.TWELVE: "%I:%M %p",
@@ -78,7 +86,8 @@ class InvoicePDF:
 
         return dt.strftime(fmt)
 
-    def _fmt_decimal(self, value) -> str:
+    @staticmethod
+    def _fmt_decimal(value) -> str:
         """Format a numeric value as a trimmed decimal string (trailing zeros removed).
 
         Args:
@@ -89,8 +98,8 @@ class InvoicePDF:
         """
         return f"{Decimal(str(value)).quantize(Decimal('0.01'))}"
 
+    @staticmethod
     def _render_pie_chart_base64(
-        self,
         labels: list[str],
         values: list[float],
         title: Optional[str] = "",
@@ -116,15 +125,21 @@ class InvoicePDF:
         pie_chart = f"data:image/png;base64,{b64}"
         return pie_chart
 
+    @staticmethod
     def _get_ppa_off_grid_daily_usage(
-        self,
         invoice_snapshots: list[InvoiceSnapshot],
+        line_items: list[InvoiceLineItem],
         date_fmt: str,
         time_fmt: str,
     ):
         data = [
             {
-                "date": self._fmt_date(dt=item.period_start_at, date_fmt=date_fmt, time_fmt=time_fmt),
+                "date": InvoicePDF._fmt_date(
+                    dt=item.period_start_at,
+                    date_fmt=date_fmt,
+                    time_fmt=time_fmt,
+                    show_year=False,
+                ),
                 "day": f"Day {idx + 1}",
                 "meter_data": {
                     k: v
@@ -144,7 +159,93 @@ class InvoicePDF:
             for idx, item in enumerate(invoice_snapshots)
         ]
 
-        return data
+        targets = {
+            InvoiceLineItemEnum.OFF_SOLAR_ENERGY_SUPPLIED.value: "night",
+            InvoiceLineItemEnum.ON_SOLAR_ENERGY_SUPPLIED.value: "day",
+        }
+
+        lines = {
+            targets[item.description]: {"total": item.energy_kwh, "amount": item.amount}
+            for item in line_items
+            if item.description in targets
+        }
+
+        night_item = lines.get("night")
+        day_item = lines.get("day")
+
+        return {"meter": data, "day_item": day_item, "night_item": night_item}
+
+    @staticmethod
+    def _render_bar_chart_base64(
+        daily: dict,
+    ) -> str:
+
+        dates = list(daily.keys())
+        series_keys = ["gen_night", "gen_day", "solar_night", "solar_day"]
+        series_labels = ["Gen Night", "Gen Day", "Solar Night", "Solar Day"]
+        colors = ["#00CA47", "#FA4F19", "#024159", "#00AEEF"]
+
+        x = np.arange(len(dates))
+        bar_width = 0.2
+        offsets = [-1.5, -0.5, 0.5, 1.5]
+
+        fig, ax = plt.subplots(figsize=(7.17, 4), dpi=300)
+
+        for i, (key, label, color) in enumerate(zip(series_keys, series_labels, colors)):
+            values = [daily[date][key] for date in dates]
+            ax.bar(x + offsets[i] * bar_width, values, bar_width, label=label, color=color)
+
+        ax.set_xlabel("Date")
+        ax.set_ylabel("kWh")
+        ax.set_xticks(x)
+        ax.set_xticklabels(dates, rotation=45, ha="right", fontsize=8)
+        ax.legend(loc="upper right", fontsize=8)
+        ax.yaxis.grid(True, linestyle="--", alpha=0.5)
+        ax.set_axisbelow(True)
+        fig.tight_layout()
+
+        buf = io.BytesIO()
+        fig.savefig(buf, format="png", bbox_inches="tight", transparent=True)
+        plt.close(fig)
+        buf.seek(0)
+
+        return f"data:image/png;base64,{base64.b64encode(buf.read()).decode()}"
+
+    @staticmethod
+    def _get_ppa_off_grid_bar_chart_data(
+        invoice_snapshots: list[InvoiceSnapshot], date_fmt: str, time_fmt: str
+    ) -> dict:
+        label_map = {
+            InvoiceMeterLabelEnum.GEN_METER_NIGHT.value: "gen_night",
+            InvoiceMeterLabelEnum.GEN_METER_DAY.value: "gen_day",
+            InvoiceMeterLabelEnum.SITE_METER_NIGHT.value: "solar_night",
+            InvoiceMeterLabelEnum.SITE_METER_DAY.value: "solar_day",
+        }
+
+        daily = {}
+
+        for snapshot in invoice_snapshots:
+            day_label = InvoicePDF._fmt_date(
+                snapshot.period_start_at,
+                date_fmt=date_fmt,
+                time_fmt=time_fmt,
+                show_year=False,
+            )
+
+            if day_label not in daily:
+                daily[day_label] = {
+                    "gen_night": 0,
+                    "gen_day": 0,
+                    "solar_night": 0,
+                    "solar_day": 0,
+                }
+
+            for meter in snapshot.meter_data:
+                series = label_map.get(meter.label)
+                if series:
+                    daily[day_label][series] += float(meter.usage)
+
+        return daily
 
     @classmethod
     def render_invoice_pdf(
@@ -185,7 +286,7 @@ class InvoicePDF:
         chart_values = [float(datum.usage) for datum in meter_data if datum.usage]
 
         usage_pie_chart = (
-            InvoicePDF._render_pie_chart_base64(
+            cls._render_pie_chart_base64(
                 labels=chart_labels,
                 values=chart_values,
             )
@@ -194,8 +295,17 @@ class InvoicePDF:
         )
 
         ppa_off_grid_daily_usage = cls._get_ppa_off_grid_daily_usage(
-            invoice_snapshots=invoice_snapshots, date_fmt=date_fmt, time_fmt=time_fmt
+            invoice_snapshots=invoice_snapshots,
+            line_items=line_items,
+            date_fmt=date_fmt,
+            time_fmt=time_fmt,
         )
+        ppa_off_grid_daily_bar_chart_dict = cls._get_ppa_off_grid_bar_chart_data(
+            invoice_snapshots=invoice_snapshots,
+            date_fmt=date_fmt,
+            time_fmt=time_fmt,
+        )
+        ppa_off_grid_bar_chart = cls._render_bar_chart_base64(ppa_off_grid_daily_bar_chart_dict)
 
         context = {
             "base64_logo": fetch_logo_base64(),
@@ -242,6 +352,7 @@ class InvoicePDF:
             ],
             "usage_pie_chart": usage_pie_chart,
             "ppa_off_grid_daily_usage": ppa_off_grid_daily_usage,
+            "ppa_off_grid_bar_chart": ppa_off_grid_bar_chart,
         }
 
         html_content = _env.get_template("invoice.html").render(get_template_context(**context))

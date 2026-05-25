@@ -8,7 +8,20 @@
 
 @page {
     size: A4;
-    margin: 12mm 14mm;
+    margin-top: 30mm;
+    margin-right: 14mm;
+    margin-bottom: 20mm;
+    margin-left: 14mm;
+
+    @top-center {
+        content: element(page-header);
+        width: 100%;
+    }
+
+    @bottom-center {
+        content: element(page-footer);
+        width: 100%;
+    }
 }
 
 body {
@@ -19,18 +32,12 @@ body {
     line-height: 1.5;
 }
 
-.card {
-    background: #ffffff;
-    border-radius: 16px;
-    border: 1px solid #e8edf2;
-    padding: 32px 36px;
-}
-
 .header {
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
     margin-bottom: 8px;
+    position: running(page-header);
 }
 
 .logo {
@@ -119,6 +126,15 @@ tr {
 
 .chart-section {
     page-break-inside: avoid;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+}
+
+.chart-section .bar-chart {
+    width: 100%;
+    max-width: 100%;
 }
 
 .items-table {
@@ -318,7 +334,7 @@ tr {
     text-align: right;
 }
 
-.ppa-off-grid-daily-usage-section{
+.new-page{
     page-break-before: always;
 }
 
@@ -327,4 +343,5 @@ tr {
     text-align: center;
     font-size: 9px;
     color: #aaa;
+    position: running(page-footer);
 }

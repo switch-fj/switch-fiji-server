@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
 </head>
 <body>
-<div class="card">
+    {% include "partials/footer.html" %}
     <div class="header">
         <div class="logo-block">
             <div class="logo">
@@ -33,7 +33,6 @@
             </table>
         </div>
     </div>
-
     <hr class="divider" />
 
     {% include "partials/ppa_line_items.html" %}
@@ -49,13 +48,20 @@
 
     {% include "partials/meter_data.html" %}
 
-    {% if ppa_off_grid_daily_usage %}
-    <div>
+    <div class="new-page">
+        {% if ppa_off_grid_daily_usage %}
         {% include "partials/ppa_off_grid_daily_usage.html" %}
-    </div>
-    {% endif %}
+        {% endif %}
 
-    {% include "partials/footer.html" %}
-</div>
+        {% if ppa_off_grid_bar_chart %}
+        <section class="chart-section">
+            <h3>Daily usage bar chart</h3>
+            <img class="bar-chart" src="{{ ppa_off_grid_bar_chart }}" alt="Bar chart of daily gen and solar usage" />
+        </section>
+        {% endif %}
+    </div>
+
+    
+
 </body>
 </html>
