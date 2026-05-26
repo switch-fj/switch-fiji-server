@@ -111,7 +111,7 @@ class InvoicePDF:
         if total == 0:
             return ""
 
-        fig, ax = plt.subplots(figsize=(6, 3.5), dpi=300)
+        fig, ax = plt.subplots(figsize=(7, 4), dpi=300)
         ax.set_aspect("equal")
         ax.axis("off")
 
@@ -151,7 +151,7 @@ class InvoicePDF:
                 f"{value:.1f} kWh\n({pct:.1f}%)",
                 ha=ha,
                 va="center",
-                fontsize=6,
+                fontsize=8,
                 fontweight="bold",
                 color=color,
             )
@@ -166,7 +166,7 @@ class InvoicePDF:
             handles=legend_handles,
             loc="center left",
             bbox_to_anchor=(1.0, 0.5),
-            fontsize=7,
+            fontsize=8,
             frameon=False,
         )
 
