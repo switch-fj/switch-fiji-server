@@ -39,12 +39,17 @@
 
     <hr class="divider" />
 
-    {% if usage_pie_chart %}
+    
     <section class="chart-section">
-        <h3>Usage Breakdown</h3>
-        <img src="{{ usage_pie_chart }}" alt="Pie chart of Day, Night usage" />
+        {% if day_pie_chart_usage %}
+        <img class="donut-chart" src="{{ day_pie_chart_usage }}" alt="Pie chart of Day usage" />
+        {% endif %}
+
+        {% if night_pie_chart_usage %}
+        <img class="donut-chart" src="{{ night_pie_chart_usage }}" alt="Pie chart of Night usage" />
+        {% endif %}
     </section>
-    {% endif %}
+
 
     {% include "partials/meter_data.html" %}
 
@@ -55,7 +60,6 @@
 
         {% if ppa_off_grid_bar_chart %}
         <section class="chart-section">
-            <h3>Daily usage bar chart</h3>
             <img class="bar-chart" src="{{ ppa_off_grid_bar_chart }}" alt="Bar chart of daily gen and solar usage" />
         </section>
         {% endif %}

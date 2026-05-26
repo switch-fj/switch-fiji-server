@@ -7,6 +7,7 @@ from typing import Optional
 from zoneinfo import ZoneInfo
 
 import matplotlib
+import matplotlib.patches as mpatches
 import matplotlib.pyplot as plt
 import numpy as np
 from jinja2 import Environment, FileSystemLoader
@@ -99,31 +100,87 @@ class InvoicePDF:
         return f"{Decimal(str(value)).quantize(Decimal('0.01'))}"
 
     @staticmethod
-    def _render_pie_chart_base64(
+    def _render_donut_chart_base64(
         labels: list[str],
         values: list[float],
         title: Optional[str] = "",
     ) -> str:
-        """Render a pie chart and return it as a base64 PNG data URI."""
-        fig, ax = plt.subplots(figsize=(3.5, 3), dpi=300)
-        ax.pie(
-            values,
-            labels=labels,
-            autopct="%1.1f%%",
-            startangle=180,
+        """Render a donut chart with outside labels and leader lines."""
+        colors = ["#00CA47", "#FA4F19", "#024159", "#00AEEF"]
+        total = sum(values)
+        if total == 0:
+            return ""
+
+        fig, ax = plt.subplots(figsize=(6, 3.5), dpi=300)
+        ax.set_aspect("equal")
+        ax.axis("off")
+
+        gap_deg = 3
+        inner_r = 0.55
+        outer_r = 1.0
+        label_r = 1.35
+        line_r = 1.12
+
+        start_angle = 180.0
+        legend_handles = []
+
+        for value, color, label in zip(values, colors[: len(values)], labels):
+            sweep = (value / total) * 360 - gap_deg
+            end_angle = start_angle + sweep
+            mid_angle = (start_angle + end_angle) / 2
+
+            theta = np.linspace(np.radians(start_angle), np.radians(end_angle), 60)
+            outer_x = np.append(outer_r * np.cos(theta), inner_r * np.cos(theta[::-1]))
+            outer_y = np.append(outer_r * np.sin(theta), inner_r * np.sin(theta[::-1]))
+            ax.fill(outer_x, outer_y, color=color)
+
+            mid_rad = np.radians(mid_angle)
+            x0 = outer_r * np.cos(mid_rad)
+            y0 = outer_r * np.sin(mid_rad)
+            x1 = line_r * np.cos(mid_rad)
+            y1 = line_r * np.sin(mid_rad)
+            ax.plot([x0, x1], [y0, y1], color=color, linewidth=0.8)
+
+            xl = label_r * np.cos(mid_rad)
+            yl = label_r * np.sin(mid_rad)
+            ha = "left" if xl >= 0 else "right"
+            pct = (value / total) * 100
+            ax.text(
+                xl,
+                yl,
+                f"{value:.1f} kWh\n({pct:.1f}%)",
+                ha=ha,
+                va="center",
+                fontsize=6,
+                fontweight="bold",
+                color=color,
+            )
+
+            legend_handles.append(mpatches.Patch(color=color, label=label))
+            start_angle = end_angle + gap_deg
+
+        ax.set_xlim(-2.0, 2.0)
+        ax.set_ylim(-1.6, 1.6)
+
+        ax.legend(
+            handles=legend_handles,
+            loc="center left",
+            bbox_to_anchor=(1.0, 0.5),
+            fontsize=7,
+            frameon=False,
         )
+
         if title:
-            ax.set_title(title)
-        ax.axis("equal")
+            ax.set_title(title, fontsize=9, fontweight="bold", pad=10)
+
+        fig.tight_layout()
 
         buf = io.BytesIO()
         fig.savefig(buf, format="png", bbox_inches="tight", transparent=True)
         plt.close(fig)
         buf.seek(0)
-        b64 = base64.b64encode(buf.read()).decode()
 
-        pie_chart = f"data:image/png;base64,{b64}"
-        return pie_chart
+        return f"data:image/png;base64,{base64.b64encode(buf.read()).decode()}"
 
     @staticmethod
     def _get_ppa_off_grid_daily_usage(
@@ -176,30 +233,57 @@ class InvoicePDF:
         return {"meter": data, "day_item": day_item, "night_item": night_item}
 
     @staticmethod
-    def _render_bar_chart_base64(
-        daily: dict,
-    ) -> str:
-
+    def _render_bar_chart_base64(daily: dict, title: str = "") -> str:
         dates = list(daily.keys())
         series_keys = ["gen_night", "gen_day", "solar_night", "solar_day"]
         series_labels = ["Gen Night", "Gen Day", "Solar Night", "Solar Day"]
         colors = ["#00CA47", "#FA4F19", "#024159", "#00AEEF"]
 
         x = np.arange(len(dates))
-        bar_width = 0.2
-        offsets = [-1.5, -0.5, 0.5, 1.5]
+        bar_width = 0.5
 
         fig, ax = plt.subplots(figsize=(7.17, 4), dpi=300)
 
-        for i, (key, label, color) in enumerate(zip(series_keys, series_labels, colors)):
-            values = [daily[date][key] for date in dates]
-            ax.bar(x + offsets[i] * bar_width, values, bar_width, label=label, color=color)
+        bottoms = np.zeros(len(dates))
 
-        ax.set_xlabel("Date")
-        ax.set_ylabel("kWh")
+        for key, label, color in zip(series_keys, series_labels, colors):
+            values = np.array([daily[date][key] for date in dates])
+            bars = ax.bar(
+                x,
+                values,
+                bar_width,
+                bottom=bottoms,
+                label=label,
+                color=color,
+            )
+
+            for bar, val in zip(bars, values):
+                if val > 0:
+                    ax.text(
+                        bar.get_x() + bar.get_width() / 2,
+                        bar.get_y() + bar.get_height() / 2,
+                        f"{val:.1f}",
+                        ha="center",
+                        va="center",
+                        fontsize=6,
+                        color="white",
+                        fontweight="bold",
+                    )
+
+            bottoms += values
+
+        ax.set_title(title, fontsize=8, fontweight="bold", pad=10)
         ax.set_xticks(x)
-        ax.set_xticklabels(dates, rotation=45, ha="right", fontsize=8)
-        ax.legend(loc="upper right", fontsize=8)
+        ax.set_xticklabels(dates, rotation=0, ha="center", fontsize=6, color="#1D1D1D")
+        ax.set_yticks(ax.get_yticks())
+        ax.set_yticklabels([f"{int(y)} kWh" for y in ax.get_yticks()], fontsize=6, color="#1D1D1D")
+        ax.legend(
+            ncol=4,
+            columnspacing=2.0,
+            loc="upper center",
+            fontsize=6,
+            labelcolor="#1D1D1D",
+        )
         ax.yaxis.grid(True, linestyle="--", alpha=0.5)
         ax.set_axisbelow(True)
         fig.tight_layout()
@@ -282,15 +366,50 @@ class InvoicePDF:
         currency = contract.currency
         ppa_off_grid_daily_usage = None
 
-        chart_labels = [datum.label for datum in meter_data if datum.usage]
-        chart_values = [float(datum.usage) for datum in meter_data if datum.usage]
+        pie_chart_data = {
+            "day": [
+                {"label": "Solar day", "usage": 0},
+                {"label": "Gen day", "usage": 0},
+            ],
+            "night": [
+                {"label": "Solar night", "usage": 0},
+                {"label": "Gen night", "usage": 0},
+            ],
+        }
 
-        usage_pie_chart = (
-            cls._render_pie_chart_base64(
-                labels=chart_labels,
-                values=chart_values,
+        for datum in meter_data:
+            if datum.label == InvoiceMeterLabelEnum.GEN_METER_DAY.value:
+                pie_chart_data["day"][1]["usage"] = datum.usage
+            elif datum.label == InvoiceMeterLabelEnum.GEN_METER_NIGHT.value:
+                pie_chart_data["night"][1]["usage"] = datum.usage
+            elif datum.label == InvoiceMeterLabelEnum.SITE_METER_DAY.value:
+                pie_chart_data["day"][0]["usage"] = datum.usage
+            elif datum.label == InvoiceMeterLabelEnum.SITE_METER_NIGHT.value:
+                pie_chart_data["night"][0]["usage"] = datum.usage
+
+        day_chart_labels = [item["label"] for item in pie_chart_data["day"]]
+        day_chart_values = [float(item["usage"]) for item in pie_chart_data["day"]]
+
+        night_chart_labels = [item["label"] for item in pie_chart_data["night"]]
+        night_chart_values = [float(item["usage"]) for item in pie_chart_data["night"]]
+
+        day_pie_chart_usage = (
+            cls._render_donut_chart_base64(
+                labels=day_chart_labels,
+                values=day_chart_values,
+                title="Total Day consumption",
             )
-            if chart_values
+            if any(v > 0 for v in day_chart_values)
+            else None
+        )
+
+        night_pie_chart_usage = (
+            cls._render_donut_chart_base64(
+                labels=night_chart_labels,
+                values=night_chart_values,
+                title="Total Night consumption",
+            )
+            if any(v > 0 for v in night_chart_values)
             else None
         )
 
@@ -305,7 +424,9 @@ class InvoicePDF:
             date_fmt=date_fmt,
             time_fmt=time_fmt,
         )
-        ppa_off_grid_bar_chart = cls._render_bar_chart_base64(ppa_off_grid_daily_bar_chart_dict)
+        ppa_off_grid_bar_chart = cls._render_bar_chart_base64(
+            daily=ppa_off_grid_daily_bar_chart_dict, title="Billing Period usage"
+        )
 
         context = {
             "base64_logo": fetch_logo_base64(),
@@ -350,7 +471,8 @@ class InvoicePDF:
                 }
                 for meter in meter_data
             ],
-            "usage_pie_chart": usage_pie_chart,
+            "day_pie_chart_usage": day_pie_chart_usage,
+            "night_pie_chart_usage": night_pie_chart_usage,
             "ppa_off_grid_daily_usage": ppa_off_grid_daily_usage,
             "ppa_off_grid_bar_chart": ppa_off_grid_bar_chart,
         }
