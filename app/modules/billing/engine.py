@@ -253,6 +253,7 @@ class BillingEngine:
         ).scalar_one_or_none()
 
         if existing_snapshot:
+            logger.warning("Invoice snapshot already exists!")
             return
 
         readings = celery_dynamo_client.get_readings_for_billing_period(
