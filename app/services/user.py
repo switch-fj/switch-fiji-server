@@ -20,15 +20,19 @@ from app.core.logger import setup_logger
 from app.database.redis import async_redis_client
 from app.jobs.on_demand.schedulers.auth import (
     send_email_verification_task,
+    send_password_reset_task,
     send_verify_login_task,
 )
 from app.modules.users.repository import UserRepository, get_user_repo
 from app.modules.users.schema import CreateUserModel
 from app.shared.schema import (
     AuthType,
+    ChangePwdModel,
     EmailModel,
     IdentityLoginModel,
+    SetPwdModel,
     TokenModel,
+    UpdateIdentityPwdModel,
     UserResponseModel,
     VerifyLoginModel,
 )
@@ -56,6 +60,16 @@ class UserService:
         send_email_verification_task.delay(
             email=email,
             verification_url=verification_url,
+        )
+
+    async def _initiate_pwd_reset_task(self, email: str):
+        token_payload = {"email": email}
+        email_token = await Authentication.create_url_safe_token(data=token_payload, url_type="pwd_reset")
+        verification_url = f"{get_request_origin()}/auth/pwd-reset?token={email_token}"
+
+        send_password_reset_task.delay(
+            email=email,
+            reset_url=verification_url,
         )
 
     async def get_current_user(self, token_payload: dict):
@@ -247,6 +261,46 @@ class UserService:
         except Exception as e:
             logger.error(f"Error generating new access token: {e}")
             raise
+
+    async def forget_pwd(self, payload: EmailModel):
+        user = await self.user_repo.get_user_by_mail(payload.email)
+
+        if not user:
+            return True
+
+        await self._initiate_pwd_reset_task(user.email)
+
+        return True
+
+    async def reset_pwd(self, token: str, payload: SetPwdModel):
+        data = await Authentication.decode_url_safe_token(token=token, url_type="pwd_reset")
+
+        user = await self.user_repo.get_user_by_mail(data.get("email"))
+
+        if not user:
+            raise InvalidToken()
+
+        pwd_hash = await Authentication.generate_password_hash(password=payload.new_password)
+        await self.user_repo.update_pwd(user=user, data=UpdateIdentityPwdModel(password=pwd_hash))
+
+        return True
+
+    async def change_pwd(self, token_payload: dict, payload: ChangePwdModel):
+        token_user = token_payload.get("user")
+        user_uid = token_user.get("uid")
+
+        user = await self.user_repo.get_user_by_uid(user_uid=user_uid)
+
+        if not user:
+            raise NotFound("User not found.")
+
+        if not await Authentication.verify_password(password=payload.old_password, hash=user.password_hash):
+            raise WrongCredentials()
+
+        pwd_hash = await Authentication.generate_password_hash(password=payload.new_password)
+        await self.user_repo.update_pwd(user=user, data=UpdateIdentityPwdModel(password=pwd_hash))
+
+        return True
 
     async def get_users(
         self,

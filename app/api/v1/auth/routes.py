@@ -9,10 +9,12 @@ from app.modules.users.schema import CreateUserModel
 from app.services.user import UserService, get_user_service
 from app.shared.schema import (
     AuthType,
+    ChangePwdModel,
     EmailModel,
     IdentityLoginModel,
     IdentityTypeEnum,
     ServerRespModel,
+    SetPwdModel,
     TokenModel,
     UserResponseModel,
     UserRoleEnum,
@@ -106,6 +108,59 @@ async def verify_login_code(
         Authentication.set_refresh_token_cookie(response=response, jti=refresh_jti)
 
     return response
+
+
+@auth_router.post(
+    "/forgot-pwd",
+    status_code=status.HTTP_202_ACCEPTED,
+    response_model=ServerRespModel[bool],
+)
+async def forgot_pwd(
+    payload: EmailModel,
+    user_service: UserService = Depends(get_user_service),
+):
+    resp = await user_service.forget_pwd(payload=payload)
+
+    return ServerRespModel[bool](
+        data=True,
+        message=resp,
+    )
+
+
+@auth_router.post(
+    "/pwd-reset/{token}",
+    status_code=status.HTTP_202_ACCEPTED,
+    response_model=ServerRespModel[bool],
+)
+async def reset_pwd(
+    token: str,
+    payload: SetPwdModel,
+    user_service: UserService = Depends(get_user_service),
+):
+    resp = await user_service.reset_pwd(token=token, payload=payload)
+
+    return ServerRespModel[bool](
+        data=True,
+        message=resp,
+    )
+
+
+@auth_router.patch(
+    "/change-pwd",
+    status_code=status.HTTP_202_ACCEPTED,
+    response_model=ServerRespModel[bool],
+)
+async def change_pwd(
+    payload: ChangePwdModel,
+    user_service: UserService = Depends(get_user_service),
+    token_payload: TokenModel = Depends(AccessTokenBearer(required_identity=[IdentityTypeEnum.USER.value])),
+):
+    resp = await user_service.change_pwd(token_payload=token_payload, payload=payload)
+
+    return ServerRespModel[bool](
+        data=True,
+        message=resp,
+    )
 
 
 @auth_router.post(
