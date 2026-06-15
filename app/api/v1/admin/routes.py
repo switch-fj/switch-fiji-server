@@ -12,9 +12,11 @@ from app.database.redis import async_redis_client
 from app.modules.clients.schema import ClientRespModel, CreateClientModel
 from app.modules.contracts.schema import EnergyPortfolioRespModel
 from app.modules.sites.schema import CreateSiteModel, SiteRespModel
+from app.modules.users.schema import UsersRespModel
 from app.services.client import ClientService, get_client_service
 from app.services.contract import ContractService, get_contract_service
 from app.services.sites import SiteService, get_site_service
+from app.services.user import UserService, get_user_service
 from app.shared.schema import (
     CursorPaginationModel,
     PaginatedRespModel,
@@ -142,3 +144,23 @@ async def get_portfolio_stats(
     resp = await contract_service.energy_portfolio()
     await async_redis_client.set_energy_portfolio(data=resp.model_dump_json())
     return ServerRespModel[EnergyPortfolioRespModel](data=resp, message="Energy portfolio retrieved")
+
+
+@admin_router.get(
+    "/users",
+    status_code=status.HTTP_200_OK,
+    response_model=ServerRespModel[PaginatedRespModel[UsersRespModel, CursorPaginationModel]],
+)
+async def users(
+    q: Optional[str] = Query(default=None),
+    limit: int = Query(default=Config.DEFAULT_PAGE_LIMIT),
+    next_cursor: Optional[str] = Query(default=None),
+    prev_cursor: Optional[str] = Query(default=None),
+    user_service: UserService = Depends(get_user_service),
+    _: dict = Depends(AdminAccessBearer()),
+):
+    result = await user_service.get_users(q=q, limit=limit, next_cursor=next_cursor, prev_cursor=prev_cursor)
+
+    return ServerRespModel[PaginatedRespModel[UsersRespModel, CursorPaginationModel]](
+        data=result, message="users retrieved"
+    )
