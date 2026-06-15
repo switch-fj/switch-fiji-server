@@ -1,10 +1,13 @@
 import asyncio
+from typing import Optional
 from uuid import UUID
 
 from fastapi import Depends
 
 from app.core.auth import Authentication
+from app.core.config import Config
 from app.core.exceptions import (
+    BadRequest,
     InActive,
     InvalidToken,
     NotFound,
@@ -244,6 +247,20 @@ class UserService:
         except Exception as e:
             logger.error(f"Error generating new access token: {e}")
             raise
+
+    async def get_users(
+        self,
+        q: Optional[str],
+        limit: int = Config.DEFAULT_PAGE_LIMIT,
+        next_cursor: Optional[str] = None,
+        prev_cursor: Optional[str] = None,
+    ):
+        if next_cursor and prev_cursor:
+            raise BadRequest("Provide either next_cursor or prev_cursor, not both")
+
+        result = await self.user_repo.get_all_users(q=q, limit=limit, next_cursor=next_cursor, prev_cursor=prev_cursor)
+
+        return result
 
 
 def get_user_service(user_repo: UserRepository = Depends(get_user_repo)):

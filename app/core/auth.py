@@ -48,7 +48,7 @@ class Authentication:
     serializer: URLSafeTimedSerializer = URLSafeTimedSerializer(secret_key=Config.JWT_SECRET, salt=Config.EMAIL_SALT)
 
     @staticmethod
-    def generate_otp(length: int = 6) -> str:
+    def generate_otp(length: int = 6, number_only: bool = False) -> str:
         """Generate a random OTP string of uppercase letters and digits.
 
         Args:
@@ -57,7 +57,12 @@ class Authentication:
         Returns:
             A random alphanumeric OTP string.
         """
-        alphabet = string.ascii_uppercase + string.digits
+        alphabet = ""
+        if number_only:
+            alphabet = string.digits
+        else:
+            alphabet = string.ascii_uppercase + string.digits
+
         return "".join(secrets.choice(alphabet) for _ in range(length))
 
     @staticmethod

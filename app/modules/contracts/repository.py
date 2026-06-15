@@ -8,14 +8,12 @@ from sqlalchemy.orm import joinedload, selectinload
 from sqlmodel import func, select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
-from app.core.auth import Authentication
 from app.core.logger import setup_logger
 from app.database.postgres import get_session
 from app.modules.clients.model import Client
 from app.modules.contracts.model import Contract, ContractDetails
 from app.modules.contracts.schema import (
     CreateContractDetailsModel,
-    CreateContractModel,
     EnergyPortfolioRespModel,
 )
 from app.modules.invoices.model import (
@@ -38,20 +36,6 @@ class ContractRepository:
             session: An async SQLAlchemy session used for all database operations.
         """
         self.session = session
-
-    def _build_contract_ref(self, name: str):
-        """Generate a unique contract reference string from the contract type name.
-
-        Args:
-            name: The contract type name (e.g. "PPA" or "Lease") used to derive the prefix.
-
-        Returns:
-            A formatted contract reference string such as "PC-2025-AB1C2D".
-        """
-        prefix = f"{name.upper()[0]}C"
-        current_year = str(datetime.now().year)
-
-        return f"{prefix}-{current_year}-{Authentication.generate_otp()}"
 
     async def get_contract_by_uid(self, contract_uid: UUID):
         """Fetch a contract with its associated client, site, and details by UUID.
@@ -167,7 +151,7 @@ class ContractRepository:
         result = await self.session.exec(statement)
         return result.first()
 
-    async def create_contract(self, user_uid: UUID, data: CreateContractModel):
+    async def create_contract(self, user_uid: UUID, data: Contract):
         """Create and persist a new contract record.
 
         Args:
@@ -177,16 +161,11 @@ class ContractRepository:
         Returns:
             The newly created Contract ORM instance, or None if an error occurs.
         """
-        data_dict = data.model_dump()
-        data_dict["user_uid"] = user_uid
-        data_dict["contract_ref"] = self._build_contract_ref(name=data.contract_type)
-        new_contract = Contract(**data_dict)
-
         try:
-            self.session.add(new_contract)
+            self.session.add(data)
             await self.session.commit()
 
-            return new_contract
+            return data
         except Exception as e:
             await self.session.rollback()
             logger.error(f"Error creating contract: {e}")

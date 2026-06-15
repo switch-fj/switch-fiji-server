@@ -6,7 +6,15 @@ from uuid import UUID
 from zoneinfo import ZoneInfo
 
 from dateutil.relativedelta import relativedelta
-from sqlmodel import Column, DateTime, Enum, Field, Integer, Relationship, String
+from sqlmodel import (
+    Column,
+    DateTime,
+    Enum,
+    Field,
+    Integer,
+    Relationship,
+    String,
+)
 
 from app.modules.contracts.schema import (
     ContractBillingFrequencyEnum,
@@ -35,7 +43,7 @@ class Contract(MyAbstractSQLModel, table=True):
     user_uid: UUID = Field(foreign_key="users.uid", index=True, nullable=False)
     client_uid: UUID = Field(foreign_key="clients.uid", index=True, nullable=False)
     site_uid: UUID = Field(foreign_key="sites.uid", index=True, nullable=False)
-    contract_ref: str = Field(nullable=False)
+    contract_ref: str = Field(nullable=False, unique=True, index=True)
     contract_type: ContractTypeEnum = Field(sa_type=Enum(ContractTypeEnum), nullable=False)
     system_mode: ContractSystemModeEnum = Field(
         sa_type=Enum(ContractSystemModeEnum),

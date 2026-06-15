@@ -2,7 +2,9 @@ from uuid import UUID
 
 from fastapi import Depends
 
+from app.core.auth import Authentication
 from app.core.exceptions import BadRequest, Forbidden, NotFound, ResourceExists
+from app.modules.clients.repository import ClientRepository, get_client_repo
 from app.modules.contracts.model import Contract
 from app.modules.contracts.repository import ContractRepository, get_contract_repo
 from app.modules.contracts.schema import (
@@ -17,8 +19,26 @@ from app.shared.schema import IdentityTypeEnum, UserRoleEnum
 
 
 class ContractService:
-    def __init__(self, contract_repo: ContractRepository = Depends(get_contract_repo)):
+    def __init__(
+        self,
+        contract_repo: ContractRepository = Depends(get_contract_repo),
+        client_repo: ClientRepository = Depends(get_client_repo),
+    ):
         self.contract_repo = contract_repo
+        self.client_repo = client_repo
+
+    def _build_contract_ref(self, name: str):
+        """Generate a unique contract reference string from the client name.
+
+        Args:
+            name: The cleint name used to derive the prefix.
+
+        Returns:
+            A formatted contract reference string such as "P-2025-AB1C2D".
+        """
+        prefix = name.upper().ljust(3, "X")[:3]
+
+        return f"{prefix}-{Authentication.generate_otp(length=6, number_only=True)}"
 
     def _sanitize_contract_details(self, contract: Contract, data: CreateContractDetailsModel):
         # checks for on-grid system mode
@@ -82,7 +102,15 @@ class ContractService:
         if site_contract_uid:
             return str(site_contract_uid)
 
-        contract = await self.contract_repo.create_contract(user_uid=user_uid, data=data)
+        client = await self.client_repo.get_client_by_uid(client_uid=data.client_uid)
+
+        if not client:
+            raise NotFound(f"client with {data.client_uid} not found.")
+
+        data_dict["user_uid"] = user_uid
+        data_dict["contract_ref"] = self._build_contract_ref(name=client.client_name)
+
+        contract = await self.contract_repo.create_contract(user_uid=user_uid, data=Contract(**data_dict))
 
         return str(contract.uid)
 
@@ -165,5 +193,6 @@ class ContractService:
 
 def get_contract_service(
     contract_repo: ContractRepository = Depends(get_contract_repo),
+    client_repo: ClientRepository = Depends(get_client_repo),
 ):
-    return ContractService(contract_repo=contract_repo)
+    return ContractService(contract_repo=contract_repo, client_repo=client_repo)

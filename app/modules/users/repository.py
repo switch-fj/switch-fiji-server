@@ -6,11 +6,17 @@ from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.core.auth import Authentication
+from app.core.config import Config
 from app.core.logger import setup_logger
 from app.database.postgres import get_session
 from app.modules.users.model import User
-from app.modules.users.schema import CreateUserModel
-from app.shared.schema import UpdateIdentityPwdModel
+from app.modules.users.schema import CreateUserModel, UsersRespModel
+from app.shared.schema import (
+    CursorPaginationModel,
+    PaginatedRespModel,
+    UpdateIdentityPwdModel,
+)
+from app.utils.pagination import Pagination
 
 logger = setup_logger(__name__)
 
@@ -116,6 +122,69 @@ class UserRepository:
         await self.session.refresh(user)
 
         return user
+
+    async def get_all_users(
+        self,
+        q: Optional[str],
+        limit: int = Config.DEFAULT_PAGE_LIMIT,
+        next_cursor: Optional[str] = None,
+        prev_cursor: Optional[str] = None,
+    ):
+        """Retrieve a cursor-paginated list of users.
+
+        Args:
+            q: Optional search string matched against users email.
+            limit: Maximum number of records to return per page.
+            next_cursor: Encrypted cursor pointing to the next page.
+            prev_cursor: Encrypted cursor pointing to the previous page.
+
+        Returns:
+            A PaginatedRespModel containing a list of UserRespModel items and pagination metadata.
+        """
+
+        statement = select(User).where(User.deleted_at.is_(None)).order_by(User.created_at.desc())
+
+        if next_cursor:
+            cursor_id = Pagination.decrypt_cursor(next_cursor)
+            statement = statement.where(User.id < cursor_id)
+
+        if prev_cursor:
+            cursor_id = Pagination.decrypt_cursor(prev_cursor)
+            statement = statement.where(User.id > cursor_id)
+
+        if q:
+            search = f"%{q}%"
+            statement = statement.where(User.email.ilike(search))
+
+        statement = statement.limit(limit + 1)
+
+        result = await self.session.exec(statement)
+        rows = result.all()
+
+        has_more = len(rows) > limit
+        items = rows[:limit]
+
+        users = [UsersRespModel.model_validate(item) for item in items]
+
+        next_cursor_out = None
+        prev_cursor_out = None
+
+        if items:
+            prev_cursor_out = Pagination.encrypt_cursor(items[0].id)
+
+        if has_more:
+            next_cursor_out = Pagination.encrypt_cursor(items[-1].id)
+
+        return PaginatedRespModel.model_validate(
+            {
+                "items": users,
+                "pagination": CursorPaginationModel(
+                    limit=limit,
+                    next_cursor=next_cursor_out,
+                    prev_cursor=prev_cursor_out,
+                ),
+            }
+        )
 
 
 def get_user_repo(session: AsyncSession = Depends(get_session)):
