@@ -41,6 +41,10 @@ class SiteRepository:
         """
         self.session = session
 
+    async def sites_count(self):
+        result = await self.session.exec(select(func.count(Site.uid)).where(Site.deleted_at.is_(None)))
+        return result.one()
+
     async def get_client_exists(self, client_uid: UUID) -> bool:
         """Check whether a client exists, using a short-lived Redis cache to avoid repeated DB lookups.
 

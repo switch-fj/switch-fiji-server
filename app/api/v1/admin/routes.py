@@ -7,7 +7,7 @@ from fastapi import APIRouter, Depends, Query, status
 from fastapi.responses import StreamingResponse
 
 from app.core.config import Config
-from app.core.security import AdminAccessBearer
+from app.core.security import AccessTokenBearer, AdminAccessBearer
 from app.database.redis import async_redis_client
 from app.modules.clients.schema import ClientRespModel, CreateClientModel
 from app.modules.contracts.schema import EnergyPortfolioRespModel
@@ -19,6 +19,7 @@ from app.services.sites import SiteService, get_site_service
 from app.services.user import UserService, get_user_service
 from app.shared.schema import (
     CursorPaginationModel,
+    IdentityTypeEnum,
     PaginatedRespModel,
     ServerRespModel,
 )
@@ -67,7 +68,11 @@ async def get_clients(
     next_cursor: Optional[str] = Query(default=None),
     prev_cursor: Optional[str] = Query(default=None),
     client_service: ClientService = Depends(get_client_service),
-    _: dict = Depends(AdminAccessBearer()),
+    _: dict = Depends(
+        AccessTokenBearer(
+            required_identity=[IdentityTypeEnum.USER.value],
+        )
+    ),
 ):
     result = await client_service.get_clients(q=q, limit=limit, next_cursor=next_cursor, prev_cursor=prev_cursor)
 

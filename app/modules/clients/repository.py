@@ -2,9 +2,11 @@ from typing import Optional
 from uuid import UUID
 
 from fastapi import Depends
+from sqlalchemy.orm import selectinload
 from sqlmodel import func, select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
+from app.api.v1.engineer.schema import EngineeringDashboardClientModel
 from app.core.auth import Authentication
 from app.core.config import Config
 from app.core.logger import setup_logger
@@ -15,6 +17,7 @@ from app.modules.clients.schema import (
     CreateClientModel,
     UpdateClientModel,
 )
+from app.modules.devices.model import Device
 from app.modules.sites.model import Site
 from app.shared.schema import (
     CursorPaginationModel,
@@ -36,6 +39,10 @@ class ClientRepository:
             session: An async SQLAlchemy session used for all database operations.
         """
         self.session = session
+
+    async def clients_count(self):
+        result = await self.session.exec(select(func.count(Client.uid)).where(Client.deleted_at.is_(None)))
+        return result.one()
 
     async def get_client_by_uid(self, client_uid: UUID):
         """Fetch a client by their primary UUID.
@@ -89,12 +96,25 @@ class ClientRepository:
             select(Site.client_uid, func.count(Site.id).label("sites_count")).group_by(Site.client_uid).subquery()
         )
 
+        devices_count_subq = (
+            select(
+                Site.client_uid.label("client_uid"),
+                func.count(Device.id).label("devices_count"),
+            )
+            .join(Device, Device.site_uid == Site.uid)
+            .where(Device.deleted_at.is_(None))
+            .group_by(Site.client_uid)
+            .subquery()
+        )
+
         statement = (
             select(
                 Client,
                 func.coalesce(sites_count_subq.c.sites_count, 0).label("sites_count"),
+                func.coalesce(devices_count_subq.c.devices_count, 0).label("devices_count"),
             )
             .outerjoin(sites_count_subq, sites_count_subq.c.client_uid == Client.uid)
+            .outerjoin(devices_count_subq, devices_count_subq.c.client_uid == Client.uid)
             .order_by(Client.created_at.desc())
         )
 
@@ -119,7 +139,14 @@ class ClientRepository:
         items = rows[:limit]
 
         clients = [
-            ClientRespModel.model_validate({**row.Client.__dict__, "sites_count": row.sites_count}) for row in items
+            ClientRespModel.model_validate(
+                {
+                    **row.Client.__dict__,
+                    "sites_count": row.sites_count,
+                    "devices_count": row.devices_count,
+                }
+            )
+            for row in items
         ]
 
         next_cursor_out = None
@@ -226,6 +253,59 @@ class ClientRepository:
         await self.session.commit()
         await self.session.refresh(client)
         return client
+
+    async def get_clients_for_engineers(
+        self,
+        q: Optional[str],
+        limit: int = Config.DEFAULT_PAGE_LIMIT,
+        next_cursor: Optional[str] = None,
+        prev_cursor: Optional[str] = None,
+    ):
+        statement = (
+            select(Client)
+            .options(selectinload(Client.sites).selectinload(Site.devices))
+            .order_by(Client.created_at.desc())
+        )
+
+        if next_cursor:
+            cursor_id = Pagination.decrypt_cursor(next_cursor)
+            statement = statement.where(Client.id < cursor_id)
+
+        if prev_cursor:
+            cursor_id = Pagination.decrypt_cursor(prev_cursor)
+            statement = statement.where(Client.id > cursor_id)
+
+        if q:
+            search = f"%{q}%"
+            statement = statement.where(Client.client_name.ilike(search) | Client.client_email.ilike(search))
+
+        statement = statement.limit(limit + 1)
+
+        result = await self.session.exec(statement)
+        rows = result.all()
+
+        has_more = len(rows) > limit
+        items = rows[:limit]
+
+        next_cursor_out = None
+        prev_cursor_out = None
+
+        if items:
+            prev_cursor_out = Pagination.encrypt_cursor(items[0].id)
+
+        if has_more:
+            next_cursor_out = Pagination.encrypt_cursor(items[-1].id)
+
+        return PaginatedRespModel.model_validate(
+            {
+                "items": [EngineeringDashboardClientModel.model_validate(item) for item in items],
+                "pagination": CursorPaginationModel(
+                    limit=limit,
+                    next_cursor=next_cursor_out,
+                    prev_cursor=prev_cursor_out,
+                ),
+            }
+        )
 
 
 def get_client_repo(session: AsyncSession = Depends(get_session)):

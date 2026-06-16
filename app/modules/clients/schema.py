@@ -40,6 +40,7 @@ class ClientRespModel(DBModel):
     client_name: str
     client_email: str
     sites_count: Optional[int]
+    devices_count: Optional[int]
 
 
 class ClientRespWithoutSitesCountModel(DBModel):
