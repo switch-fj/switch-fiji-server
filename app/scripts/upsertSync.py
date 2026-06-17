@@ -148,6 +148,35 @@ def upsert_devices(conn, payload, site_uid: str):
                 )
 
 
+def record_device_last_seen(conn, payload, site_uid: str):
+    last_seen_at = datetime.now(tz=timezone.utc)
+    device_groups = [
+        ("meter", payload["meters"]),
+        ("inverter", payload["inverters"]),
+        ("ac_unit", payload["ac_units"]),
+        ("irradiance_meter", payload["irradiance_meters"]),
+    ]
+
+    with conn.cursor() as cur:
+        for device_type, devices in device_groups:
+            for device in devices:
+                cur.execute(
+                    """
+                    UPDATE devices
+                    SET last_seen_at = %(last_seen_at)s
+                    WHERE site_uid    = %(site_uid)s
+                      AND slave_id    = %(slave_id)s
+                      AND device_type = %(device_type)s
+                    """,
+                    {
+                        "last_seen_at": last_seen_at,
+                        "site_uid": site_uid,
+                        "slave_id": int(device["slave_id"]),
+                        "device_type": device_type,
+                    },
+                )
+
+
 def try_lock_contract_dates(conn, site_uid: str, first_seen_at_s: int):
     first_seen_at = datetime.fromtimestamp(first_seen_at_s, tz=timezone.utc)
 
@@ -239,6 +268,8 @@ def lambda_handler(event, context):
                 site_uid=site_uid,
                 first_seen_at_s=int(payload["ts_epoch_ms"]) // 1000,
             )
+            record_device_last_seen(conn, payload, site_uid)
+            print("[INFO] Devices last seen updated!")
             conn.commit()
             print(f"[INFO] Committed — client_uid={client_uid} site_uid={site_uid}")
         except Exception as e:

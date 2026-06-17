@@ -3,6 +3,8 @@ from typing import Optional
 
 from pydantic import BaseModel, ConfigDict, computed_field
 
+from app.core.telemetry.ppa_off_grid import PPAOffGridTelemetryMeterModel
+from app.core.telemetry.ppa_on_grid import PPAOnGridNoBatteryTelemetryMeterModel
 from app.modules.contracts.schema import OnGridNoBatteryTariffSlotModel
 
 
@@ -39,8 +41,8 @@ class PPAOnAndOffGridEnergyItem(BaseModel):
 
 
 class PPAOffGridExtractedMeters(BaseModel):
-    gen_meter: dict
-    load_meter: dict
+    gen_meter: PPAOffGridTelemetryMeterModel
+    load_meter: PPAOffGridTelemetryMeterModel
 
 
 class PPAOffGridEnergyData(BaseModel):
@@ -122,7 +124,7 @@ class ComputePPAOnGridNoBatteryInvoiceResp(BaseModel):
 
 
 class OnGridMeters(BaseModel):
-    grid_meter: Optional[dict] = None
+    grid_meter: Optional[PPAOnGridNoBatteryTelemetryMeterModel] = None
 
 
 class OnGridWithBatterExtractedMeters(OnGridMeters):
@@ -162,7 +164,7 @@ class OnGridWithBatteryEnergyData(BaseModel):
 
 
 class OnGridNoBatteryExtractedMeters(OnGridMeters):
-    solar_meters: list[dict] = []
+    solar_meters: list[PPAOnGridNoBatteryTelemetryMeterModel] = []
 
 
 class OnGridNoBatteryEnergyData(BaseModel):

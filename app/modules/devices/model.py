@@ -1,8 +1,9 @@
+from datetime import datetime, timezone
 from typing import TYPE_CHECKING, Optional
 from uuid import UUID
 
 from sqlalchemy import Column, Identity, Integer
-from sqlmodel import Field, Relationship, UniqueConstraint
+from sqlmodel import DateTime, Field, Relationship, UniqueConstraint
 
 from app.shared.model import MyAbstractSQLModel
 
@@ -41,7 +42,23 @@ class Device(MyAbstractSQLModel, table=True):
         description="Only applies when device_type is 'meter'. Derived from firmware isDualTariff()",
     )
 
+    last_seen_at: Optional[datetime] = Field(
+        default=None,
+        nullable=True,
+        description="Timestamp of last telemetry push recorded for this device.",
+        sa_type=DateTime(timezone=True),
+    )
+
     site: "Site" = Relationship(
         back_populates="devices",
         sa_relationship_kwargs={"foreign_keys": "Device.site_uid"},
     )
+
+    @property
+    def is_online(self) -> bool:
+        if self.last_seen_at is None:
+            return False
+        last_seen = self.last_seen_at
+        if last_seen.tzinfo is None:
+            last_seen = last_seen.replace(tzinfo=timezone.utc)
+        return (datetime.now(timezone.utc) - last_seen).total_seconds() < 600

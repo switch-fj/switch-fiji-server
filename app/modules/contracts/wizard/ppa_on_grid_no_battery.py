@@ -6,6 +6,7 @@ from uuid import UUID
 from fastapi.encoders import jsonable_encoder
 
 from app.core.logger import setup_logger
+from app.core.telemetry.ppa_on_grid import PPAOnGridNoBatteryTelemetryModel
 from app.modules.contracts.model import Contract
 from app.modules.contracts.schema import (
     OnGridNoBatterySlotEnum,
@@ -60,17 +61,17 @@ class PPAOnGridNoBatteryContractWizard(BaseContractWizard):
         self.contract_settings = contract_settings
 
     @classmethod
-    def _extract_meters(cls, telemetry_data: dict):
+    def _extract_meters(cls, telemetry_data: PPAOnGridNoBatteryTelemetryModel):
         grid_meter = None
         solar_meters = []
 
-        meters: list[dict] = telemetry_data.get("meters", [])
+        meters = telemetry_data.meters
 
         if not len(meters):
             raise ValueError("PPA On-grid No Battery telemetry data has empty meter data")
 
         for meter in meters:
-            description = meter.get("description")
+            description = meter.description
             if description == MeterRoleEnum.GRID_METER.value:
                 grid_meter = meter
 
@@ -249,37 +250,41 @@ class PPAOnGridNoBatteryContractWizard(BaseContractWizard):
         contract_settings: ContractSettings,
     ):
         # start period
-        start_meters: OnGridNoBatteryExtractedMeters = cls._extract_meters(telemetry_data=telemetry_start_reading)
+        start_meters = cls._extract_meters(
+            telemetry_data=PPAOnGridNoBatteryTelemetryModel.model_validate(telemetry_start_reading)
+        )
         start_grid_meter = start_meters.grid_meter
         start_solar_meter = start_meters.solar_meters
 
         # end period
-        end_meters: OnGridNoBatteryExtractedMeters = cls._extract_meters(telemetry_data=telemetry_end_reading)
+        end_meters = cls._extract_meters(
+            telemetry_data=PPAOnGridNoBatteryTelemetryModel.model_validate(telemetry_end_reading)
+        )
         end_grid_meter = end_meters.grid_meter
         end_solar_meter = end_meters.solar_meters
 
         solar = [
             OnGridEnergyItem(
-                slave_id=start["slave_id"],
-                description=start["description"],
-                start_kwh=start["kwh_import"] or 0,
-                end_kwh=end["kwh_import"] or 0,
+                slave_id=start.slave_id,
+                description=start.description,
+                start_kwh=start.kwh_import or 0,
+                end_kwh=end.kwh_import or 0,
             )
             for start, end in zip(start_solar_meter, end_solar_meter)
         ]
 
         grid_import = OnGridEnergyItem(
-            slave_id=start_grid_meter["slave_id"],
+            slave_id=start_grid_meter.slave_id,
             description="Grid Meter",
-            start_kwh=start_grid_meter["kwh_import"] or 0,
-            end_kwh=end_grid_meter["kwh_import"] or 0,
+            start_kwh=start_grid_meter.kwh_import or 0,
+            end_kwh=end_grid_meter.kwh_import or 0,
         )
 
         grid_export = OnGridEnergyItem(
-            slave_id=start_grid_meter["slave_id"],
+            slave_id=start_grid_meter.slave_id,
             description="Fed to Grid",
-            start_kwh=start_grid_meter["kwh_export"] or 0,
-            end_kwh=end_grid_meter["kwh_export"] or 0,
+            start_kwh=start_grid_meter.kwh_export or 0,
+            end_kwh=end_grid_meter.kwh_export or 0,
         )
 
         energy_data = OnGridNoBatteryEnergyData(solar=solar, grid_import=grid_import, grid_export=grid_export)

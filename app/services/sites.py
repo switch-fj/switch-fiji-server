@@ -2,6 +2,7 @@ from uuid import UUID
 
 from fastapi import Depends
 
+from app.api.v1.engineer.schema import EngineeringDashboardSiteModel
 from app.core.exceptions import BadRequest, NotFound
 from app.modules.clients.repository import ClientRepository, get_client_repo
 from app.modules.sites.repository import SiteRepository, get_site_repo
@@ -56,6 +57,11 @@ class SiteService:
             raise NotFound("No active contract found for this site.")
 
         return stats
+
+    async def engineers_get_site_details_by_client_uid(self, client_uid: UUID):
+        sites = await self.site_repo.engineers_get_details_by_client_uid(client_uid=client_uid)
+
+        return [EngineeringDashboardSiteModel.model_validate(site) for site in sites]
 
 
 def get_site_service(

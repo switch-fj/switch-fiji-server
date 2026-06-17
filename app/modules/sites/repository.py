@@ -41,6 +41,10 @@ class SiteRepository:
         """
         self.session = session
 
+    async def sites_count(self):
+        result = await self.session.exec(select(func.count(Site.uid)).where(Site.deleted_at.is_(None)))
+        return result.one()
+
     async def get_client_exists(self, client_uid: UUID) -> bool:
         """Check whether a client exists, using a short-lived Redis cache to avoid repeated DB lookups.
 
@@ -352,6 +356,17 @@ class SiteRepository:
                 "last_invoice_amount": last_invoice_amount,
             }
         )
+
+    async def engineers_get_details_by_client_uid(self, client_uid: UUID):
+        result = await self.session.exec(
+            select(Site)
+            .options(selectinload(Site.devices))
+            .where(Site.client_uid == client_uid, Site.deleted_at.is_(None))
+            .order_by(Site.created_at.desc())
+        )
+        sites = result.all()
+
+        return sites
 
 
 def get_site_repo(session: AsyncSession = Depends(get_session)):
