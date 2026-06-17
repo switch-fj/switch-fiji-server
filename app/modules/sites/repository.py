@@ -357,6 +357,17 @@ class SiteRepository:
             }
         )
 
+    async def engineers_get_details_by_client_uid(self, client_uid: UUID):
+        result = await self.session.exec(
+            select(Site)
+            .options(selectinload(Site.devices))
+            .where(Site.client_uid == client_uid, Site.deleted_at.is_(None))
+            .order_by(Site.created_at.desc())
+        )
+        sites = result.all()
+
+        return sites
+
 
 def get_site_repo(session: AsyncSession = Depends(get_session)):
     """FastAPI dependency that provides a SiteRepository instance.

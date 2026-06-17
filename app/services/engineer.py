@@ -1,5 +1,3 @@
-from typing import Optional
-
 from fastapi import Depends
 from sqlalchemy.ext.asyncio.session import AsyncSession
 
@@ -22,19 +20,6 @@ class EngineeringService:
         clients_count = await self.client_repo.clients_count()
 
         return ResourceStatsModel(clients=clients_count, sites=sites_count, devices=devices_count)
-
-    async def all_clients(
-        self,
-        q: Optional[str],
-        limit: int,
-        next_cursor: Optional[str],
-        prev_cursor: Optional[str],
-    ):
-        clients = await self.client_repo.get_clients_for_engineers(
-            q=q, limit=limit, next_cursor=next_cursor, prev_cursor=prev_cursor
-        )
-
-        return clients
 
 
 def get_engr_service(

@@ -149,9 +149,7 @@ def upsert_devices(conn, payload, site_uid: str):
 
 
 def record_device_last_seen(conn, payload, site_uid: str):
-    ts_epoch_s = int(payload["ts_epoch_ms"]) // 1000
-    last_seen_at = datetime.fromtimestamp(ts_epoch_s, tz=timezone.utc)
-
+    last_seen_at = datetime.now(tz=timezone.utc)
     device_groups = [
         ("meter", payload["meters"]),
         ("inverter", payload["inverters"]),

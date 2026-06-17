@@ -1,9 +1,11 @@
-from typing import Optional
+from typing import List, Optional
+from uuid import UUID
 
 from fastapi import APIRouter, Body, Depends, Query, status
 
 from app.api.v1.engineer.schema import (
     EngineeringDashboardClientModel,
+    EngineeringDashboardSiteModel,
     ResourceStatsModel,
 )
 from app.core.config import Config
@@ -83,12 +85,32 @@ async def clients(
     limit: int = Query(default=Config.DEFAULT_PAGE_LIMIT),
     next_cursor: Optional[str] = Query(default=None),
     prev_cursor: Optional[str] = Query(default=None),
-    engineering_service: EngineeringService = Depends(get_engr_service),
+    client_service: ClientService = Depends(get_client_service),
     _: dict = Depends(EngineerAccessBearer()),
 ):
-    resp = await engineering_service.all_clients(q=q, limit=limit, next_cursor=next_cursor, prev_cursor=prev_cursor)
+    resp = await client_service.engineers_get_clients(
+        q=q, limit=limit, next_cursor=next_cursor, prev_cursor=prev_cursor
+    )
 
     return ServerRespModel[PaginatedRespModel[EngineeringDashboardClientModel, CursorPaginationModel]](
+        data=resp,
+        message="clients retrieved",
+    )
+
+
+@engineer_router.get(
+    "/client/{client_uid}/sites",
+    status_code=status.HTTP_200_OK,
+    response_model=ServerRespModel[List[EngineeringDashboardSiteModel]],
+)
+async def client_sites(
+    client_uid: UUID,
+    site_service: SiteService = Depends(get_site_service),
+    _: dict = Depends(EngineerAccessBearer()),
+):
+    resp = await site_service.engineers_get_site_details_by_client_uid(client_uid=client_uid)
+
+    return ServerRespModel[List[EngineeringDashboardSiteModel]](
         data=resp,
         message="clients retrieved",
     )

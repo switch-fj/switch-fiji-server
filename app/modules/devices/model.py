@@ -58,4 +58,7 @@ class Device(MyAbstractSQLModel, table=True):
     def is_online(self) -> bool:
         if self.last_seen_at is None:
             return False
-        return (datetime.now(timezone.utc) - self.last_seen_at).total_seconds() < 600
+        last_seen = self.last_seen_at
+        if last_seen.tzinfo is None:
+            last_seen = last_seen.replace(tzinfo=timezone.utc)
+        return (datetime.now(timezone.utc) - last_seen).total_seconds() < 600

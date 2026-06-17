@@ -1,9 +1,11 @@
 from datetime import datetime
 from typing import List, Optional
+from uuid import UUID
 
 from pydantic import BaseModel, field_serializer
 
 from app.shared.schema import DBModel
+from app.utils import uuid_serializer
 
 
 class ResourceStatsModel(BaseModel):
@@ -13,6 +15,7 @@ class ResourceStatsModel(BaseModel):
 
 
 class EngineeringDashboardDeviceModel(DBModel):
+    site_uid: UUID
     device_type: str
     meter_role: Optional[str]
     is_dual_tariff: Optional[bool]
@@ -32,8 +35,21 @@ class EngineeringDashboardDeviceModel(DBModel):
         if value:
             return value.isoformat()
 
+    @field_serializer("site_uid")
+    def serialize_device_model_uuid(self, value: UUID):
+        """Serialise the uid UUID to a plain string.
+
+        Args:
+            value: The UUID value to serialise.
+
+        Returns:
+            A string representation of the UUID.
+        """
+        return uuid_serializer(value)
+
 
 class EngineeringDashboardSiteModel(DBModel):
+    client_uid: UUID
     site_name: Optional[str]
     gateway_id: str
     firmware: Optional[str]
@@ -53,6 +69,18 @@ class EngineeringDashboardSiteModel(DBModel):
         """
         if value:
             return value.isoformat()
+
+    @field_serializer("client_uid")
+    def serialize_site_model_uuid(self, value: UUID):
+        """Serialise the uid UUID to a plain string.
+
+        Args:
+            value: The UUID value to serialise.
+
+        Returns:
+            A string representation of the UUID.
+        """
+        return uuid_serializer(value)
 
 
 class EngineeringDashboardClientModel(DBModel):

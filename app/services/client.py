@@ -223,6 +223,22 @@ class ClientService:
 
         return result
 
+    async def engineers_get_clients(
+        self,
+        q: Optional[str],
+        limit: int,
+        next_cursor: Optional[str],
+        prev_cursor: Optional[str],
+    ):
+        clients = await self.client_repo.get_clients_for_engineers(
+            q=q, limit=limit, next_cursor=next_cursor, prev_cursor=prev_cursor
+        )
+
+        return clients
+
+    async def engineers_get_client_details(self, client_uid: UUID):
+        pass
+
 
 def get_client_service(client_repo: ClientRepository = Depends(get_client_repo)):
     return ClientService(client_repo=client_repo)
