@@ -17,10 +17,7 @@ async_engine: AsyncEngine = create_async_engine(
     pool_pre_ping=True,
     pool_recycle=1800,
     echo=False,
-    connect_args={
-        "server_settings": {"timezone": "UTC"},
-        "sslmode": "require",
-    },
+    connect_args={"server_settings": {"timezone": "UTC"}},
 )
 AsyncSessionMaker = async_sessionmaker(bind=async_engine, class_=AsyncSession, expire_on_commit=False)
 
