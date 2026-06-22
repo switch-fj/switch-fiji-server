@@ -1,5 +1,4 @@
 from datetime import datetime, timezone
-from zoneinfo import ZoneInfo
 
 from sqlalchemy.orm import joinedload, selectinload
 from sqlmodel import select
@@ -63,72 +62,29 @@ def compute_contract_invoice_on_auto(self, contract_uid, gateway_id, site_uid):
             now_local = datetime.now(tz=timezone.utc)
             commissioned_at = contract.details.actual_commissioned_at or contract.details.commissioned_at
 
-            # all_periods = BillingEngine.get_all_billing_periods(
-            #     commissioned_at=commissioned_at,
-            #     billing_frequency=contract.details.billing_frequency,
-            #     as_of=now_local,
-            #     weekly_billing_start_day=contract.details.weekly_billing_start_day,
-            # )
-
-            # for idx, (period_start, period_end) in enumerate(all_periods):
-            #     try:
-            #         logger.info(f"Processing period {period_start} -> {period_end}")
-
-            #         period_start = period_start.replace(
-            #             hour=0,
-            #             minute=0,
-            #             second=0,
-            #             microsecond=0,
-            #         )
-            #         period_end = period_end.replace(
-            #             hour=0,
-            #             minute=0,
-            #             second=0,
-            #             microsecond=0,
-            #         )
-
-            #         BillingEngine.handle_invoice_bill(
-            #             session=session,
-            #             contract=contract,
-            #             contract_settings=contract_settings,
-            #             devices=devices,
-            #             gateway_id=gateway_id,
-            #             period_start=period_start,
-            #             period_end=period_end,
-            #         )
-
-            #         logger.info("Completed period")
-
-            #     except Exception as exc:
-            #         logger.exception(
-            #             f"Failed processing period {period_start} -> {period_end}. Error: {exc}"
-            #         )
-
-            period_start, period_end = BillingEngine.get_current_billing_period(
+            all_periods = BillingEngine.get_all_billing_periods(
                 commissioned_at=commissioned_at,
                 billing_frequency=contract.details.billing_frequency,
                 as_of=now_local,
                 weekly_billing_start_day=contract.details.weekly_billing_start_day,
             )
 
-            period_start = period_start.replace(
-                hour=0,
-                minute=0,
-                second=0,
-                microsecond=0,
-            )
-            period_end = period_end.replace(
-                hour=0,
-                minute=0,
-                second=0,
-                microsecond=0,
-            )
-
-            is_billing_date = now_local >= period_end.astimezone(tz=ZoneInfo(contract.timezone))
-
-            if is_billing_date:
+            for idx, (period_start, period_end) in enumerate(all_periods):
                 try:
                     logger.info(f"Processing period {period_start} -> {period_end}")
+
+                    period_start = period_start.replace(
+                        hour=0,
+                        minute=0,
+                        second=0,
+                        microsecond=0,
+                    )
+                    period_end = period_end.replace(
+                        hour=0,
+                        minute=0,
+                        second=0,
+                        microsecond=0,
+                    )
 
                     BillingEngine.handle_invoice_bill(
                         session=session,
@@ -144,6 +100,47 @@ def compute_contract_invoice_on_auto(self, contract_uid, gateway_id, site_uid):
 
                 except Exception as exc:
                     logger.exception(f"Failed processing period {period_start} -> {period_end}. Error: {exc}")
+
+            # period_start, period_end = BillingEngine.get_current_billing_period(
+            #     commissioned_at=commissioned_at,
+            #     billing_frequency=contract.details.billing_frequency,
+            #     as_of=now_local,
+            #     weekly_billing_start_day=contract.details.weekly_billing_start_day,
+            # )
+
+            # period_start = period_start.replace(
+            #     hour=0,
+            #     minute=0,
+            #     second=0,
+            #     microsecond=0,
+            # )
+            # period_end = period_end.replace(
+            #     hour=0,
+            #     minute=0,
+            #     second=0,
+            #     microsecond=0,
+            # )
+
+            # is_billing_date = now_local >= period_end.astimezone(tz=ZoneInfo(contract.timezone))
+
+            # if is_billing_date:
+            #     try:
+            #         logger.info(f"Processing period {period_start} -> {period_end}")
+
+            #         BillingEngine.handle_invoice_bill(
+            #             session=session,
+            #             contract=contract,
+            #             contract_settings=contract_settings,
+            #             devices=devices,
+            #             gateway_id=gateway_id,
+            #             period_start=period_start,
+            #             period_end=period_end,
+            #         )
+
+            #         logger.info("Completed period")
+
+            #     except Exception as exc:
+            #         logger.exception(f"Failed processing period {period_start} -> {period_end}. Error: {exc}")
 
     except Exception as exc:
         raise self.retry(exc=exc)

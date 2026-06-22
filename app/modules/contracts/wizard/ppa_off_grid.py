@@ -6,7 +6,6 @@ from uuid import UUID
 from fastapi.encoders import jsonable_encoder
 
 from app.core.logger import setup_logger
-from app.core.telemetry.ppa_off_grid import PPAOffGridTelemetryModel
 from app.modules.contracts.model import Contract
 from app.modules.contracts.schema import (
     TariffIndexedRuleTypeEnum,
@@ -58,17 +57,17 @@ class PPAOffGridContractWizard(BaseContractWizard):
         self.contract_settings = contract_settings
 
     @classmethod
-    def _extract_meters(cls, telemetry_data: PPAOffGridTelemetryModel):
+    def _extract_meters(cls, telemetry_data: dict):
         gen_meter = None
         load_meter = None
 
-        meters = telemetry_data.meters
+        meters: list[dict] = telemetry_data.get("meters", [])
 
         if not len(meters):
             raise ValueError("PPA Off-grid telemetry data has empty meter data")
 
         for meter in meters:
-            description = meter.description
+            description = meter.get("description", "")
             if description == MeterRoleEnum.GEN_METER.value:
                 gen_meter = meter
 
@@ -87,35 +86,33 @@ class PPAOffGridContractWizard(BaseContractWizard):
         contract_settings: ContractSettings,
     ):
         # start period
-        start_meters = cls._extract_meters(
-            telemetry_data=PPAOffGridTelemetryModel.model_validate(telemetry_start_reading)
-        )
+        start_meters: PPAOffGridExtractedMeters = cls._extract_meters(telemetry_data=telemetry_start_reading)
 
         start_gen_meter = start_meters.gen_meter
         start_load_meter = start_meters.load_meter
 
         # end period
-        end_meters = cls._extract_meters(telemetry_data=PPAOffGridTelemetryModel.model_validate(telemetry_end_reading))
+        end_meters: PPAOffGridExtractedMeters = cls._extract_meters(telemetry_data=telemetry_end_reading)
 
         end_gen_meter = end_meters.gen_meter
         end_load_meter = end_meters.load_meter
 
         load = PPAOnAndOffGridEnergyItem(
-            slave_id=start_load_meter.slave_id,
+            slave_id=start_load_meter["slave_id"],
             description="Site Meter",
-            start_day_tariff=start_load_meter.tariff.kwh_t2,
-            start_night_tariff=start_load_meter.tariff.kwh_t1,
-            end_day_tariff=end_load_meter.tariff.kwh_t2,
-            end_night_tariff=end_load_meter.tariff.kwh_t1,
+            start_day_tariff=start_load_meter.get("tariff", 0)["kwh_t2"],
+            start_night_tariff=start_load_meter.get("tariff", 0)["kwh_t1"],
+            end_day_tariff=end_load_meter.get("tariff", 0)["kwh_t2"],
+            end_night_tariff=end_load_meter.get("tariff", 0)["kwh_t1"],
         )
 
         backup_gen = PPAOnAndOffGridEnergyItem(
-            slave_id=start_gen_meter.slave_id,
+            slave_id=start_gen_meter["slave_id"],
             description="Generator Meter",
-            start_day_tariff=start_gen_meter.tariff.kwh_t2,
-            start_night_tariff=start_gen_meter.tariff.kwh_t1,
-            end_day_tariff=end_gen_meter.tariff.kwh_t2,
-            end_night_tariff=end_gen_meter.tariff.kwh_t1,
+            start_day_tariff=start_gen_meter.get("tariff", 0)["kwh_t2"],
+            start_night_tariff=start_gen_meter.get("tariff", 0)["kwh_t1"],
+            end_day_tariff=end_gen_meter.get("tariff", 0)["kwh_t2"],
+            end_night_tariff=end_gen_meter.get("tariff", 0)["kwh_t1"],
         )
 
         energy_data = PPAOffGridEnergyData(load=load, backup_gen=backup_gen)
