@@ -27,8 +27,7 @@ celery_app.conf.beat_schedule = {
     },
     "trigger_compute_active_contracts_every_hour": {
         "task": "trigger_compute_contract_invoice_on_auto",
-        "schedule": crontab(minute="*/1"),
-        # "schedule": crontab(minute=0),
+        "schedule": crontab(minute=0),
     },
     "trigger_snapshot_active_contracts_at_00_30": {
         "task": "trigger_compute_contract_invoice_snapshot_on_auto",
