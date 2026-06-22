@@ -103,7 +103,7 @@ class Settings(BaseSettings):
             The psycopg2 database URL, using the remote URL (with asyncpg replaced) when USE_REMOTE_DB is True.
         """
         password = quote_plus(self.DB_PASSWORD)
-        url = f"postgresql+psycopg2://{self.DB_USER}:{password}@{self.DB_HOST}:{self.DB_PORT}/{self.DB_NAME}"
+        url = f"postgresql+psycopg2://{self.DB_USER}:{password}@{self.DB_HOST}:{self.DB_PORT}/{self.DB_NAME}?sslmode=require"
 
         return self.REMOTE_DB_URL.replace("asyncpg", "psycopg2") if self.USE_REMOTE_DB else url
 
