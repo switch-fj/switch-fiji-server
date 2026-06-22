@@ -19,7 +19,7 @@ _engine = create_engine(
     max_overflow=10,
     pool_timeout=30,
     pool_recycle=1800,
-    connect_args={"server_settings": {"timezone": "UTC"}},
+    connect_args={"options": "-ctimezone=UTC"},
 )
 _SessionLocal = sessionmaker(bind=_engine, expire_on_commit=False)
 
