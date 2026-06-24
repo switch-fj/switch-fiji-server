@@ -1,4 +1,5 @@
-from datetime import datetime, timezone
+import json
+from datetime import datetime, timedelta, timezone
 from typing import Optional
 from zoneinfo import ZoneInfo
 
@@ -355,7 +356,7 @@ class BillingEngine:
         period_start: datetime,
         period_end: datetime,
     ):
-        already_invoiced = session.execute(
+        already_invoiced: Invoice = session.execute(
             select(Invoice).where(
                 Invoice.contract_uid == contract.uid,
                 Invoice.period_start_at == period_start,
@@ -365,7 +366,14 @@ class BillingEngine:
 
         if already_invoiced:
             logger.warning("Invoice already exists!")
-            return
+            return already_invoiced.uid
+
+        previous_invoice: Invoice = session.execute(
+            select(Invoice).where(
+                Invoice.contract_uid == contract.uid,
+                Invoice.period_end_at == period_start - timedelta(days=1),
+            )
+        ).scalar_one_or_none()
 
         readings = celery_dynamo_client.get_readings_for_billing_period(
             gateway_id=gateway_id,
@@ -379,6 +387,10 @@ class BillingEngine:
             return
 
         telemetry_start_reading, telemetry_end_reading = readings
+
+        if previous_invoice:
+            telemetry_start_reading: dict = json.loads(previous_invoice.period_end_telemetry_data)
+
         create_invoice = None
         invoice_meter_data = None
         invoice_line_items = None

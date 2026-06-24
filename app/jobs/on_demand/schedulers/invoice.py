@@ -75,15 +75,26 @@ def compute_contract_invoice_for_period_on_demand(
                 )
                 return
 
-            invoice_uid = BillingEngine.handle_invoice_bill(
-                session=session,
-                contract=contract,
-                contract_settings=contract_settings,
-                devices=devices,
-                gateway_id=gateway_id,
-                period_start=period_start,
-                period_end=period_end,
-            )
+            try:
+                invoice_uid = BillingEngine.handle_invoice_bill(
+                    session=session,
+                    contract=contract,
+                    contract_settings=contract_settings,
+                    devices=devices,
+                    gateway_id=gateway_id,
+                    period_start=period_start,
+                    period_end=period_end,
+                )
+            except Exception as e:
+                logger.exception(f"Error creating invoice for task {job_run_task_id}: {e}")
+                update_job_run(
+                    reference_uid=contract_uid,
+                    task_id=job_run_task_id,
+                    status=JobRunStatus.FAILED,
+                    completed_at=datetime.now(timezone.utc),
+                    error=f"Error creating invoice for task {job_run_task_id}: {e}",
+                )
+                return
 
             logger.info(f"invoice uid: {invoice_uid}")
 
@@ -96,8 +107,14 @@ def compute_contract_invoice_for_period_on_demand(
                     result_uid=invoice_uid,
                 )
             else:
-                logger.error(f"Unable to create invoice: for task {job_run_task_id}")
-                return
+                logger.error(f"Unable to create invoice for task {job_run_task_id}")
+                update_job_run(
+                    reference_uid=contract_uid,
+                    task_id=job_run_task_id,
+                    status=JobRunStatus.FAILED,
+                    error=f"Unable to create invoice for task {job_run_task_id}",
+                    completed_at=datetime.now(timezone.utc),
+                )
 
     except Exception as exc:
         update_job_run(
