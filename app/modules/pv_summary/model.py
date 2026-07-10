@@ -1,8 +1,9 @@
+from datetime import datetime
 from decimal import Decimal
 from typing import TYPE_CHECKING
 from uuid import UUID
 
-from sqlmodel import Field, Numeric, Relationship
+from sqlmodel import DateTime, Field, Numeric, Relationship
 
 from app.shared.model import MyAbstractSQLModel
 
@@ -20,6 +21,10 @@ class PVSummary(MyAbstractSQLModel, table=True):
 
     site_uid: UUID = Field(foreign_key="sites.uid", nullable=False, index=True, unique=True)
     user_uid: UUID = Field(foreign_key="users.uid", nullable=False, index=True)
+    commissioned_at: datetime = Field(
+        default=None,
+        sa_type=DateTime(timezone=True),
+    )
     expected_production_kwh: Decimal = Field(...)
     system_size_kwp: Decimal = Field(...)
     year1_degradation: float = Field(Numeric(precision=1, scale=2))

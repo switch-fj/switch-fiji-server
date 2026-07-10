@@ -29,11 +29,11 @@ class UpdatePanelRefModel(BaseModel):
 class PanelRefsModel(DBModel):
     site_uid: UUID
     user_uid: UUID
-    panel_type: str = Field(...)
-    watt: float = Field(...)
-    vmp: float = Field(...)
-    voc: float = Field(...)
-    imp: float = Field(...)
+    panel_type: str
+    watt: float
+    vmp: float
+    voc: float
+    imp: float
 
     @field_serializer("site_uid", "user_uid")
     def serialize_panel_ref_uuids(self, value: UUID):
