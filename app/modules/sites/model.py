@@ -5,6 +5,7 @@ from uuid import UUID
 from sqlalchemy import Column, DateTime, Identity, Integer, String
 from sqlmodel import Field, Relationship, UniqueConstraint
 
+from app.modules.degradation_table.model import Degradation
 from app.shared.model import MyAbstractSQLModel
 
 if TYPE_CHECKING:
@@ -76,4 +77,5 @@ class Site(MyAbstractSQLModel, table=True):
         sa_relationship_kwargs={"foreign_keys": "[Contract.site_uid]"},
     )
     panel_refs: list["PanelReference"] = Relationship(back_populates="site")
-    pv_summary: "PVSummary" = Relationship(back_populates="site")
+    pv_summary: Optional["PVSummary"] = Relationship(back_populates="site")
+    degradation: Optional["Degradation"] = Relationship(back_populates="site")
