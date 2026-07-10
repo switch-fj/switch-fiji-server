@@ -53,3 +53,16 @@ class PVSModel(DBModel):
             A string representation of the UUID.
         """
         return uuid_serializer(value)
+
+    @field_serializer("expected_production_kwh", "system_size_kwp")
+    def serialize_pv_decimals(self, value: Decimal):
+        """Serialise Decimal financial fields to two-decimal-place strings.
+
+        Args:
+            value: The Decimal value to serialise.
+
+        Returns:
+            A string formatted to two decimal places, or None if value is falsy.
+        """
+        if value:
+            return f"{value:.2f}"
