@@ -24,7 +24,7 @@ from app.shared.schema import (
     ServerRespModel,
 )
 
-site_router = APIRouter(prefix="/sites", tags=["site"])
+site_router = APIRouter(prefix="", tags=["site"])
 
 
 @site_router.post(
