@@ -10,6 +10,8 @@ from app.shared.schema import IdentityTypeEnum, UserRoleEnum
 
 if TYPE_CHECKING:
     from app.modules.clients.model import Client
+    from app.modules.panel_references.model import PanelReference
+    from app.modules.pv_summary.model import PVSummary
 
 
 class User(MyAbstractSQLModel, table=True):
@@ -53,6 +55,7 @@ class User(MyAbstractSQLModel, table=True):
         """
         return IdentityTypeEnum.USER.value
 
+    # Relationships
     clients: list["Client"] = Relationship(back_populates="user")
     registrar: Optional["User"] = Relationship(
         sa_relationship_kwargs={
@@ -60,3 +63,5 @@ class User(MyAbstractSQLModel, table=True):
             "remote_side": "[User.uid]",
         }
     )
+    panel_refs: list["PanelReference"] = Relationship(back_populates="user")
+    pv_summary: "PVSummary" = Relationship(back_populates="user")

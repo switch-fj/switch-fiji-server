@@ -11,6 +11,8 @@ if TYPE_CHECKING:
     from app.modules.clients.model import Client
     from app.modules.contracts.model import Contract
     from app.modules.devices.model import Device
+    from app.modules.panel_references.model import PanelReference
+    from app.modules.pv_summary.model import PVSummary
 
 
 class Site(MyAbstractSQLModel, table=True):
@@ -73,3 +75,5 @@ class Site(MyAbstractSQLModel, table=True):
         back_populates="site",
         sa_relationship_kwargs={"foreign_keys": "[Contract.site_uid]"},
     )
+    panel_refs: list["PanelReference"] = Relationship(back_populates="site")
+    pv_summary: "PVSummary" = Relationship(back_populates="site")
