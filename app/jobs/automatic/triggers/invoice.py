@@ -2,7 +2,7 @@ from app.core.logger import setup_logger
 from app.database.celery import get_celery_db_session
 from app.jobs.automatic.schedulers.invoice import compute_contract_invoice_on_auto
 from app.jobs.celery import celery_app
-from app.jobs.shared import _get_active_contracts
+from app.jobs.shared import get_active_contracts
 
 logger = setup_logger(__name__)
 
@@ -21,7 +21,7 @@ def trigger_compute_contract_invoice_on_auto(self):
     """
     try:
         with get_celery_db_session() as session:
-            active_contracts = _get_active_contracts(session)
+            active_contracts = get_active_contracts(session)
 
         for datum in active_contracts:
             compute_contract_invoice_on_auto.delay(

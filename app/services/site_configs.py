@@ -5,9 +5,18 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.core.exceptions import Forbidden, NotFound, ResourceExists
 from app.database.postgres import get_session
+from app.jobs.on_demand.triggers.degradation import (
+    trigger_compute_site_yearly_degradation_on_demand,
+)
 from app.modules.clients.repository import ClientRepository
 from app.modules.panel_references.repository import PanelRefRepository
 from app.modules.panel_references.schema import CreatePanelRefModel, UpdatePanelRefModel
+from app.modules.pv_degradation.respository import PvDegradationRepository
+from app.modules.pv_degradation.schema import (
+    PvDegradationSchedule,
+    Year1DegradationInputModel,
+    YearlyDegradation,
+)
 from app.modules.pv_summary.repository import PvSummaryRepository
 from app.modules.pv_summary.schema import SitePVSItemModel, UpdatePVSItemModel
 from app.modules.sites.repository import SiteRepository
@@ -27,8 +36,18 @@ class SiteConfigService(SiteService):
         self.client_repo = ClientRepository(session=session)
         self.panel_ref_repo = PanelRefRepository(session=session)
         self.pvs_repo = PvSummaryRepository(session=session)
+        self.pv_degradation_repo = PvDegradationRepository(session=session)
 
         super().__init__(site_repo=self.site_repo, client_repo=self.client_repo)
+
+    async def _initiate_degradation_computation_task(self, user_uid: UUID, degradation_uid: UUID, site_uid: UUID):
+        trigger_compute_site_yearly_degradation_on_demand.delay(
+            requesting_user_uid=str(user_uid),
+            degradation_uid=str(degradation_uid),
+            site_uid=str(site_uid),
+        )
+
+        return
 
     async def add_panel_refs(self, user_uid: UUID, site_uid: UUID, payload: CreatePanelRefModel):
         user = await self.user_repo.get_user_by_uid(user_uid=user_uid)
@@ -115,8 +134,48 @@ class SiteConfigService(SiteService):
 
     async def get_site_pvs(self, site_uid: UUID):
         pvs = await self.pvs_repo.get_pvs_by_site_uid(site_uid=site_uid)
-
         return pvs
+
+    async def create_or_update_year_one_degradation(
+        self, site_uid: UUID, user_uid: UUID, payload: Year1DegradationInputModel
+    ):
+        site_pvs = await self.pvs_repo.get_pvs_by_site_uid(site_uid=site_uid)
+
+        if not site_pvs:
+            return None
+
+        year_1 = YearlyDegradation(
+            root=dict(
+                zip(
+                    PvDegradationSchedule.build_month_sequence(site_pvs.commissioned_at, num_years=1),
+                    payload.monthly_kwh_values,
+                )
+            )
+        )
+
+        partial_schedule = PvDegradationSchedule(root=[year_1])
+
+        pv_degradation = await self.pv_degradation_repo.get_by_site_uid(site_uid=site_uid)
+
+        if not pv_degradation:
+            pv_degradation = await self.pv_degradation_repo.create(
+                site_uid=site_uid, user_uid=user_uid, payload=partial_schedule
+            )
+        else:
+            pv_degradation = await self.pv_degradation_repo.update(
+                payload=partial_schedule, pv_degradation=pv_degradation
+            )
+
+        # initiate background job here for year 2 plus degradation computation:
+        await self._initiate_degradation_computation_task(
+            user_uid=user_uid, degradation_uid=pv_degradation.uid, site_uid=site_uid
+        )
+        return pv_degradation
+
+    async def get_degradation_by_site(self, site_uid: UUID):
+        site_degradation = await self.pv_degradation_repo.get_by_site_uid(site_uid=site_uid)
+
+        return site_degradation
 
 
 def get_site_configs_service(

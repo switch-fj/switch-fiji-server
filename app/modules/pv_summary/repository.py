@@ -6,7 +6,7 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.database.postgres import get_session
 from app.modules.pv_summary.model import PVSummary
-from app.modules.pv_summary.schema import PVSModel, SitePVSItemModel, UpdatePVSItemModel
+from app.modules.pv_summary.schema import SitePVSItemModel, UpdatePVSItemModel
 
 
 class PvSummaryRepository:
@@ -32,7 +32,7 @@ class PvSummaryRepository:
         result = await self.session.exec(statement)
         pvs = result.one_or_none()
 
-        return PVSModel.model_validate(pvs)
+        return pvs
 
     async def create_pvs(self, site_uid: UUID, user_uid: UUID, payload: SitePVSItemModel):
         new_pvs = PVSummary(**payload.model_dump(), user_uid=user_uid, site_uid=site_uid)
