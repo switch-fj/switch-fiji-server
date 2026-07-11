@@ -1,5 +1,4 @@
 import json
-from datetime import datetime
 from uuid import UUID
 
 from sqlmodel import select
@@ -7,10 +6,10 @@ from sqlmodel import select
 from app.core.logger import setup_logger
 from app.database.celery import get_celery_db_session
 from app.jobs.celery import celery_app
-from app.jobs.on_demand.schedulers.invoice import (
-    compute_contract_invoice_for_period_on_demand,
+from app.jobs.on_demand.schedulers.degradation import (
+    compute_site_yearly_degradation_on_demand,
 )
-from app.jobs.shared import get_active_contract, update_job_run
+from app.jobs.shared import get_pv_summary, update_job_run
 from app.modules.job_run.model import JobRun
 from app.modules.job_run.schema import JobReferenceType, JobRunStatus, JobType
 
@@ -18,38 +17,34 @@ logger = setup_logger(__name__)
 
 
 @celery_app.task(
-    name="trigger_compute_contract_invoice_on_demand",
+    name="trigger_compute_site_yearly_degradation_on_demand",
     bind=True,
     max_retries=3,
     default_retry_delay=5,
 )
-def trigger_compute_contract_invoice_for_period_on_demand(
-    self,
-    requesting_user_uid: str,
-    contract_uid: str,
-    period_start: datetime,
-    period_end: datetime,
+def trigger_compute_site_yearly_degradation_on_demand(
+    self, requesting_user_uid: str, degradation_uid: str, site_uid: str
 ):
     """
     This is triggered manually based on demand from user.
-    Fetches all active contracts and dispatches
-    one compute task per contract to the worker pool.
+    Fetches the pv summary, ov degradation and dispatches
+    the compute task to the worker pool.
     """
     with get_celery_db_session() as session:
         # Normalise meta so comparison is consistent and sorted alphabetically
         meta = json.dumps(
             {
-                "period_end": period_end.isoformat(),
-                "period_start": period_start.isoformat(),
+                "degradation_uid": degradation_uid,
+                "site_uid": site_uid,
             },
             sort_keys=True,
         )
 
         existing = session.execute(
             select(JobRun).where(
-                JobRun.reference_uid == UUID(contract_uid),
-                JobRun.job_type == JobType.COMPUTE_INVOICE,
-                JobRun.reference_type == JobReferenceType.CONTRACT,
+                JobRun.reference_uid == UUID(degradation_uid),
+                JobRun.job_type == JobType.COMPUTE_PV_DEGRADATION,
+                JobRun.reference_type == JobReferenceType.PV_DEGRADATION,
                 JobRun.meta == meta,
                 JobRun.status.in_([JobRunStatus.PENDING, JobRunStatus.RUNNING]),
             )
@@ -58,15 +53,15 @@ def trigger_compute_contract_invoice_for_period_on_demand(
         if existing:
             logger.info(
                 f"Duplicate job request ignored — existing job {existing.task_id} "
-                f"is {existing.status} for contract {contract_uid}"
+                f"is {existing.status} for degradation {degradation_uid}"
             )
             return existing.task_id
 
         job_run = JobRun(
             task_id=self.request.id,
-            job_type=JobType.COMPUTE_INVOICE,
-            reference_type=JobReferenceType.CONTRACT,
-            reference_uid=UUID(contract_uid),
+            job_type=JobType.COMPUTE_PV_DEGRADATION,
+            reference_type=JobReferenceType.PV_DEGRADATION,
+            reference_uid=UUID(degradation_uid),
             triggered_by_uid=UUID(requesting_user_uid),
             status=JobRunStatus.PENDING,
             meta=meta,
@@ -76,30 +71,29 @@ def trigger_compute_contract_invoice_for_period_on_demand(
 
     try:
         with get_celery_db_session() as session:
-            active_contract = get_active_contract(session, contract_uid)
+            pv_summary = get_pv_summary(session, site_uid)
 
-        if not active_contract:
-            logger.warning(f"Contract is invalid or doesn't exist: {contract_uid}")
+        if not pv_summary:
+            logger.warning(f"Pv summary is invalid or doesn't exist: {site_uid}")
             update_job_run(
-                reference_uid=contract_uid,
+                reference_uid=degradation_uid,
                 task_id=self.request.id,
                 status=JobRunStatus.INVALID,
-                error="Contract not found or not active",
+                error="pv summary not found or not active",
             )
             return
 
-        compute_contract_invoice_for_period_on_demand.delay(
+        compute_site_yearly_degradation_on_demand.delay(
             job_run_task_id=self.request.id,
-            contract_uid=contract_uid,
-            gateway_id=active_contract.get("gateway_id"),
-            site_uid=active_contract.get("site_uid"),
-            period_start=period_start,
-            period_end=period_end,
+            degradation_uid=degradation_uid,
+            comissioned_at=pv_summary.get("comissioned_at"),
+            year1_degradation=pv_summary.get("year1_degradation"),
+            year2plus_degradation=pv_summary.get("year2plus_degradation"),
         )
 
     except Exception as exc:
         update_job_run(
-            reference_uid=contract_uid,
+            reference_uid=degradation_uid,
             task_id=self.request.id,
             status=JobRunStatus.FAILED,
             error=str(exc),

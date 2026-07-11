@@ -11,6 +11,7 @@ from app.shared.schema import IdentityTypeEnum, UserRoleEnum
 if TYPE_CHECKING:
     from app.modules.clients.model import Client
     from app.modules.panel_references.model import PanelReference
+    from app.modules.pv_degradation.model import PvDegradation
     from app.modules.pv_summary.model import PVSummary
 
 
@@ -64,4 +65,5 @@ class User(MyAbstractSQLModel, table=True):
         }
     )
     panel_refs: list["PanelReference"] = Relationship(back_populates="user")
-    pv_summary: "PVSummary" = Relationship(back_populates="user")
+    pv_summary: Optional["PVSummary"] = Relationship(back_populates="user")
+    pv_degradation: Optional["PvDegradation"] = Relationship(back_populates="user")

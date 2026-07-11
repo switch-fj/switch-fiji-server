@@ -20,10 +20,12 @@ class JobRunStatus(StrEnum):
 
 class JobType(StrEnum):
     COMPUTE_INVOICE = "compute_invoice"
+    COMPUTE_PV_DEGRADATION = "compute_pv_degradation"
 
 
 class JobReferenceType(StrEnum):
     CONTRACT = "contract"
+    PV_DEGRADATION = "pv_degradation"
 
 
 class JobComputeContractInvoice(BaseModel):

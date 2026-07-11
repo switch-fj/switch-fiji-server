@@ -1,5 +1,6 @@
 import asyncio
 import json
+from typing import Optional
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, status
@@ -11,6 +12,10 @@ from app.modules.panel_references.schema import (
     CreatePanelRefModel,
     PanelRefsModel,
     UpdatePanelRefModel,
+)
+from app.modules.pv_degradation.schema import (
+    PVDegradationModel,
+    Year1DegradationInputModel,
 )
 from app.modules.pv_summary.schema import PVSModel, SitePVSItemModel, UpdatePVSItemModel
 from app.modules.sites.schema import (
@@ -167,7 +172,7 @@ async def edit_site_panels(
 @site_router.get(
     "/sites/{site_uid}/pvs",
     status_code=status.HTTP_200_OK,
-    response_model=ServerRespModel[PVSModel],
+    response_model=ServerRespModel[Optional[PVSModel]],
 )
 async def get_site_pvs(
     site_uid: UUID,
@@ -175,7 +180,10 @@ async def get_site_pvs(
 ):
     site_pvs = await site_config_service.get_site_pvs(site_uid=site_uid)
 
-    return ServerRespModel[PVSModel](data=site_pvs, message="Site photovoltaic summary retrieved")
+    return ServerRespModel[Optional[PVSModel]](
+        data=PVSModel.model_validate(site_pvs) if site_pvs else None,
+        message="Site photovoltaic summary retrieved",
+    )
 
 
 @site_router.post(
@@ -214,3 +222,69 @@ async def edit_site_pvs(
     await site_config_service.edit_pvs(site_uid=site_uid, user_uid=token_user_uid, payload=payload)
 
     return ServerRespModel[bool](data=True, message="Site photovoltaic summary updated")
+
+
+@site_router.post(
+    "/sites/{site_uid}/degradation",
+    status_code=status.HTTP_200_OK,
+    response_model=ServerRespModel[Optional[PVDegradationModel]],
+)
+async def create_year_one_degradation(
+    site_uid: UUID,
+    payload: Year1DegradationInputModel,
+    site_config_service: SiteConfigService = Depends(get_site_configs_service),
+    token_payload: dict = Depends(EngineerAccessBearer()),
+):
+    token_user = token_payload.get("user")
+    token_user_uid = token_user.get("uid")
+
+    result = await site_config_service.create_or_update_year_one_degradation(
+        site_uid=site_uid, user_uid=token_user_uid, payload=payload
+    )
+
+    return ServerRespModel[Optional[PVDegradationModel]](
+        data=PVDegradationModel.model_validate(result) if result else None,
+        message=("Site degradation created!" if result else "Site PV Summary needs to be created first!"),
+    )
+
+
+@site_router.put(
+    "/sites/{site_uid}/degradation",
+    status_code=status.HTTP_200_OK,
+    response_model=ServerRespModel[Optional[PVDegradationModel]],
+)
+async def update_year_one_degradation(
+    site_uid: UUID,
+    payload: Year1DegradationInputModel,
+    site_config_service: SiteConfigService = Depends(get_site_configs_service),
+    token_payload: dict = Depends(EngineerAccessBearer()),
+):
+    token_user = token_payload.get("user")
+    token_user_uid = token_user.get("uid")
+
+    result = await site_config_service.create_or_update_year_one_degradation(
+        site_uid=site_uid, user_uid=token_user_uid, payload=payload
+    )
+
+    return ServerRespModel[Optional[PVDegradationModel]](
+        data=PVDegradationModel.model_validate(result) if result else None,
+        message="Site degradation updated!",
+    )
+
+
+@site_router.get(
+    "/sites/{site_uid}/degradation",
+    status_code=status.HTTP_200_OK,
+    response_model=ServerRespModel[Optional[PVDegradationModel]],
+)
+async def get_site_degradation(
+    site_uid: UUID,
+    site_config_service: SiteConfigService = Depends(get_site_configs_service),
+    _: dict = Depends(EngineerAccessBearer()),
+):
+    result = await site_config_service.get_degradation_by_site(site_uid=site_uid)
+
+    return ServerRespModel[Optional[PVDegradationModel]](
+        data=PVDegradationModel.model_validate(result) if result else None,
+        message="Site degradation retrieved!",
+    )

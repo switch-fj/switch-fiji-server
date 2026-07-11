@@ -57,3 +57,9 @@ from app.jobs.on_demand.triggers import invoice as invoice_on_demand_triggers  #
 from app.jobs.on_demand.schedulers import (  # noqa
     invoice as invoice_on_demand_schedulers,  # noqa
 )  # noqa
+from app.jobs.on_demand.triggers import (  # noqa
+    degradation as degradation_on_demand_triggers,
+)  # noqa
+from app.jobs.on_demand.schedulers import (  # noqa
+    degradation as degradation_on_demand_schedulers,
+)  # noqa
