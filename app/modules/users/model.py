@@ -13,6 +13,7 @@ if TYPE_CHECKING:
     from app.modules.panel_references.model import PanelReference
     from app.modules.pv_degradation.model import PvDegradation
     from app.modules.pv_summary.model import PVSummary
+    from app.modules.string_wiring.model import StringWiring
 
 
 class User(MyAbstractSQLModel, table=True):
@@ -67,3 +68,4 @@ class User(MyAbstractSQLModel, table=True):
     panel_refs: list["PanelReference"] = Relationship(back_populates="user")
     pv_summary: Optional["PVSummary"] = Relationship(back_populates="user")
     pv_degradation: Optional["PvDegradation"] = Relationship(back_populates="user")
+    string_wiring: Optional["StringWiring"] = Relationship(back_populates="user")

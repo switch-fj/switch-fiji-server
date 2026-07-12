@@ -40,10 +40,13 @@ def compute_site_yearly_degradation_on_demand(
         celery_dynamo_client.init()
         with get_celery_db_session() as session:
             pv_degradation = session.execute(
-                select(PvDegradation).where(PvDegradation.uid == degradation_uid)
+                select(PvDegradation).where(
+                    PvDegradation.uid == degradation_uid,
+                    PvDegradation.deleted_at.is_(None),
+                )
             ).scalar_one_or_none()
 
-            if pv_degradation is None:
+            if not pv_degradation:
                 raise ValueError(f"PvDegradation {degradation_uid} not found")
 
             current_schedule = PvDegradationSchedule.from_json(pv_degradation.degradation)

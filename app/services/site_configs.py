@@ -3,10 +3,18 @@ from uuid import UUID
 from fastapi import Depends
 from sqlmodel.ext.asyncio.session import AsyncSession
 
-from app.core.exceptions import Forbidden, NotFound, ResourceExists
+from app.core.exceptions import (
+    Forbidden,
+    InsufficientPermissions,
+    NotFound,
+    ResourceExists,
+)
 from app.database.postgres import get_session
 from app.jobs.on_demand.triggers.degradation import (
     trigger_compute_site_yearly_degradation_on_demand,
+)
+from app.jobs.on_demand.triggers.string_wiring import (
+    trigger_compute_string_wiring_on_demand,
 )
 from app.modules.clients.repository import ClientRepository
 from app.modules.panel_references.repository import PanelRefRepository
@@ -20,6 +28,11 @@ from app.modules.pv_degradation.schema import (
 from app.modules.pv_summary.repository import PvSummaryRepository
 from app.modules.pv_summary.schema import SitePVSItemModel, UpdatePVSItemModel
 from app.modules.sites.repository import SiteRepository
+from app.modules.string_wiring.repository import StringWiringRepository
+from app.modules.string_wiring.schema import (
+    StringsWiringInputModel,
+    StringWiringRespModel,
+)
 from app.modules.users.repository import UserRepository
 from app.services.sites import SiteService
 from app.shared.schema import UserRoleEnum
@@ -37,6 +50,7 @@ class SiteConfigService(SiteService):
         self.panel_ref_repo = PanelRefRepository(session=session)
         self.pvs_repo = PvSummaryRepository(session=session)
         self.pv_degradation_repo = PvDegradationRepository(session=session)
+        self.st_wiring_repo = StringWiringRepository(session=session)
 
         super().__init__(site_repo=self.site_repo, client_repo=self.client_repo)
 
@@ -44,6 +58,15 @@ class SiteConfigService(SiteService):
         trigger_compute_site_yearly_degradation_on_demand.delay(
             requesting_user_uid=str(user_uid),
             degradation_uid=str(degradation_uid),
+            site_uid=str(site_uid),
+        )
+
+        return
+
+    async def _initiate_string_wiring_task(self, user_uid: UUID, string_wiring_uid: UUID, site_uid: UUID):
+        trigger_compute_string_wiring_on_demand.delay(
+            requesting_user_uid=str(user_uid),
+            string_wiring_uid=str(string_wiring_uid),
             site_uid=str(site_uid),
         )
 
@@ -176,6 +199,57 @@ class SiteConfigService(SiteService):
         site_degradation = await self.pv_degradation_repo.get_by_site_uid(site_uid=site_uid)
 
         return site_degradation
+
+    async def create_string_wiring(self, site_uid: UUID, user_uid: UUID, payload: StringsWiringInputModel):
+        existing_str_wiring = await self.st_wiring_repo.get_by_site(site_uid == site_uid)
+
+        if existing_str_wiring:
+            raise ResourceExists("string configuration exists. Update it instead.")
+
+        site = await self.site_repo.get_site_by_uid(site_uid=site_uid)
+
+        if not site:
+            raise NotFound("Site not found!")
+
+        string_wiring = await self.st_wiring_repo.create(user_uid=user_uid, site_uid=site_uid, payload=payload)
+
+        await self._initiate_string_wiring_task(
+            user_uid=user_uid,
+            string_wiring_uid=string_wiring.uid,
+            site_uid=site_uid,
+        )
+
+        return string_wiring
+
+    async def update_string_wiring(
+        self,
+        site_uid: UUID,
+        user_uid: UUID,
+        str_wiring_uid: UUID,
+        payload: StringsWiringInputModel,
+    ):
+        existing_str_wiring = await self.st_wiring_repo.get_by_uid(str_wiring_uid=str_wiring_uid)
+
+        if not existing_str_wiring:
+            raise NotFound()
+
+        has_permission = existing_str_wiring.site_uid == site_uid and existing_str_wiring.user_uid == user_uid
+
+        if not has_permission:
+            raise InsufficientPermissions()
+
+        existing_str_wiring = await self.st_wiring_repo.update(payload=payload, string_wiring=existing_str_wiring)
+
+        self._initiate_string_wiring_task(user_uid=user_uid, string_wiring_uid=existing_str_wiring.uid)
+        return existing_str_wiring
+
+    async def get_str_wiring(self, site_uid: UUID):
+        result = await self.st_wiring_repo.get_by_site(site_uid=site_uid)
+
+        if not result:
+            raise NotFound()
+
+        return StringWiringRespModel.model_validate(result.model_dump())
 
 
 def get_site_configs_service(

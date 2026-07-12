@@ -63,3 +63,9 @@ from app.jobs.on_demand.triggers import (  # noqa
 from app.jobs.on_demand.schedulers import (  # noqa
     degradation as degradation_on_demand_schedulers,
 )  # noqa
+from app.jobs.on_demand.triggers import (  # noqa
+    string_wiring as string_wiring_on_demand_triggers,
+)  # noqa
+from app.jobs.on_demand.schedulers import (  # noqa
+    string_wiring as string_wiring_on_demand_schedulers,
+)  # noqa

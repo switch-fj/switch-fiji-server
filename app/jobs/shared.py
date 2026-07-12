@@ -1,5 +1,6 @@
 from datetime import datetime
 from typing import Optional
+from uuid import UUID
 
 from sqlmodel import Session, select, text
 
@@ -85,7 +86,7 @@ def update_job_run(
         job_run = session.execute(
             select(JobRun).where(
                 JobRun.task_id == task_id,
-                JobRun.reference_uid == reference_uid,
+                JobRun.reference_uid == UUID(reference_uid),
             )
         ).scalar_one_or_none()
 

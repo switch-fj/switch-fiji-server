@@ -23,6 +23,10 @@ from app.modules.sites.schema import (
     SiteDailyStatsRespModel,
     SiteRespModel,
 )
+from app.modules.string_wiring.schema import (
+    StringsWiringInputModel,
+    StringWiringRespModel,
+)
 from app.services.site_configs import SiteConfigService, get_site_configs_service
 from app.services.sites import SiteService, get_site_service
 from app.shared.schema import (
@@ -287,4 +291,71 @@ async def get_site_degradation(
     return ServerRespModel[Optional[PVDegradationModel]](
         data=PVDegradationModel.model_validate(result) if result else None,
         message="Site degradation retrieved!",
+    )
+
+
+@site_router.post(
+    "/sites/{site_uid}/string-wiring",
+    status_code=status.HTTP_200_OK,
+    response_model=ServerRespModel[StringWiringRespModel],
+)
+async def configure_string_wiring(
+    site_uid: UUID,
+    payload: StringsWiringInputModel,
+    site_config_service: SiteConfigService = Depends(get_site_configs_service),
+    token_payload: dict = Depends(EngineerAccessBearer()),
+):
+    token_user = token_payload.get("user")
+    token_user_uid = token_user.get("uid")
+    result = await site_config_service.create_string_wiring(site_uid=site_uid, user_uid=token_user_uid, payload=payload)
+
+    return ServerRespModel[StringWiringRespModel](
+        data=StringWiringRespModel.model_validate(result.model_dump()),
+        message="Site string summary configured!",
+    )
+
+
+@site_router.put(
+    "/sites/{site_uid}/string-wiring/{str_wiring_uid}",
+    status_code=status.HTTP_200_OK,
+    response_model=ServerRespModel[Optional[PVDegradationModel]],
+)
+async def update_string_writing(
+    site_uid: UUID,
+    str_wiring_uid: UUID,
+    payload: StringsWiringInputModel,
+    site_config_service: SiteConfigService = Depends(get_site_configs_service),
+    token_payload: dict = Depends(EngineerAccessBearer()),
+):
+    token_user = token_payload.get("user")
+    token_user_uid = token_user.get("uid")
+
+    result = await site_config_service.update_string_wiring(
+        site_uid=site_uid,
+        user_uid=token_user_uid,
+        str_wiring_uid=str_wiring_uid,
+        payload=payload,
+    )
+
+    return ServerRespModel[StringWiringRespModel](
+        data=StringWiringRespModel.model_validate(result.model_dump()),
+        message="Site string summary configured!",
+    )
+
+
+@site_router.get(
+    "/sites/{site_uid}/string-wiring",
+    status_code=status.HTTP_200_OK,
+    response_model=ServerRespModel[Optional[PVDegradationModel]],
+)
+async def get_site_wiring(
+    site_uid: UUID,
+    site_config_service: SiteConfigService = Depends(get_site_configs_service),
+    _: dict = Depends(EngineerAccessBearer()),
+):
+    result = await site_config_service.get_str_wiring(site_uid=site_uid)
+
+    return ServerRespModel[Optional[PVDegradationModel]](
+        data=PVDegradationModel.model_validate(result) if result else None,
+        message="Site string wiring retrieved!",
     )
