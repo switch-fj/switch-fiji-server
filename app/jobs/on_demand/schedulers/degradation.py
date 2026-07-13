@@ -5,10 +5,14 @@ from sqlmodel import select
 from app.core.logger import setup_logger
 from app.database.celery import celery_dynamo_client, get_celery_db_session
 from app.jobs.celery import celery_app
+from app.jobs.on_demand.triggers.string_wiring import (
+    trigger_compute_string_wiring_on_demand,
+)
 from app.jobs.shared import update_job_run
 from app.modules.job_run.schema import JobRunStatus
 from app.modules.pv_degradation.model import PvDegradation
 from app.modules.pv_degradation.schema import PvDegradationSchedule, YearlyDegradation
+from app.modules.string_wiring.model import StringWiring
 
 logger = setup_logger(__name__)
 
@@ -40,10 +44,13 @@ def compute_site_yearly_degradation_on_demand(
         celery_dynamo_client.init()
         with get_celery_db_session() as session:
             pv_degradation = session.execute(
-                select(PvDegradation).where(PvDegradation.uid == degradation_uid)
+                select(PvDegradation).where(
+                    PvDegradation.uid == degradation_uid,
+                    PvDegradation.deleted_at.is_(None),
+                )
             ).scalar_one_or_none()
 
-            if pv_degradation is None:
+            if not pv_degradation:
                 raise ValueError(f"PvDegradation {degradation_uid} not found")
 
             current_schedule = PvDegradationSchedule.from_json(pv_degradation.degradation)
@@ -82,6 +89,21 @@ def compute_site_yearly_degradation_on_demand(
             status=JobRunStatus.COMPLETED,
             completed_at=datetime.now(timezone.utc),
         )
+
+        string_wiring = session.execute(
+            select(StringWiring).where(
+                StringWiring.site_uid == pv_degradation.site_uid,
+                StringWiring.deleted_at.is_(None),
+            )
+        ).scalar_one_or_none()
+
+        if string_wiring:
+            trigger_compute_string_wiring_on_demand.delay(
+                requesting_user_uid=string_wiring.user_uid,
+                site_uid=string_wiring.site_uid,
+                string_wiring_uid=string_wiring.uid,
+            )
+
     except Exception as exc:
         update_job_run(
             reference_uid=degradation_uid,

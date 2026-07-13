@@ -21,11 +21,13 @@ class JobRunStatus(StrEnum):
 class JobType(StrEnum):
     COMPUTE_INVOICE = "compute_invoice"
     COMPUTE_PV_DEGRADATION = "compute_pv_degradation"
+    COMPUTE_STRING_WIRING = "COMPUTE_STRING_WIRING"
 
 
 class JobReferenceType(StrEnum):
     CONTRACT = "contract"
     PV_DEGRADATION = "pv_degradation"
+    STRING_WIRING = "string_wiring"
 
 
 class JobComputeContractInvoice(BaseModel):
