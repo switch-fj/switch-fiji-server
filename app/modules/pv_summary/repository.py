@@ -37,7 +37,7 @@ class PvSummaryRepository:
     async def create_pvs(self, site_uid: UUID, user_uid: UUID, payload: SitePVSItemModel):
         new_pvs = PVSummary(**payload.model_dump(), user_uid=user_uid, site_uid=site_uid)
 
-        await self.session.add(new_pvs)
+        self.session.add(new_pvs)
         await self.session.commit()
 
         return new_pvs
