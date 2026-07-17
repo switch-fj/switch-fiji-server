@@ -146,10 +146,10 @@ class SiteConfigService(SiteService):
         if not existing_pvs:
             raise NotFound(f"Solar  with pv summary: {payload.uid} not found!")
 
-        if existing_pvs.site_uid != site_uid:
+        if str(existing_pvs.site_uid) != str(site_uid):
             raise Forbidden()
 
-        if existing_pvs.user_uid != user_uid:
+        if str(existing_pvs.user_uid) != str(user_uid):
             raise Forbidden()
 
         await self.pvs_repo.edit_pvs(existing_pvs=existing_pvs, payload=payload)
