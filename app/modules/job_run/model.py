@@ -3,7 +3,15 @@ from datetime import datetime
 from typing import Optional
 from uuid import UUID
 
-from sqlmodel import Column, DateTime, Enum, Field, Identity, Integer, UniqueConstraint
+from sqlmodel import (
+    Column,
+    DateTime,
+    Field,
+    Identity,
+    Integer,
+    String,
+    UniqueConstraint,
+)
 
 from app.modules.job_run.schema import JobReferenceType, JobRunStatus, JobType
 from app.shared.model import MyAbstractSQLModel
@@ -33,10 +41,10 @@ class JobRun(MyAbstractSQLModel, table=True):
         )
     )
     task_id: str = Field(index=True, nullable=False)
-    job_type: JobType = Field(nullable=False, sa_type=Enum(JobType))
-    reference_type: JobReferenceType = Field(nullable=False, sa_type=Enum(JobReferenceType))
+    job_type: JobType = Field(nullable=False, sa_type=String)
+    reference_type: JobReferenceType = Field(nullable=False, sa_type=String)
     reference_uid: UUID = Field(nullable=False, index=True)
-    status: JobRunStatus = Field(default=JobRunStatus.PENDING, sa_type=Enum(JobRunStatus))
+    status: JobRunStatus = Field(default=JobRunStatus.PENDING, sa_type=String)
     triggered_by_uid: Optional[UUID] = Field(default=None, nullable=True)
     meta: Optional[str] = Field(
         default=None,
