@@ -83,25 +83,25 @@ def compute_site_yearly_degradation_on_demand(
             session.add(pv_degradation)
             session.commit()
 
-        update_job_run(
-            reference_uid=degradation_uid,
-            task_id=job_run_task_id,
-            status=JobRunStatus.COMPLETED,
-            completed_at=datetime.now(timezone.utc),
-        )
+            string_wiring = session.execute(
+                select(StringWiring).where(
+                    StringWiring.site_uid == pv_degradation.site_uid,
+                    StringWiring.deleted_at.is_(None),
+                )
+            ).scalar_one_or_none()
 
-        string_wiring = session.execute(
-            select(StringWiring).where(
-                StringWiring.site_uid == pv_degradation.site_uid,
-                StringWiring.deleted_at.is_(None),
-            )
-        ).scalar_one_or_none()
+            if string_wiring:
+                trigger_compute_string_wiring_on_demand.delay(
+                    requesting_user_uid=string_wiring.user_uid,
+                    site_uid=string_wiring.site_uid,
+                    string_wiring_uid=string_wiring.uid,
+                )
 
-        if string_wiring:
-            trigger_compute_string_wiring_on_demand.delay(
-                requesting_user_uid=string_wiring.user_uid,
-                site_uid=string_wiring.site_uid,
-                string_wiring_uid=string_wiring.uid,
+            update_job_run(
+                reference_uid=degradation_uid,
+                task_id=job_run_task_id,
+                status=JobRunStatus.COMPLETED,
+                completed_at=datetime.now(timezone.utc),
             )
 
     except Exception as exc:

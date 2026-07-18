@@ -52,22 +52,22 @@ def get_active_contract(session: Session, contract_uid):
 
 
 def get_pv_summary(session: Session, site_uid):
-    query = """
+    query = text("""
         SELECT
             pvs.uid::text AS pvs_uid,
             pvs.site_uid::text AS site_uid,
             pvs.user_uid::text AS user_uid,
-            pvs.comissioned_at AS comissioned_at,
+            pvs.commissioned_at AS comissioned_at,
             pvs.expected_production_kwh AS expected_production_kwh,
             pvs.system_size_kwp AS system_size_kwp,
             pvs.year1_degradation AS year1_degradation,
             pvs.year2plus_degradation AS year2plus_degradation
         FROM pv_summary pvs
-        WHERE pvs.site_uid = %(site_uid)s
+        WHERE pvs.site_uid = :site_uid
             AND pvs.deleted_at IS NULL
         LIMIT 1
-    """
-    result = session.execute(text(query), {"site_uid": site_uid})
+    """)
+    result = session.execute(query, {"site_uid": site_uid})
     return result.mappings().first()
 
 
