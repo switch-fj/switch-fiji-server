@@ -8,9 +8,10 @@ from sqlmodel import (
     DateTime,
     Field,
     Identity,
+    Index,
     Integer,
     String,
-    UniqueConstraint,
+    text,
 )
 
 from app.modules.job_run.schema import JobReferenceType, JobRunStatus, JobType
@@ -22,13 +23,15 @@ class JobRun(MyAbstractSQLModel, table=True):
 
     __tablename__ = "job_runs"
     __table_args__ = (
-        UniqueConstraint(
+        Index(
+            "uq_job_run_dedup",
             "reference_uid",
             "job_type",
             "reference_type",
             "meta",
             "triggered_by_uid",
-            name="uq_job_run_dedup",
+            unique=True,
+            postgresql_where=text("status IN ('pending', 'running')"),
         ),
     )
 

@@ -32,6 +32,7 @@ class PvDegradationRepository:
         pv_degradation.degradation = payload.to_json()
 
         await self.session.commit()
+        await self.session.refresh(pv_degradation)
 
         return pv_degradation
 

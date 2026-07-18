@@ -52,8 +52,7 @@ def get_active_contract(session: Session, contract_uid):
 
 
 def get_pv_summary(session: Session, site_uid):
-    result = session.execute(
-        text("""
+    query = """
         SELECT
             pvs.uid::text AS pvs_uid,
             pvs.site_uid::text AS site_uid,
@@ -62,15 +61,14 @@ def get_pv_summary(session: Session, site_uid):
             pvs.expected_production_kwh AS expected_production_kwh,
             pvs.system_size_kwp AS system_size_kwp,
             pvs.year1_degradation AS year1_degradation,
-            pvs.year2plus_degradation AS year2plus_degradation,
+            pvs.year2plus_degradation AS year2plus_degradation
         FROM pv_summary pvs
-        WHERE pvs.site_uid = :site_uid
+        WHERE pvs.site_uid = %(site_uid)s
             AND pvs.deleted_at IS NULL
-        LIMIT 1      
-        """),
-        {"site_uid": site_uid},
-    )
-    return result.mappings().one_or_none()
+        LIMIT 1
+    """
+    result = session.execute(text(query), {"site_uid": site_uid})
+    return result.mappings().first()
 
 
 def update_job_run(
