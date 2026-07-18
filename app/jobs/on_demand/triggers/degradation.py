@@ -1,6 +1,7 @@
 import json
 from uuid import UUID
 
+from sqlalchemy.orm import selectinload
 from sqlmodel import select
 
 from app.core.logger import setup_logger
@@ -10,6 +11,7 @@ from app.jobs.on_demand.schedulers.degradation import (
     compute_site_yearly_degradation_on_demand,
 )
 from app.jobs.shared import get_pv_summary, update_job_run
+from app.modules.contracts.model import Contract
 from app.modules.job_run.model import JobRun
 from app.modules.job_run.schema import JobReferenceType, JobRunStatus, JobType
 
@@ -70,6 +72,23 @@ def trigger_compute_site_yearly_degradation_on_demand(
         session.commit()
 
     try:
+        contract = session.execute(
+            select(Contract)
+            .options(selectinload(Contract.details))
+            .where(Contract.site_uid == UUID(site_uid), Contract.deleted_at.is_(None))
+        ).scalar_one_or_none()
+
+        # if not contract:
+        #     error_msg = f"Contract doesn't exist for site_uid {site_uid} "
+        #     logger.info(error_msg)
+        #     update_job_run(
+        #         reference_uid=degradation_uid,
+        #         task_id=self.request.id,
+        #         status=JobRunStatus.INVALID,
+        #         error=error_msg,
+        #     )
+        #     raise error_msg
+
         with get_celery_db_session() as session:
             pv_summary = get_pv_summary(session, site_uid)
 
@@ -86,6 +105,7 @@ def trigger_compute_site_yearly_degradation_on_demand(
         compute_site_yearly_degradation_on_demand.delay(
             job_run_task_id=self.request.id,
             degradation_uid=degradation_uid,
+            num_of_years=contract.details.term_years if contract else 10,
             comissioned_at=pv_summary.get("comissioned_at"),
             year1_degradation=pv_summary.get("year1_degradation"),
             year2plus_degradation=pv_summary.get("year2plus_degradation"),

@@ -16,7 +16,19 @@ from app.modules.string_wiring.model import StringWiring
 
 logger = setup_logger(__name__)
 
-NUM_YEARS = 12
+
+def apply_degradation(value: float, degradation_pct: float) -> float:
+    """
+    Apply a degradation percentage to a monthly value.
+
+    Args:
+        value: The original monthly value (e.g. kWh).
+        degradation_pct: Degradation rate as a percentage (e.g. 1 for 1%, 0.4 for 0.4%).
+
+    Returns:
+        The new value after applying the degradation, rounded to 2 decimal places.
+    """
+    return round(value - (value * degradation_pct / 100), 2)
 
 
 @celery_app.task(
@@ -28,11 +40,13 @@ NUM_YEARS = 12
 def compute_site_yearly_degradation_on_demand(
     self,
     job_run_task_id,
+    num_of_years,
     degradation_uid,
     comissioned_at,
     year1_degradation,
     year2plus_degradation,
 ):
+    NUM_YEARS = num_of_years
     update_job_run(
         reference_uid=degradation_uid,
         task_id=job_run_task_id,
@@ -70,7 +84,7 @@ def compute_site_yearly_degradation_on_demand(
             # Years 3..12 each decay from the year before using year2plus_degradation.
             for year_idx in range(1, NUM_YEARS):
                 rate = year1_degradation if year_idx == 1 else year2plus_degradation
-                current_year_values = [round(v * (1 - rate), 2) for v in previous_year_values]
+                current_year_values = [apply_degradation(v, rate) for v in previous_year_values]
 
                 year_months = months[year_idx * 12 : (year_idx + 1) * 12]
                 all_years.append(YearlyDegradation(root=dict(zip(year_months, current_year_values))))
