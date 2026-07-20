@@ -1,4 +1,3 @@
-import json
 from typing import List, Optional
 from uuid import UUID
 
@@ -27,7 +26,7 @@ class StringsWiringInputModel(BaseModel):
     strings: List[StringsInputItemModel]
 
     def to_json(self) -> str:
-        return json.dumps(self.strings)
+        return self.model_dump_json()
 
 
 class StringSchematicsModel(BaseModel):

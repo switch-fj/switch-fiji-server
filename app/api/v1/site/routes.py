@@ -6,6 +6,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, status
 from fastapi.responses import StreamingResponse
 
+from app.core.logger import setup_logger
 from app.core.security import AdminAccessBearer, EngineerAccessBearer
 from app.database.redis import async_redis_client
 from app.modules.panel_references.schema import (
@@ -34,6 +35,7 @@ from app.shared.schema import (
 )
 
 site_router = APIRouter(prefix="", tags=["site"])
+logger = setup_logger(__name__)
 
 
 @site_router.post(
@@ -305,12 +307,13 @@ async def configure_string_wiring(
     site_config_service: SiteConfigService = Depends(get_site_configs_service),
     token_payload: dict = Depends(EngineerAccessBearer()),
 ):
+    logger.info(f"site_uid: {site_uid}")
     token_user = token_payload.get("user")
     token_user_uid = token_user.get("uid")
     result = await site_config_service.create_string_wiring(site_uid=site_uid, user_uid=token_user_uid, payload=payload)
 
     return ServerRespModel[StringWiringRespModel](
-        data=StringWiringRespModel.model_validate(result.model_dump()),
+        data=StringWiringRespModel.model_validate(result),
         message="Site string summary configured!",
     )
 
@@ -346,7 +349,7 @@ async def update_string_writing(
 @site_router.get(
     "/sites/{site_uid}/string-wiring",
     status_code=status.HTTP_200_OK,
-    response_model=ServerRespModel[Optional[PVDegradationModel]],
+    response_model=ServerRespModel[StringWiringRespModel],
 )
 async def get_site_wiring(
     site_uid: UUID,
@@ -355,7 +358,7 @@ async def get_site_wiring(
 ):
     result = await site_config_service.get_str_wiring(site_uid=site_uid)
 
-    return ServerRespModel[Optional[PVDegradationModel]](
-        data=PVDegradationModel.model_validate(result) if result else None,
+    return ServerRespModel[StringWiringRespModel](
+        data=result,
         message="Site string wiring retrieved!",
     )

@@ -198,7 +198,7 @@ class SiteConfigService(SiteService):
         return site_degradation
 
     async def create_string_wiring(self, site_uid: UUID, user_uid: UUID, payload: StringsWiringInputModel):
-        existing_str_wiring = await self.st_wiring_repo.get_by_site(site_uid == site_uid)
+        existing_str_wiring = await self.st_wiring_repo.get_by_site(site_uid=site_uid)
 
         if existing_str_wiring:
             raise ResourceExists("string configuration exists. Update it instead.")
