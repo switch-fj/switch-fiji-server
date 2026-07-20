@@ -91,24 +91,21 @@ class SiteConfigService(SiteService):
         return True
 
     async def edit_panel_ref(self, site_uid: UUID, user_uid: UUID, payload: UpdatePanelRefModel):
+        ref_uids = [ref.uid for ref in payload.refs]
+        existing_refs = await self.panel_ref_repo.get_by_uids(panel_ref_uids=ref_uids)
+        existing_by_uid = {ref.uid: ref for ref in existing_refs}
+
+        missing = set(ref_uids) - existing_by_uid.keys()
+        if missing:
+            raise NotFound(f"Panel ref(s) not found: {missing}")
+
         for ref in payload.refs:
-            existing_panel_ref = await self.panel_ref_repo.get_by_uid(panel_ref_uid=ref.uid)
-
-            if not existing_panel_ref:
-                raise NotFound(f"Solar  with ref: {ref.uid} not found!")
-
-            if not existing_panel_ref.site_uid == site_uid:
+            existing = existing_by_uid[ref.uid]
+            if str(existing.site_uid) != str(site_uid) or str(existing.user_uid) != str(user_uid):
                 raise Forbidden()
 
-            if not existing_panel_ref.user_uid == user_uid:
-                raise Forbidden()
-
-            for k, v in ref.model_dump(exclude={"uid"}).items():
-                setattr(existing_panel_ref, k, v)
-
-            await self.session.flush()
-
-        await self.session.commit()
+        updates_by_uid = {ref.uid: ref for ref in payload.refs}
+        await self.panel_ref_repo.update_panel_refs(existing_refs, updates_by_uid)
 
         return True
 

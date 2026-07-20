@@ -6,7 +6,11 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.database.postgres import get_session
 from app.modules.panel_references.model import PanelReference
-from app.modules.panel_references.schema import CreatePanelRefModel, PanelRefsModel
+from app.modules.panel_references.schema import (
+    CreatePanelRefModel,
+    PanelRefsModel,
+    SiteSinglePanelRefItemModel,
+)
 
 
 class PanelRefRepository:
@@ -29,6 +33,13 @@ class PanelRefRepository:
 
         return panel_ref
 
+    async def get_by_uids(self, panel_ref_uids: list[UUID]):
+        stmt = select(PanelReference).where(PanelReference.uid.in_(panel_ref_uids))
+        result = await self.session.exec(stmt)
+        panels = result.all()
+
+        return panels
+
     async def get_refs_by_site_uid(self, site_uid: UUID):
         statement = select(PanelReference).where(
             PanelReference.site_uid == site_uid, PanelReference.deleted_at.is_(None)
@@ -43,10 +54,22 @@ class PanelRefRepository:
             PanelReference(**ref.model_dump(), site_uid=site_uid, user_uid=user_uid) for ref in payload.refs
         ]
 
-        await self.session.add_all(panel_refs_model)
+        self.session.add_all(panel_refs_model)
         await self.session.commit()
 
         return panel_refs_model
+
+    async def update_panel_refs(
+        self,
+        existing_refs: list[PanelReference],
+        updates_by_uid: dict[UUID, SiteSinglePanelRefItemModel],
+    ) -> None:
+        for existing in existing_refs:
+            update = updates_by_uid[existing.uid]
+            for k, v in update.model_dump(exclude={"uid"}).items():
+                setattr(existing, k, v)
+
+        await self.session.commit()
 
 
 def get_panel_ref_repo(session: AsyncSession = Depends(get_session)):
