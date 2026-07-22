@@ -5,7 +5,7 @@ from pydantic import TypeAdapter
 from sqlmodel import select
 
 from app.core.logger import setup_logger
-from app.database.celery import celery_dynamo_client, get_celery_db_session
+from app.database.celery import get_celery_db_session
 from app.jobs.celery import celery_app
 from app.jobs.shared import update_job_run
 from app.modules.job_run.schema import JobRunStatus
@@ -42,7 +42,6 @@ def compute_string_wiring_on_demand(
     )
 
     try:
-        celery_dynamo_client.init()
         with get_celery_db_session() as session:
             panel_refs = (
                 session.execute(
@@ -80,13 +79,14 @@ def compute_string_wiring_on_demand(
                     StringSchematicsModel(
                         inverter=string_input.inverter,
                         mppt=string_input.mppt,
+                        string_id=string_input.string_id,
                         panel_ref_uid=string_input.panel_ref_uid,
                         panel_qty=string_input.panel_qty,
                         panel_watt=selected_panel.watt,
                         panel_voc=selected_panel.voc,
                         panel_vmp=selected_panel.vmp,
                         ip=selected_panel.imp,
-                    ).model_dump()
+                    )
                 )
 
             string_schematics_model_adapter = TypeAdapter(List[StringSchematicsModel])

@@ -28,7 +28,11 @@ class StringWiringRepository:
         return string_wiring
 
     async def create(self, site_uid: UUID, user_uid: UUID, payload: StringsWiringInputModel):
-        string_wiring = StringWiring(site_uid=site_uid, user_uid=user_uid, string_input=payload.to_json())
+        string_wiring = StringWiring(
+            site_uid=site_uid,
+            user_uid=user_uid,
+            string_input=StringsWiringInputModel.to_json(payload.strings),
+        )
 
         self.session.add(string_wiring)
         await self.session.commit()
@@ -36,7 +40,7 @@ class StringWiringRepository:
         return string_wiring
 
     async def update(self, payload: StringsWiringInputModel, string_wiring: StringWiring):
-        string_wiring.string_input = payload.to_json()
+        string_wiring.string_input = StringsWiringInputModel.to_json(items=payload.strings)
         await self.session.commit()
 
         return string_wiring

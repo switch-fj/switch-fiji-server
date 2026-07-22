@@ -229,14 +229,20 @@ class SiteConfigService(SiteService):
         if not existing_str_wiring:
             raise NotFound()
 
-        has_permission = existing_str_wiring.site_uid == site_uid and existing_str_wiring.user_uid == user_uid
+        has_permission = str(existing_str_wiring.site_uid) == str(site_uid) and str(
+            existing_str_wiring.user_uid
+        ) == str(user_uid)
 
         if not has_permission:
             raise InsufficientPermissions()
 
         existing_str_wiring = await self.st_wiring_repo.update(payload=payload, string_wiring=existing_str_wiring)
 
-        await self._initiate_string_wiring_task(user_uid=user_uid, string_wiring_uid=existing_str_wiring.uid)
+        await self._initiate_string_wiring_task(
+            site_uid=site_uid,
+            user_uid=user_uid,
+            string_wiring_uid=existing_str_wiring.uid,
+        )
         return True
 
     async def get_str_wiring(self, site_uid: UUID):
