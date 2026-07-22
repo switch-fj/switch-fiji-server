@@ -321,7 +321,7 @@ async def configure_string_wiring(
 @site_router.put(
     "/sites/{site_uid}/string-wiring",
     status_code=status.HTTP_200_OK,
-    response_model=ServerRespModel[Optional[PVDegradationModel]],
+    response_model=ServerRespModel[bool],
 )
 async def update_string_writing(
     site_uid: UUID,
@@ -338,8 +338,8 @@ async def update_string_writing(
         payload=payload,
     )
 
-    return ServerRespModel[StringWiringRespModel](
-        data=StringWiringRespModel.model_validate(result.model_dump()),
+    return ServerRespModel[bool](
+        data=result,
         message="Site string summary configured!",
     )
 
