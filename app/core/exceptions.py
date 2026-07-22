@@ -465,7 +465,7 @@ def register_exceptions(app: FastAPI):
     app.add_exception_handler(InvalidOTP, create_exception_handler(status.HTTP_410_GONE))
     app.add_exception_handler(
         InsufficientPermissions,
-        create_exception_handler(status.HTTP_405_METHOD_NOT_ALLOWED),
+        create_exception_handler(status.HTTP_403_FORBIDDEN),
     )
     app.add_exception_handler(BadRequest, create_exception_handler(status.HTTP_400_BAD_REQUEST))
     app.add_exception_handler(TooManyRequest, create_exception_handler(status.HTTP_400_BAD_REQUEST))
