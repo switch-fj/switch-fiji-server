@@ -319,13 +319,12 @@ async def configure_string_wiring(
 
 
 @site_router.put(
-    "/sites/{site_uid}/string-wiring/{str_wiring_uid}",
+    "/sites/{site_uid}/string-wiring",
     status_code=status.HTTP_200_OK,
     response_model=ServerRespModel[Optional[PVDegradationModel]],
 )
 async def update_string_writing(
     site_uid: UUID,
-    str_wiring_uid: UUID,
     payload: StringsWiringInputModel,
     site_config_service: SiteConfigService = Depends(get_site_configs_service),
     token_payload: dict = Depends(EngineerAccessBearer()),
@@ -336,7 +335,6 @@ async def update_string_writing(
     result = await site_config_service.update_string_wiring(
         site_uid=site_uid,
         user_uid=token_user_uid,
-        str_wiring_uid=str_wiring_uid,
         payload=payload,
     )
 

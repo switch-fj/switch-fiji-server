@@ -6,6 +6,7 @@ from pydantic import (
     ConfigDict,
     Field,
     RootModel,
+    TypeAdapter,
     computed_field,
     field_serializer,
 )
@@ -25,8 +26,15 @@ class StringsInputItemModel(BaseModel):
 class StringsWiringInputModel(BaseModel):
     strings: List[StringsInputItemModel]
 
-    def to_json(self) -> str:
-        return self.model_dump_json()
+    @classmethod
+    def to_json(cls, items: List[StringsInputItemModel]) -> str:
+        adapter = TypeAdapter(List[StringsInputItemModel])
+        return adapter.dump_json(items).decode()
+
+    @classmethod
+    def from_json(cls, raw: str) -> List[StringsInputItemModel]:
+        adapter = TypeAdapter(List[StringsInputItemModel])
+        return adapter.validate_json(raw)
 
 
 class StringSchematicsModel(BaseModel):

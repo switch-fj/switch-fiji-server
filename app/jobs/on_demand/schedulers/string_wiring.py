@@ -1,7 +1,7 @@
-import json
 from datetime import datetime, timezone
 from typing import List
 
+from pydantic import TypeAdapter
 from sqlmodel import select
 
 from app.core.logger import setup_logger
@@ -16,6 +16,7 @@ from app.modules.string_wiring.schema import (
     MPPTFunctionTable,
     StringSchematicsModel,
     StringsInputItemModel,
+    StringsWiringInputModel,
 )
 
 logger = setup_logger(__name__)
@@ -65,7 +66,8 @@ def compute_string_wiring_on_demand(
                 raise ValueError(f"String wiring for {site_uid} not found")
 
             # 1. compute all the strings.
-            string_inputs: List[StringsInputItemModel] = json.loads(string_wiring.string_input)
+            string_inputs: List[StringsInputItemModel] = StringsWiringInputModel.from_json(string_wiring.string_input)
+
             string_schematics_model: List[StringSchematicsModel] = []
 
             for string_input in string_inputs:
@@ -86,7 +88,9 @@ def compute_string_wiring_on_demand(
                         ip=selected_panel.imp,
                     ).model_dump()
                 )
-            string_wiring.wring_schematics = json.dumps(string_schematics_model)
+
+            string_schematics_model_adapter = TypeAdapter(List[StringSchematicsModel])
+            string_wiring.wring_schematics = string_schematics_model_adapter.dump_json(string_schematics_model).decode()
 
             # 2. compute all the mppt function table.
             mppt_fn_table = MPPTFunctionTable.build(string_schematics_model)

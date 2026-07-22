@@ -222,10 +222,9 @@ class SiteConfigService(SiteService):
         self,
         site_uid: UUID,
         user_uid: UUID,
-        str_wiring_uid: UUID,
         payload: StringsWiringInputModel,
     ):
-        existing_str_wiring = await self.st_wiring_repo.get_by_uid(str_wiring_uid=str_wiring_uid)
+        existing_str_wiring = await self.st_wiring_repo.get_by_site(site_uid=site_uid)
 
         if not existing_str_wiring:
             raise NotFound()
@@ -237,7 +236,7 @@ class SiteConfigService(SiteService):
 
         existing_str_wiring = await self.st_wiring_repo.update(payload=payload, string_wiring=existing_str_wiring)
 
-        self._initiate_string_wiring_task(user_uid=user_uid, string_wiring_uid=existing_str_wiring.uid)
+        await self._initiate_string_wiring_task(user_uid=user_uid, string_wiring_uid=existing_str_wiring.uid)
         return existing_str_wiring
 
     async def get_str_wiring(self, site_uid: UUID):
