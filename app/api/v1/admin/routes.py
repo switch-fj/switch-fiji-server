@@ -138,11 +138,12 @@ async def stream_site_stats(
 )
 async def get_portfolio_stats(
     month: int | None = Query(default=None),
-    year: int | None = Query(default=datetime.now(tz=timezone.utc).year),
+    year: int | None = Query(default=None),
     contract_service: ContractService = Depends(get_contract_service),
     _: dict = Depends(AdminAccessBearer()),
 ):
     now = datetime.now(tz=timezone.utc)
+
     target_year = year or now.year
     target_month = month if month is not None else (None if year is not None else now.month)
 
