@@ -21,6 +21,7 @@ class AsyncRedisClient:
     _instance: Optional["AsyncRedisClient"] = None
     _client: Optional[aioredis.Redis] = None
     SITES_CACHE_TTL = 60
+    ENERGY_PORTFOLIO_CACHE_TTL_SECONDS = 24 * 60 * 60  # 1 day
 
     def __new__(cls):
         """Return the existing singleton instance or create one.
@@ -115,7 +116,7 @@ class AsyncRedisClient:
         if not self._client:
             return None
         try:
-            await self._client.setex(key, 300, data)
+            await self._client.setex(key, self.ENERGY_PORTFOLIO_CACHE_TTL_SECONDS, data)
         except Exception as e:
             logger.error(f"Error setting site energy portfolio {e}")
             return None
