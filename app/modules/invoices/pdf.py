@@ -496,7 +496,7 @@ class InvoicePDF:
                         "period_end_reading": cls._fmt_decimal(meter.period_end_reading),
                         "usage": cls._fmt_decimal(meter.period_end_reading - meter.period_start_reading),
                     }
-                    for meter in previous_invoice.meter_data
+                    for meter in sorted(previous_invoice.meter_data, key=lambda m: m.label)
                 ]
                 if previous_invoice
                 else None
@@ -508,7 +508,7 @@ class InvoicePDF:
                     "period_end_reading": cls._fmt_decimal(meter.period_end_reading),
                     "usage": cls._fmt_decimal(meter.period_end_reading - meter.period_start_reading),
                 }
-                for meter in meter_data
+                for meter in sorted(meter_data, key=lambda m: m.label)
             ],
             "day_pie_chart_usage": day_pie_chart_usage,
             "night_pie_chart_usage": night_pie_chart_usage,
