@@ -185,8 +185,12 @@ class ContractService:
 
         return True
 
-    async def energy_portfolio(self):
-        res = await self.contract_repo.compute_energy_portfolio()
+    async def energy_portfolio(
+        self,
+        year: int,
+        month: int | None = None,
+    ):
+        res = await self.contract_repo.compute_energy_portfolio(month=month, year=year)
 
         return res
 
