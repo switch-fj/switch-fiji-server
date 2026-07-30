@@ -12,7 +12,7 @@
             </div>
             <div class="invoice-date">
                 <span>Invoice Date:</span>
-                {{ period_start_at }} – {{ period_end_at }}
+                {{ current_period_start_at }} – {{ current_period_end_at }}
             </div>
         </div>
 
@@ -50,7 +50,9 @@
         {% endif %}
     </section>
 
-    {% include "partials/meter_data.html" %}
+    <div class="new-page">
+        {% include "partials/meter_data.html" %}
+    </div>
 
     <div class="new-page">
         {% if ppa_off_grid_daily_usage %}
