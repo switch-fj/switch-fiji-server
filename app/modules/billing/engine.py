@@ -211,6 +211,7 @@ class BillingEngine:
         result: tuple[Invoice, list[InvoiceMeterData], list[InvoiceLineItem]],
         invoice_snapshots: list[InvoiceSnapshot],
         contract_settings: ContractSettings,
+        previous_invoice: Invoice | None = None,
     ):
         invoice, meter_data, line_items = result
 
@@ -221,6 +222,7 @@ class BillingEngine:
             meter_data=meter_data,
             invoice_snapshots=invoice_snapshots,
             contract_settings=contract_settings,
+            previous_invoice=previous_invoice,
         )
 
         key = f"invoices/{invoice.invoice_ref}.pdf"
@@ -394,6 +396,7 @@ class BillingEngine:
         create_invoice = None
         invoice_meter_data = None
         invoice_line_items = None
+        site_name = contract.site.site_name if contract.site.site_name else ""
 
         if is_lease(contract=contract):
             # Pending
@@ -412,7 +415,7 @@ class BillingEngine:
                 period_start_at=period_start,
                 period_end_at=period_end,
                 contract_uid=contract.uid,
-                invoice_ref=InvoiceRepository._build_invoice_ref(),
+                invoice_ref=InvoiceRepository._build_invoice_ref(site_name),
             )
             invoice_meter_data = ppa_on_grid_with_battery_wizard.invoice_meter_data
             invoice_line_items = ppa_on_grid_with_battery_wizard.invoice_line_items
@@ -430,7 +433,7 @@ class BillingEngine:
                 period_start_at=period_start,
                 period_end_at=period_end,
                 contract_uid=contract.uid,
-                invoice_ref=InvoiceRepository._build_invoice_ref(),
+                invoice_ref=InvoiceRepository._build_invoice_ref(site_name),
             )
             invoice_meter_data = ppa_off_grid_wizard.invoice_meter_data
             invoice_line_items = ppa_off_grid_wizard.invoice_line_items
@@ -448,7 +451,7 @@ class BillingEngine:
                 period_start_at=period_start,
                 period_end_at=period_end,
                 contract_uid=contract.uid,
-                invoice_ref=InvoiceRepository._build_invoice_ref(),
+                invoice_ref=InvoiceRepository._build_invoice_ref(site_name),
             )
             invoice_meter_data = ppa_on_grid_no_battery_wizard.invoice_meter_data
             invoice_line_items = ppa_on_grid_no_battery_wizard.invoice_line_items

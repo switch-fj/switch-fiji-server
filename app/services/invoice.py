@@ -177,6 +177,11 @@ class InvoiceService:
 
         return resp
 
+    async def get_invoice_by_period_start_date(self, period_start_at: datetime):
+        invoice = await self.invoice_repo.get_invoice_by_period_start_date(period_start_at=period_start_at)
+
+        return invoice
+
     async def save_pdf_s3_key(self, invoice_uid: UUID, key: str) -> None:
         await self.invoice_repo.update_pdf_s3_key(invoice_uid=invoice_uid, key=key)
 
