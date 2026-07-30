@@ -177,8 +177,8 @@ class InvoiceService:
 
         return resp
 
-    async def get_invoice_by_period_start_date(self, period_start_at: datetime):
-        invoice = await self.invoice_repo.get_invoice_by_period_start_date(period_start_at=period_start_at)
+    async def get_invoice_by_period_end_date(self, period_end_at: datetime):
+        invoice = await self.invoice_repo.get_invoice_by_period_end_date(period_end_at=period_end_at)
 
         return invoice
 

@@ -341,11 +341,11 @@ class InvoiceRepository:
 
         return result
 
-    async def get_invoice_by_period_start_date(self, period_start_at: datetime):
-        """Retrieve an invoice for a contract with a period start date.
+    async def get_invoice_by_period_end_date(self, period_end_at: datetime):
+        """Retrieve an invoice for a contract with a period end date.
 
         Args:
-            period_start_at: Start date of the invoice.
+            period_end_at: End date of the invoice.
 
         Returns:
             None or a single invoice.
@@ -360,7 +360,7 @@ class InvoiceRepository:
                 joinedload(Invoice.line_items),
                 joinedload(Invoice.meter_data),
             )
-            .where(Invoice.period_start_at == period_start_at)
+            .where(Invoice.period_end_at == period_end_at)
             .execution_options(populate_existing=True)
         )
         result = await self.session.exec(statement)
