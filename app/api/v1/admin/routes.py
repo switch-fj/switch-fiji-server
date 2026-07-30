@@ -1,5 +1,6 @@
 import asyncio
 import json
+from datetime import datetime, timezone
 from typing import Optional
 from uuid import UUID
 
@@ -136,18 +137,32 @@ async def stream_site_stats(
     response_model=ServerRespModel[EnergyPortfolioRespModel],
 )
 async def get_portfolio_stats(
+    month: int | None = Query(default=None),
+    year: int | None = Query(default=datetime.now(tz=timezone.utc).year),
     contract_service: ContractService = Depends(get_contract_service),
     _: dict = Depends(AdminAccessBearer()),
 ):
-    energy_portfolio = await async_redis_client.get_energy_portfolio()
+    now = datetime.now(tz=timezone.utc)
+    target_year = year or now.year
+    target_month = month if month is not None else (None if year is not None else now.month)
+
+    cache_key = (
+        f"energy_portfolio:{target_year}" if target_month is None else f"energy_portfolio:{target_year}:{target_month}"
+    )
+
+    energy_portfolio = await async_redis_client.get_energy_portfolio(cache_key)
 
     if energy_portfolio:
-        return ServerRespModel[dict[str, float]](
-            data=json.loads(energy_portfolio), message="Energy portfolio retrieved"
+        return ServerRespModel[EnergyPortfolioRespModel](
+            data=EnergyPortfolioRespModel(**json.loads(energy_portfolio)),
+            message="Energy portfolio retrieved",
         )
 
-    resp = await contract_service.energy_portfolio()
-    await async_redis_client.set_energy_portfolio(data=resp.model_dump_json())
+    resp = await contract_service.energy_portfolio(month=target_month, year=target_year)
+    await async_redis_client.set_energy_portfolio(
+        key=cache_key,
+        data=resp.model_dump_json(),
+    )
     return ServerRespModel[EnergyPortfolioRespModel](data=resp, message="Energy portfolio retrieved")
 
 

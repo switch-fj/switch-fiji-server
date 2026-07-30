@@ -1,4 +1,5 @@
 import json
+from calendar import monthrange
 from datetime import datetime, timezone
 from decimal import Decimal
 from uuid import UUID
@@ -266,14 +267,21 @@ class ContractRepository:
             logger.error(f"Error updating contract details: {e}")
             raise
 
-    async def compute_energy_portfolio(self):
-        """Fetch a contract with its associated client, site, and details by UUID.
+    async def compute_energy_portfolio(
+        self,
+        year: int,
+        month: int | None = None,
+    ):
+        """Compute aggregate energy portfolio stats (produced kWh, baseline kWh,
+        invoice total, invoice count) across all invoices for a given month.
+
+        Args:
+            month: target month (1-12)
+            year: target year
 
         Returns:
             energy portfolio
         """
-        now = datetime.now(tz=timezone.utc)
-
         baseline_stmt = (
             select(
                 func.coalesce(
@@ -293,7 +301,8 @@ class ContractRepository:
         )
 
         baseline_result = await self.session.exec(baseline_stmt)
-        baseline_row = baseline_result.one()
+        baseline_kwh = baseline_result.one()
+        baseline_kwh = baseline_kwh
 
         meter_subq = (
             select(
@@ -306,6 +315,14 @@ class ContractRepository:
             .subquery()
         )
 
+        if month is not None:
+            start = datetime(year, month, 1, tzinfo=timezone.utc)
+            _, last_day = monthrange(year, month)
+            end = datetime(year, month, last_day, 23, 59, 59, 999999, tzinfo=timezone.utc)
+        else:
+            start = datetime(year, 1, 1, tzinfo=timezone.utc)
+            end = datetime(year, 12, 31, 23, 59, 59, 999999, tzinfo=timezone.utc)
+
         invoice_stmt = (
             select(
                 func.coalesce(func.sum(meter_subq.c.produced_kwh), 0).label("produced_kwh"),
@@ -316,8 +333,9 @@ class ContractRepository:
                 func.count(Invoice.uid).label("invoice_count"),
             )
             .select_from(Invoice)
-            .join(meter_subq, meter_subq.c.invoice_uid == Invoice.uid)
-            .where(func.extract("month", Invoice.period_start_at) >= now.month)
+            .outerjoin(meter_subq, meter_subq.c.invoice_uid == Invoice.uid)
+            .where(Invoice.period_start_at >= start)
+            .where(Invoice.period_start_at <= end)
         )
 
         invoice_result = await self.session.exec(invoice_stmt)
@@ -326,7 +344,7 @@ class ContractRepository:
         energy_portfolio_resp = EnergyPortfolioRespModel(
             **{
                 "produced_kwh": float(invoice_stat[0]),
-                "baseline_kwh": float(baseline_row),
+                "baseline_kwh": float(baseline_kwh),
                 "invoice_total": float(invoice_stat[1]),
                 "invoice_count": invoice_stat[2],
             }

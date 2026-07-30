@@ -21,6 +21,7 @@ class AsyncRedisClient:
     _instance: Optional["AsyncRedisClient"] = None
     _client: Optional[aioredis.Redis] = None
     SITES_CACHE_TTL = 60
+    ENERGY_PORTFOLIO_CACHE_TTL_SECONDS = 24 * 60 * 60  # 1 day
 
     def __new__(cls):
         """Return the existing singleton instance or create one.
@@ -83,8 +84,11 @@ class AsyncRedisClient:
             logger.error(f"Error getting site stats for {site_uid}: {e}")
             return None
 
-    async def get_energy_portfolio(self):
+    async def get_energy_portfolio(self, key: str):
         """Retrieve cached current month energy portfolio JSON string from Redis.
+
+        Args:
+            key: Energy portfolio cache key
 
         Returns:
             The cached JSON string for the current month energy portfolio.
@@ -94,15 +98,16 @@ class AsyncRedisClient:
             return None
 
         try:
-            return await self._client.get(Constants.ENERGY_PORTFOLIO)
+            return await self._client.get(key)
         except Exception as e:
             logger.error(f"Error fetching Energy portfolio {e}")
             return None
 
-    async def set_energy_portfolio(self, data: str):
+    async def set_energy_portfolio(self, key: str, data: str):
         """Store sites current month energy porfolio JSON string in Redis.
 
         Args:
+            key: Energy portfolio cache key
             data: JSON string of the energy portfolio to cache.
 
         Returns:
@@ -111,7 +116,7 @@ class AsyncRedisClient:
         if not self._client:
             return None
         try:
-            await self._client.setex(Constants.ENERGY_PORTFOLIO, 300, data)
+            await self._client.setex(key, self.ENERGY_PORTFOLIO_CACHE_TTL_SECONDS, data)
         except Exception as e:
             logger.error(f"Error setting site energy portfolio {e}")
             return None
