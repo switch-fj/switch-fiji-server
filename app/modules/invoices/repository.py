@@ -44,17 +44,16 @@ class InvoiceRepository:
         self.session = session
 
     @staticmethod
-    def _build_invoice_ref() -> str:
+    def _build_invoice_ref(site_name: str | None = "XXX") -> str:
         """Generate a unique invoice reference string based on the current year and month.
 
         Returns:
-            A formatted invoice reference string such as "INV-2025-05-AB1C2D".
+            A formatted invoice reference string such as "INV-{site_name}-AB1C2D".
         """
-        current_year = str(datetime.now().year)
-        current_month = str(datetime.now().month).zfill(2)
-        return f"INV-{current_year}-{current_month}-{Authentication.generate_otp()}"
+        prefix = site_name.upper().ljust(3, "X")[:3]
+        return f"INV-{prefix}-{Authentication.generate_otp()}"
 
-    async def create_invoice(self, contract_uid: UUID, data: CreateInvoiceModel):
+    async def create_invoice(self, contract_uid: UUID, site_name: str, data: CreateInvoiceModel):
         """Create and persist a new invoice for a contract.
 
         Args:
@@ -69,7 +68,7 @@ class InvoiceRepository:
         """
         data_dict = data.model_dump()
         data_dict["contract_uid"] = contract_uid
-        data_dict["invoice_ref"] = self._build_invoice_ref()
+        data_dict["invoice_ref"] = self._build_invoice_ref(site_name=site_name)
 
         try:
             settings_repo = SettingsRepository(session=self.session)
@@ -341,6 +340,32 @@ class InvoiceRepository:
         result = await self.session.exec(statement=statement)
 
         return result
+
+    async def get_invoice_by_period_start_date(self, period_start_at: datetime):
+        """Retrieve an invoice for a contract with a period start date.
+
+        Args:
+            period_start_at: Start date of the invoice.
+
+        Returns:
+            None or a single invoice.
+        """
+        statement = (
+            select(Invoice)
+            .options(
+                joinedload(Invoice.contract).options(
+                    joinedload(Contract.client),
+                    joinedload(Contract.site),
+                ),
+                joinedload(Invoice.line_items),
+                joinedload(Invoice.meter_data),
+            )
+            .where(Invoice.period_start_at == period_start_at)
+            .execution_options(populate_existing=True)
+        )
+        result = await self.session.exec(statement)
+        invoice = result.unique().first()
+        return invoice
 
     async def update_pdf_s3_key(self, invoice_uid: UUID, key: str) -> None:
         """Update the pdf_s3_key field for an invoice after PDF upload.

@@ -264,6 +264,15 @@ tr {
     padding: 12px;
 }
 
+.meter-section-title {
+    font-size: 10px;
+    font-weight: 600;
+    color: #888;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    margin-bottom: 8px;
+}
+
 .meter-table {
     width: 100%;
     border-collapse: collapse;

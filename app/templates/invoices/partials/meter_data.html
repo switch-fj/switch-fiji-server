@@ -1,4 +1,6 @@
+{% if previous_meter_data %}
 <div class="meter-section">
+    <h3 class="meter-section-title">Previous Period</h3>
     <table class="meter-table">
         <thead>
             <tr>
@@ -15,7 +17,38 @@
                 <td>{{ period_end_at }}</td>
                 <td></td>
             </tr>
-            {% for meter in meter_data %}
+            {% for meter in previous_meter_data %}
+            <tr>
+                <td>{{ meter.label }}</td>
+                <td>{{ meter.period_start_reading }}</td>
+                <td>{{ meter.period_end_reading }}</td>
+                <td>{{ meter.usage }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endif %}
+
+<div class="meter-section">
+    <h3 class="meter-section-title">Current Period</h3>
+    <table class="meter-table">
+        <thead>
+            <tr>
+                <th>Meter Data</th>
+                <th>Period Start</th>
+                <th>Period End</th>
+                <th>Usage</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr class="period-row">
+                <td></td>
+                <td>{{ period_start_at }}</td>
+                <td>{{ period_end_at }}</td>
+                <td></td>
+            </tr>
+            {% for meter in current_meter_data %}
             <tr>
                 <td>{{ meter.label }}</td>
                 <td>{{ meter.period_start_reading }}</td>

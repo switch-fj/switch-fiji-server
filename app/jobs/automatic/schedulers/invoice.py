@@ -31,6 +31,7 @@ def compute_contract_invoice_on_auto(self, contract_uid, gateway_id, site_uid):
                 .options(
                     joinedload(Contract.details),
                     joinedload(Contract.client),
+                    joinedload(Contract.site),
                 )
                 .where(Contract.uid == contract_uid)
             ).scalar_one_or_none()
