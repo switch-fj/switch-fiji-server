@@ -1,3 +1,4 @@
+from datetime import timedelta
 from typing import Optional
 from uuid import UUID
 
@@ -140,11 +141,16 @@ async def download_invoice_pdf(
 
     if not invoice.pdf_s3_key:
         contract_settings = await settings_service.get_contract_general_settings()
+        previous_invoice_period_end_at = invoice.period_start_at - timedelta(days=1)
+        previous_invoice = await invoice_service.get_invoice_by_period_start_date(
+            period_start_at=previous_invoice_period_end_at
+        )
         pdf_bytes, key = BillingEngine.generate_pdf(
             contract=contract,
             result=(invoice, meter_data, line_items),
             invoice_snapshots=invoice_snapshots,
             contract_settings=contract_settings,
+            previous_invoice=previous_invoice,
         )
         BillingEngine.store_pdf_in_s3(pdf_bytes=pdf_bytes, key=key, invoice_ref=invoice.invoice_ref)
         await invoice_service.save_pdf_s3_key(invoice_uid=invoice.uid, key=key)

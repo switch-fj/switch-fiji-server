@@ -186,6 +186,7 @@ class InvoicePDF:
     def _get_ppa_off_grid_daily_usage(
         invoice_snapshots: list[InvoiceSnapshot],
         line_items: list[InvoiceLineItem],
+        contract: Contract,
         date_fmt: str,
         time_fmt: str,
     ):
@@ -340,6 +341,7 @@ class InvoicePDF:
         meter_data: list[InvoiceMeterData],
         invoice_snapshots: list[InvoiceSnapshot],
         contract_settings: ContractSettings,
+        previous_invoice: Invoice | None = None,
     ) -> bytes:
         """
         Renders the invoice as PDF bytes.
@@ -349,7 +351,9 @@ class InvoicePDF:
             contract: Contract ORM object (with .client and .site loaded)
             line_items: list of InvoiceLineItem ORM objects
             meter_data: list of InvoiceMeterData ORM objects
+            invoice_snapshots: list of invoiceSnapshot ORM objects
             contract_settings: contract general settings ORM objects
+            previous_invoice: immediate previous Invoice ORM object
 
         Returns:
             PDF as bytes — ready for FastAPI Response or email attachment
@@ -415,6 +419,7 @@ class InvoicePDF:
 
         ppa_off_grid_daily_usage = cls._get_ppa_off_grid_daily_usage(
             invoice_snapshots=invoice_snapshots,
+            contract=contract,
             line_items=line_items,
             date_fmt=date_fmt,
             time_fmt=time_fmt,
@@ -462,7 +467,20 @@ class InvoicePDF:
                 }
                 for item in line_items
             ],
-            "meter_data": [
+            "previous_meter_data": (
+                [
+                    {
+                        "label": meter.label,
+                        "period_start_reading": cls._fmt_decimal(meter.period_start_reading),
+                        "period_end_reading": cls._fmt_decimal(meter.period_end_reading),
+                        "usage": cls._fmt_decimal(meter.period_end_reading - meter.period_start_reading),
+                    }
+                    for meter in previous_invoice.meter_data
+                ]
+                if previous_invoice
+                else None
+            ),
+            "current_meter_data": [
                 {
                     "label": meter.label,
                     "period_start_reading": cls._fmt_decimal(meter.period_start_reading),
