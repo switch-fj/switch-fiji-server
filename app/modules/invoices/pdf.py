@@ -433,19 +433,40 @@ class InvoicePDF:
             daily=ppa_off_grid_daily_bar_chart_dict, title="Billing Period usage"
         )
 
+        previous_period_start_at = previous_invoice.period_start_at if previous_invoice else None
+        previous_period_end_at = previous_invoice.period_end_at if previous_invoice else None
+
         context = {
             "base64_logo": fetch_logo_base64(),
             "invoice_ref": invoice.invoice_ref,
             "currency": currency,
-            "period_start_at": cls._fmt_date(
+            "current_period_start_at": cls._fmt_date(
                 dt=invoice.period_start_at.astimezone(tz=tz),
                 date_fmt=date_fmt,
                 time_fmt=time_fmt,
             ),
-            "period_end_at": cls._fmt_date(
+            "current_period_end_at": cls._fmt_date(
                 dt=invoice.period_end_at.astimezone(tz=tz),
                 date_fmt=date_fmt,
                 time_fmt=time_fmt,
+            ),
+            "previous_period_start_at": (
+                cls._fmt_date(
+                    dt=previous_period_start_at.astimezone(tz=tz),
+                    date_fmt=date_fmt,
+                    time_fmt=time_fmt,
+                )
+                if previous_period_start_at
+                else None
+            ),
+            "previous_period_end_at": (
+                cls._fmt_date(
+                    dt=previous_period_end_at.astimezone(tz=tz),
+                    date_fmt=date_fmt,
+                    time_fmt=time_fmt,
+                )
+                if previous_period_end_at
+                else None
             ),
             "client_name": contract.client.client_name if contract.client else "—",
             "site_name": (contract.site.site_name or contract.site.gateway_id if contract.site else "—"),

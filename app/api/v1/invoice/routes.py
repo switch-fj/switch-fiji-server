@@ -142,8 +142,9 @@ async def download_invoice_pdf(
     if not invoice.pdf_s3_key:
         contract_settings = await settings_service.get_contract_general_settings()
         previous_invoice_period_end_at = invoice.period_start_at - timedelta(days=1)
-        previous_invoice = await invoice_service.get_invoice_by_period_start_date(
-            period_start_at=previous_invoice_period_end_at
+        logger.info(previous_invoice_period_end_at)
+        previous_invoice = await invoice_service.get_invoice_by_period_end_date(
+            period_end_at=previous_invoice_period_end_at
         )
         pdf_bytes, key = BillingEngine.generate_pdf(
             contract=contract,

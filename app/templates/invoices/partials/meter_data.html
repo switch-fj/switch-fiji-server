@@ -13,8 +13,8 @@
         <tbody>
             <tr class="period-row">
                 <td></td>
-                <td>{{ period_start_at }}</td>
-                <td>{{ period_end_at }}</td>
+                <td>{{ previous_period_start_at }}</td>
+                <td>{{ previous_period_end_at }}</td>
                 <td></td>
             </tr>
             {% for meter in previous_meter_data %}
@@ -44,8 +44,8 @@
         <tbody>
             <tr class="period-row">
                 <td></td>
-                <td>{{ period_start_at }}</td>
-                <td>{{ period_end_at }}</td>
+                <td>{{ current_period_start_at }}</td>
+                <td>{{ current_period_end_at }}</td>
                 <td></td>
             </tr>
             {% for meter in current_meter_data %}
