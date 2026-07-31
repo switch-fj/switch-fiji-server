@@ -21,7 +21,7 @@ class AsyncRedisClient:
     _instance: Optional["AsyncRedisClient"] = None
     _client: Optional[aioredis.Redis] = None
     SITES_CACHE_TTL = 60
-    ENERGY_PORTFOLIO_CACHE_TTL_SECONDS = 24 * 60 * 60  # 1 day
+    ENERGY_PORTFOLIO_CACHE_TTL_SECONDS = 60 * 60  # 1 hr
 
     def __new__(cls):
         """Return the existing singleton instance or create one.
