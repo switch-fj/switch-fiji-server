@@ -142,10 +142,11 @@ IR_W_M = [1000, 950, 900, 850, 800, 750, 700, 650, 600]
 
 
 class MPPTExpectedCurrentModel(BaseModel):
-    model_config = ConfigDict(extra="forbid")
     ir_wm2: int
     mppt_key: str
     expected_ip: float
+
+    model_config = ConfigDict(extra="forbid")
 
 
 class ExpectedMPPT_ATable(RootModel[List[MPPTExpectedCurrentModel]]):
@@ -168,6 +169,9 @@ class ExpectedMPPT_ATable(RootModel[List[MPPTExpectedCurrentModel]]):
             for mppt in mppt_table
         ]
         return cls(root=rows)
+
+    def to_list(self) -> List[MPPTExpectedCurrentModel]:
+        return self.root
 
 
 class StringWiringRespModel(DBModel):

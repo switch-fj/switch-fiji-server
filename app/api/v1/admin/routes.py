@@ -18,6 +18,7 @@ from app.services.client import ClientService, get_client_service
 from app.services.contract import ContractService, get_contract_service
 from app.services.sites import SiteService, get_site_service
 from app.services.user import UserService, get_user_service
+from app.shared.constants import Constants
 from app.shared.schema import (
     CursorPaginationModel,
     IdentityTypeEnum,
@@ -146,9 +147,11 @@ async def get_portfolio_stats(
 
     target_year = year or now.year
     target_month = month if month is not None else (None if year is not None else now.month)
-
+    Constants.ENERGY_PORTFOLIO.replace()
     cache_key = (
-        f"energy_portfolio:{target_year}" if target_month is None else f"energy_portfolio:{target_year}:{target_month}"
+        Constants.ENERGY_PORTFOLIO.replace("y", f"{target_year}")
+        if target_month is None
+        else Constants.ENERGY_PORTFOLIO.replace("m", f"{target_month}").replace("y", f"{target_year}")
     )
 
     energy_portfolio = await async_redis_client.get_energy_portfolio(cache_key)

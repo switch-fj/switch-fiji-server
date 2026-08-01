@@ -1,6 +1,7 @@
 from contextlib import contextmanager
-from datetime import datetime
+from datetime import date, datetime, time, timedelta, timezone
 from typing import Optional
+from zoneinfo import ZoneInfo
 
 import boto3
 from boto3.dynamodb.conditions import Key
@@ -164,6 +165,60 @@ class CeleryDynamoClient:
         except Exception as e:
             logger.error(f"Error fetching billing period readings for gateway {gateway_id}: {e}")
             return None
+
+    def get_site_readings_for_mppt_fn_check(
+        self, gateway_id: str, date_at: date, tz: str, interval_minutes: int = 30
+    ) -> Optional[list[dict]]:
+        """Fetch nearest-prior DynamoDB readings for a gateway at fixed intervals.
+
+        Queries readings between 9:00am and 15:00pm for date_at, in interval_minutes
+        steps. Boundaries stop at the current site-local time, so a still-in-progress
+        day returns fewer than 13 items instead of guessing future readings.
+
+        Args:
+            gateway_id: The gateway identifier used as the DynamoDB partition key.
+            date_at: Specific date.
+            tz: Site timezone, used to resolve boundaries and "now".
+            interval_minutes: Spacing between boundary points, in minutes.
+
+        Returns:
+            A list of reading dicts, one per elapsed boundary (max 13), or None if
+            the table isn't initialized.
+        """
+        if not self._table:
+            logger.warning("DynamoDB table not initialized")
+            return None
+
+        local_tz = ZoneInfo(tz)
+        window_start = datetime.combine(date_at, time(9, 0), tzinfo=local_tz)
+        window_end = datetime.combine(date_at, time(15, 0), tzinfo=local_tz)
+        now_local = datetime.now(local_tz)
+
+        effective_end = min(window_end, now_local)
+
+        boundaries: list[datetime] = []
+        current = window_start
+        while current <= effective_end:
+            boundaries.append(current)
+            current += timedelta(minutes=interval_minutes)
+
+        results = []
+        try:
+            for boundary in boundaries:
+                boundary_ts = int(boundary.astimezone(timezone.utc).timestamp() * 1000)
+                response = self._table.query(
+                    KeyConditionExpression=Key("gateway_id").eq(gateway_id) & Key("ts_epoch_ms").lte(boundary_ts),
+                    ScanIndexForward=False,
+                    Limit=1,
+                )
+                items = response.get("Items", [])
+                if items[0]:
+                    results.append(items[0])
+
+            return results
+        except Exception as e:
+            logger.error(f"❌ Failed to query DynamoDB for gateway {gateway_id}: {e}")
+            raise
 
 
 celery_dynamo_client = CeleryDynamoClient()

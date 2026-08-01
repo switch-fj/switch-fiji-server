@@ -1,15 +1,23 @@
+import json
+from datetime import datetime
 from uuid import UUID
+from zoneinfo import ZoneInfo
 
 from fastapi import Depends
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.core.exceptions import (
+    BadRequest,
     Forbidden,
     InsufficientPermissions,
     NotFound,
     ResourceExists,
 )
 from app.database.postgres import get_session
+from app.database.redis import async_redis_client
+from app.jobs.on_demand.schedulers.mppt_fn_check import (
+    schedule_site_mppt_fn_check_on_demand,
+)
 from app.jobs.on_demand.triggers.degradation import (
     trigger_compute_site_yearly_degradation_on_demand,
 )
@@ -17,6 +25,11 @@ from app.jobs.on_demand.triggers.string_wiring import (
     trigger_compute_string_wiring_on_demand,
 )
 from app.modules.clients.repository import ClientRepository
+from app.modules.mppt_function_check.repository import SiteMpptFnCheckRepository
+from app.modules.mppt_function_check.schema import (
+    MPPTFnCheckQuery,
+    SiteMpptFunctionRespModel,
+)
 from app.modules.panel_references.repository import PanelRefRepository
 from app.modules.panel_references.schema import CreatePanelRefModel, UpdatePanelRefModel
 from app.modules.pv_degradation.respository import PvDegradationRepository
@@ -35,7 +48,9 @@ from app.modules.string_wiring.schema import (
 )
 from app.modules.users.repository import UserRepository
 from app.services.sites import SiteService
+from app.shared.constants import Constants
 from app.shared.schema import UserRoleEnum
+from app.utils.date import is_future_date
 
 
 class SiteConfigService(SiteService):
@@ -44,6 +59,7 @@ class SiteConfigService(SiteService):
         session: AsyncSession,
     ):
         self.session = session
+
         self.site_repo = SiteRepository(session=session)
         self.user_repo = UserRepository(session=session)
         self.client_repo = ClientRepository(session=session)
@@ -51,6 +67,7 @@ class SiteConfigService(SiteService):
         self.pvs_repo = PvSummaryRepository(session=session)
         self.pv_degradation_repo = PvDegradationRepository(session=session)
         self.st_wiring_repo = StringWiringRepository(session=session)
+        self.site_mppt_fn_check_repo = SiteMpptFnCheckRepository(session=session)
 
         super().__init__(site_repo=self.site_repo, client_repo=self.client_repo)
 
@@ -252,6 +269,40 @@ class SiteConfigService(SiteService):
             raise NotFound()
 
         return StringWiringRespModel.model_validate(result.model_dump())
+
+    async def mppt_fn_check(self, site_uid: UUID, params: MPPTFnCheckQuery):
+        site = await self.site_repo.get_site_by_uid(site_uid=site_uid)
+        if site is None:
+            raise NotFound("site not found!")
+
+        tz = site.tz or site.contract.timezone  # canonical source post-backfill
+        date_at = datetime.fromtimestamp(params.date, tz=ZoneInfo(tz)).date()
+
+        if is_future_date(date_at, tz):
+            raise BadRequest("Only current and past date allowed.")
+
+        cache_key = Constants.MPPT_FN_CHECK.format(
+            site_uid=site_uid,
+            date_at=date_at.isoformat(),
+        )
+        cached = await async_redis_client.client.get(cache_key)
+        if cached:
+            return SiteMpptFunctionRespModel.model_validate(json.loads(cached))
+
+        mppt_fn_check = await self.site_mppt_fn_check_repo.get_by_site_and_date(site_uid=site_uid, date_at=date_at)
+        if mppt_fn_check:
+            return SiteMpptFunctionRespModel.model_validate(mppt_fn_check)
+
+        lock_key = Constants.MPPT_FN_CHECK_LOCK.format(
+            site_uid=site_uid,
+            date_at=date_at.isoformat(),
+        )
+        lock_acquired = await async_redis_client.client.set(lock_key, "1", nx=True, ex=300)
+        if lock_acquired:
+            # mppt_fn_check_task.delay(site_uid=site_uid, date=date_at, tz=tz)
+            schedule_site_mppt_fn_check_on_demand.delay(site_uid, date_at)
+
+        return None
 
 
 def get_site_configs_service(

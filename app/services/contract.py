@@ -15,6 +15,8 @@ from app.modules.contracts.schema import (
     CreateContractDetailsModel,
     CreateContractModel,
 )
+from app.modules.sites.repository import SiteRepository, get_site_repo
+from app.modules.sites.schema import UpdateSiteModel
 from app.shared.schema import IdentityTypeEnum, UserRoleEnum
 
 
@@ -23,9 +25,11 @@ class ContractService:
         self,
         contract_repo: ContractRepository = Depends(get_contract_repo),
         client_repo: ClientRepository = Depends(get_client_repo),
+        site_repo: SiteRepository = Depends(get_site_repo),
     ):
         self.contract_repo = contract_repo
         self.client_repo = client_repo
+        self.site_repo = site_repo
 
     def _build_contract_ref(self, name: str):
         """Generate a unique contract reference string from the client name.
@@ -111,7 +115,13 @@ class ContractService:
         data_dict["contract_ref"] = self._build_contract_ref(name=client.client_name)
 
         contract = await self.contract_repo.create_contract(user_uid=user_uid, data=Contract(**data_dict))
+        site = await self.site_repo.get_site_by_uid(site_uid=contract.site_uid)
 
+        if site:
+            await self.site_repo.update_site(
+                site=site,
+                data=UpdateSiteModel.model_validate({"tz": contract.timezone}),
+            )
         return str(contract.uid)
 
     async def get_contract_by_uid(self, contract_uid: UUID, token_payload: dict):

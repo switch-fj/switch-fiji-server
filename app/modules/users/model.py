@@ -10,6 +10,7 @@ from app.shared.schema import IdentityTypeEnum, UserRoleEnum
 
 if TYPE_CHECKING:
     from app.modules.clients.model import Client
+    from app.modules.mppt_function_check.model import SiteMPPTFunctionCheck
     from app.modules.panel_references.model import PanelReference
     from app.modules.pv_degradation.model import PvDegradation
     from app.modules.pv_summary.model import PVSummary
@@ -69,3 +70,4 @@ class User(MyAbstractSQLModel, table=True):
     pv_summary: Optional["PVSummary"] = Relationship(back_populates="user")
     pv_degradation: Optional["PvDegradation"] = Relationship(back_populates="user")
     string_wiring: Optional["StringWiring"] = Relationship(back_populates="user")
+    site_mppt_fn_check: list["SiteMPPTFunctionCheck"] = Relationship(back_populates="user")

@@ -1,14 +1,18 @@
 import asyncio
 import json
-from typing import Optional
+from typing import Annotated, Optional
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, Query, status
 from fastapi.responses import StreamingResponse
 
 from app.core.logger import setup_logger
 from app.core.security import AdminAccessBearer, EngineerAccessBearer
 from app.database.redis import async_redis_client
+from app.modules.mppt_function_check.schema import (
+    MPPTFnCheckQuery,
+    SiteMpptFunctionRespModel,
+)
 from app.modules.panel_references.schema import (
     CreatePanelRefModel,
     PanelRefsModel,
@@ -359,4 +363,23 @@ async def get_site_wiring(
     return ServerRespModel[StringWiringRespModel](
         data=result,
         message="Site string wiring retrieved!",
+    )
+
+
+@site_router.get(
+    "/sites/{site_uid}/mppt-function-check",
+    status_code=status.HTTP_200_OK,
+    response_model=ServerRespModel[SiteMpptFunctionRespModel | None],
+)
+async def get_site_mppt_fn_check(
+    site_uid: UUID,
+    params: Annotated[MPPTFnCheckQuery, Query()],
+    site_config_service: SiteConfigService = Depends(get_site_configs_service),
+    _: dict = Depends(EngineerAccessBearer()),
+):
+    result = await site_config_service.mppt_fn_check(site_uid=site_uid, params=params)
+
+    return ServerRespModel[SiteMpptFunctionRespModel | None](
+        data=result,
+        message=("Computing..." if result is None else "Site string wiring retrieved!"),
     )
