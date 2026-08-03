@@ -41,7 +41,7 @@ class Device(MyAbstractSQLModel, table=True):
         nullable=True,
         description="Only applies when device_type is 'meter'. Derived from firmware isDualTariff()",
     )
-
+    recent_telemetry_reading: Optional[str] = Field(default=None)
     last_seen_at: Optional[datetime] = Field(
         default=None,
         nullable=True,

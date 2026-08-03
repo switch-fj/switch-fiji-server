@@ -138,7 +138,7 @@ class SiteRepository:
         Returns:
             The matching Site ORM instance, or None if not found.
         """
-        statement = select(Site).where(Site.uid == site_uid)
+        statement = select(Site).options(selectinload(Site.contract)).where(Site.uid == site_uid)
         result = await self.session.exec(statement=statement)
         site = result.first()
 
@@ -194,7 +194,7 @@ class SiteRepository:
             logger.error(f"Error creating site {e}")
 
     async def update_site(self, site: Site, data: UpdateSiteModel):
-        """Apply a partial update to an existing site record and invalidate the client's sites cache.
+        """Apply an update to an existing site record and invalidate the client's sites cache.
 
         Args:
             site: The Site ORM instance to update.

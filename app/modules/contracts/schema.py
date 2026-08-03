@@ -19,6 +19,7 @@ from app.core.exceptions import BadRequest
 from app.modules.clients.schema import ClientRespWithoutSitesCountModel
 from app.shared.schema import CurrencyEnum, DBModel
 from app.utils import uuid_serializer
+from app.utils.tz import VALID_TIMEZONES
 
 type YesNo = Literal["yes", "no"]
 
@@ -178,6 +179,13 @@ class CreateContractModel(BaseModel):
     system_mode: ContractSystemModeEnum = Field(...)
     currency: CurrencyEnum = Field(...)
     timezone: str = Field(...)
+
+    @field_validator("timezone")
+    @classmethod
+    def validate_tz(cls, v: str) -> str:
+        if v not in VALID_TIMEZONES:
+            raise ValueError(f"Invalid timezone: {v}")
+        return v
 
     @model_validator(mode="after")
     def validate_contract(self):

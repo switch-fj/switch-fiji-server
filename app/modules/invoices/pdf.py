@@ -365,7 +365,7 @@ class InvoicePDF:
         total = invoice.total
         date_fmt = contract_settings.date_format
         time_fmt = contract_settings.time_format
-        contract_timezone = contract.timezone
+        contract_timezone = contract.site.tz or contract.timezone
         tz = ZoneInfo(contract_timezone)
         currency = contract.currency
         ppa_off_grid_daily_usage = None

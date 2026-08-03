@@ -14,6 +14,7 @@ class DeviceModel(DBModel):
     device_type: str
     meter_role: Optional[str]
     is_dual_tariff: Optional[bool]
+    recent_telemetry_reading: Optional[str]
     last_seen_at: Optional[datetime]
 
     @field_serializer("last_seen_at")

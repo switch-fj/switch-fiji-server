@@ -125,7 +125,8 @@ def compute_contract_invoice_on_auto(self, contract_uid, gateway_id, site_uid):
                 microsecond=0,
             )
 
-            is_billing_date = now_local >= period_end.astimezone(tz=ZoneInfo(contract.timezone))
+            tz = contract.site.tz or contract.timezone
+            is_billing_date = now_local >= period_end.astimezone(tz=ZoneInfo(tz))
 
             if is_billing_date:
                 try:

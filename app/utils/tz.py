@@ -6,8 +6,11 @@ def get_all_zones():
     return sorted(all_zones)
 
 
+VALID_TIMEZONES = get_all_zones()
+
+
 def grouped_cities():
-    all_zones = get_all_zones()
+    all_zones = VALID_TIMEZONES
     grouped_regions: dict[str, list[str]] = {"Others": []}
 
     for zone in all_zones:
