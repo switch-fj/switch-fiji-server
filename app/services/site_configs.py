@@ -282,10 +282,7 @@ class SiteConfigService(SiteService):
         if is_future_date(date_at, tz):
             raise BadRequest("Only current and past date allowed.")
 
-        cache_key = Constants.MPPT_FN_CHECK.format(
-            site_uid=site_uid,
-            date_at=date_at.isoformat(),
-        )
+        cache_key = Constants.MPPT_FN_CHECK.replace("site_uid", str(site_uid)).replace("date_at", date_at.isoformat())
         cached = await async_redis_client.client.get(cache_key)
         if cached:
             return SiteMpptFunctionRespModel.model_validate(json.loads(cached))
@@ -297,9 +294,8 @@ class SiteConfigService(SiteService):
                 user_uid=token_user_uid, site_uid=site_uid, date_at=date_at
             )
 
-        lock_key = Constants.MPPT_FN_CHECK_LOCK.format(
-            site_uid=site_uid,
-            date_at=date_at.isoformat(),
+        lock_key = Constants.MPPT_FN_CHECK_LOCK.replace("site_uid", str(site_uid)).replace(
+            "date_at", date_at.isoformat()
         )
         lock_acquired = await async_redis_client.client.set(lock_key, "1", nx=True, ex=300)
         if lock_acquired:
