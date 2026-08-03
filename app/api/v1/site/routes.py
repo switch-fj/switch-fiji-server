@@ -375,9 +375,9 @@ async def get_site_mppt_fn_check(
     site_uid: UUID,
     params: Annotated[MPPTFnCheckQuery, Query()],
     site_config_service: SiteConfigService = Depends(get_site_configs_service),
-    _: dict = Depends(EngineerAccessBearer()),
+    token_payload: dict = Depends(EngineerAccessBearer()),
 ):
-    result = await site_config_service.mppt_fn_check(site_uid=site_uid, params=params)
+    result = await site_config_service.mppt_fn_check(token_payload=token_payload, site_uid=site_uid, params=params)
 
     return ServerRespModel[SiteMpptFunctionRespModel | None](
         data=result,

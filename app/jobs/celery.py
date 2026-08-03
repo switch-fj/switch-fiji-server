@@ -33,9 +33,9 @@ celery_app.conf.beat_schedule = {
         "task": "trigger_compute_contract_invoice_snapshot_on_auto",
         "schedule": crontab(hour=0, minute=30),
     },
-    "trigger_todays_site_mppt_fn_check_every_30_minutes": {
+    "trigger_todays_site_mppt_fn_check_every_30_minutes_from_9_to_15": {
         "task": "trigger_todays_site_mppt_fn_check_on_auto",
-        "schedule": crontab(minute="*/30"),
+        "schedule": crontab(minute="1,31", hour="9-15"),
     },
 }
 

@@ -59,7 +59,6 @@ class SiteConfigService(SiteService):
         session: AsyncSession,
     ):
         self.session = session
-
         self.site_repo = SiteRepository(session=session)
         self.user_repo = UserRepository(session=session)
         self.client_repo = ClientRepository(session=session)
@@ -270,13 +269,15 @@ class SiteConfigService(SiteService):
 
         return StringWiringRespModel.model_validate(result.model_dump())
 
-    async def mppt_fn_check(self, site_uid: UUID, params: MPPTFnCheckQuery):
+    async def mppt_fn_check(self, token_payload: dict, site_uid: UUID, params: MPPTFnCheckQuery):
+        token_user = token_payload.get("user")
+        token_user_uid = token_user.get("uid")
         site = await self.site_repo.get_site_by_uid(site_uid=site_uid)
         if site is None:
             raise NotFound("site not found!")
 
-        tz = site.tz or site.contract.timezone  # canonical source post-backfill
-        date_at = datetime.fromtimestamp(params.date, tz=ZoneInfo(tz)).date()
+        tz = site.tz or site.contract.timezone
+        date_at = datetime.fromtimestamp(params.date_at, tz=ZoneInfo(tz)).date()
 
         if is_future_date(date_at, tz):
             raise BadRequest("Only current and past date allowed.")
@@ -290,8 +291,11 @@ class SiteConfigService(SiteService):
             return SiteMpptFunctionRespModel.model_validate(json.loads(cached))
 
         mppt_fn_check = await self.site_mppt_fn_check_repo.get_by_site_and_date(site_uid=site_uid, date_at=date_at)
-        if mppt_fn_check:
-            return SiteMpptFunctionRespModel.model_validate(mppt_fn_check)
+
+        if not mppt_fn_check:
+            mppt_fn_check = await self.site_mppt_fn_check_repo.create_mppt_fn_check(
+                user_uid=token_user_uid, site_uid=site_uid, date_at=date_at
+            )
 
         lock_key = Constants.MPPT_FN_CHECK_LOCK.format(
             site_uid=site_uid,
@@ -299,10 +303,9 @@ class SiteConfigService(SiteService):
         )
         lock_acquired = await async_redis_client.client.set(lock_key, "1", nx=True, ex=300)
         if lock_acquired:
-            # mppt_fn_check_task.delay(site_uid=site_uid, date=date_at, tz=tz)
             schedule_site_mppt_fn_check_on_demand.delay(site_uid, date_at)
 
-        return None
+        return SiteMpptFunctionRespModel.model_validate(mppt_fn_check)
 
 
 def get_site_configs_service(

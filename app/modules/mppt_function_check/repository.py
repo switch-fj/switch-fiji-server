@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, time
 from uuid import UUID
 
 from fastapi import Depends
@@ -27,6 +27,21 @@ class SiteMpptFnCheckRepository:
         )
         result = await self.session.exec(statement)
         site_mppt_fn_check = result.one_or_none()
+
+        return site_mppt_fn_check
+
+    async def create_mppt_fn_check(self, user_uid: UUID, site_uid: UUID, date_at: date):
+        site_mppt_fn_check = SiteMPPTFunctionCheck(
+            user_uid=user_uid,
+            site_uid=site_uid,
+            date_at=date_at,
+            from_=time(9, 0),
+            to=time(15, 0),
+            interval_in_minutes=30,
+            is_completed=False,
+        )
+        self.session.add(site_mppt_fn_check)
+        await self.session.commit()
 
         return site_mppt_fn_check
 

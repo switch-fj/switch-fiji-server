@@ -212,8 +212,10 @@ class CeleryDynamoClient:
                     Limit=1,
                 )
                 items = response.get("Items", [])
-                if items[0]:
+                if len(items):
                     results.append(items[0])
+                else:
+                    results.append(None)
 
             return results
         except Exception as e:
