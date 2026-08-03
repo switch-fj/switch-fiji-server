@@ -54,6 +54,7 @@ class SiteMpptFunctionRespModel(DBModel):
 
 class MpptKeyFnCheckItemModel(BaseModel):
     mppt_key: str
+    pvn_ip: float
     pct: float
 
 
@@ -82,12 +83,6 @@ class SiteMpptFunctionCheckTable(RootModel[List[MpptFnCheckItemModel]]):
         rows = []
         expected_lookup = {(item.mppt_key, item.ir_wm2): item.expected_ip for item in expected_mppt_table}
 
-        def get_expected_ip(mppt_key: str, ir_wm2: int):
-            for item in expected_mppt_table:
-                if item.mppt_key == mppt_key and item.ir_wm2 == ir_wm2:
-                    return item.expected_ip
-            return None
-
         for time_at, assumed_ir, reading in zip(assumed_ir_wm2.keys(), assumed_ir_wm2.values(), telemetry_reading):
             resolved_ir = assumed_ir
             irradiance_source = "assumed"
@@ -112,7 +107,7 @@ class SiteMpptFunctionCheckTable(RootModel[List[MpptFnCheckItemModel]]):
                         mppt_key = f"{slave_id}.{n}"
                         expected_ip = expected_lookup.get((mppt_key, resolved_ir))
                         pct = float(round((float(pvn_ip) / float(expected_ip)) * 100, 2)) if expected_ip else 0.0
-                        mppt_keys.append(MpptKeyFnCheckItemModel(mppt_key=mppt_key, pct=pct))
+                        mppt_keys.append(MpptKeyFnCheckItemModel(mppt_key=mppt_key, pct=pct, pvn_ip=float(pvn_ip or 0)))
 
             rows.append(
                 MpptFnCheckItemModel(
