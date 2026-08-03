@@ -104,3 +104,21 @@ def update_job_run(
 
         session.add(job_run)
         session.commit()
+
+
+def get_site(session: Session, site_uid):
+    result = session.execute(
+        text("""
+        SELECT
+            s.uid AS site_uid, s.tz AS site_tz,
+            c.uid AS contract_uid, c.timezone AS contract_timezone,
+        FROM sites s
+        JOIN contracts c ON c.site_uid = s.uid
+        JOIN contract_details cd ON cd.contract_uid = c.uid
+        JOIN clients cs ON cs.uid = c.client_uid
+        WHERE s.uid = :site_uid
+        LIMIT 1
+        """),
+        {"site_uid": site_uid},
+    )
+    return result.mappings().one_or_none()

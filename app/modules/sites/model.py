@@ -11,6 +11,7 @@ if TYPE_CHECKING:
     from app.modules.clients.model import Client
     from app.modules.contracts.model import Contract
     from app.modules.devices.model import Device
+    from app.modules.mppt_function_check.model import SiteMPPTFunctionCheck
     from app.modules.panel_references.model import PanelReference
     from app.modules.pv_degradation.model import PvDegradation
     from app.modules.pv_summary.model import PVSummary
@@ -38,6 +39,10 @@ class Site(MyAbstractSQLModel, table=True):
             String(255),
             nullable=True,
         ),
+    )
+    tz: Optional[str] = Field(
+        default=None,
+        sa_column_kwargs={"server_default": None},
     )
     site_name: Optional[str] = Field(
         sa_column=Column(
@@ -81,3 +86,4 @@ class Site(MyAbstractSQLModel, table=True):
     pv_summary: Optional["PVSummary"] = Relationship(back_populates="site")
     pv_degradation: Optional["PvDegradation"] = Relationship(back_populates="site")
     string_wiring: Optional["StringWiring"] = Relationship(back_populates="site")
+    site_mppt_fn_check: list["SiteMPPTFunctionCheck"] = Relationship(back_populates="site")

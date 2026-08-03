@@ -286,6 +286,15 @@ class SyncRedisClient:
                 self._client = None
                 raise
 
+    @property
+    def client(self) -> Optional[aioredis.Redis]:
+        """Return the underlying syncredis.Redis client instance.
+
+        Returns:
+            The syncredis.Redis client, or None if not yet initialised.
+        """
+        return self._client
+
     def set_site_stats(self, site_uid: str, stats: str, ttl: int = 600) -> bool:
         """
         Write computed site stats to Redis.

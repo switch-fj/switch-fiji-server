@@ -33,6 +33,10 @@ celery_app.conf.beat_schedule = {
         "task": "trigger_compute_contract_invoice_snapshot_on_auto",
         "schedule": crontab(hour=0, minute=30),
     },
+    "trigger_todays_site_mppt_fn_check_every_30_minutes_from_9_to_15": {
+        "task": "trigger_todays_site_mppt_fn_check_on_auto",
+        "schedule": crontab(minute="1,31", hour="9-15"),
+    },
 }
 
 
@@ -52,6 +56,7 @@ from app.jobs.automatic.schedulers import invoice as invoice_schedulers  # noqa
 from app.jobs.automatic.triggers import invoice as invoice_triggers  # noqa
 from app.jobs.automatic.schedulers import snapshot as snapshot_schedulers  # noqa
 from app.jobs.automatic.triggers import snapshot as snapshot_triggers  # noqa
+from app.jobs.automatic.triggers import mppt_fn_check as mppt_fn_check_triggers  # noqa
 
 from app.jobs.on_demand.triggers import invoice as invoice_on_demand_triggers  # noqa
 from app.jobs.on_demand.schedulers import (  # noqa
@@ -68,4 +73,7 @@ from app.jobs.on_demand.triggers import (  # noqa
 )  # noqa
 from app.jobs.on_demand.schedulers import (  # noqa
     string_wiring as string_wiring_on_demand_schedulers,
+)  # noqa
+from app.jobs.on_demand.schedulers import (  # noqa
+    mppt_fn_check as mppt_fn_check_on_demand_schedulers,
 )  # noqa

@@ -1,7 +1,7 @@
 from datetime import datetime
 from decimal import Decimal
 from email.utils import parseaddr
-from typing import TYPE_CHECKING, Union
+from typing import TYPE_CHECKING, Callable, Union
 from uuid import UUID
 
 from email_validator import EmailNotValidError, EmailSyntaxError
@@ -83,3 +83,7 @@ def build_redis_url(db: int = 0) -> str:
 
 def two_decimal_place(val: Union[Decimal, float, int], decimal_places: str = "0.01"):
     return Decimal(val).quantize(Decimal(decimal_places))
+
+
+def some(arr: list, fn: Callable):
+    return any(fn(item) for item in arr)

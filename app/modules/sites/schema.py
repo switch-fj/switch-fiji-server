@@ -2,12 +2,13 @@ from datetime import datetime
 from typing import Optional
 from uuid import UUID
 
-from pydantic import BaseModel, Field, field_serializer
+from pydantic import BaseModel, Field, field_serializer, field_validator
 
 from app.modules.clients.schema import ClientRespModel
 from app.modules.contracts.schema import ContractDetailsRespModel, ContractRespModel
 from app.shared.schema import DBModel
 from app.utils import uuid_serializer
+from app.utils.tz import VALID_TIMEZONES
 
 
 class CreateSiteModel(BaseModel):
@@ -24,6 +25,15 @@ class UpdateSiteModel(BaseModel):
     site_name: Optional[str] = Field(default=None)
     gateway_id: Optional[str] = Field(default=None)
     firmware: Optional[str] = Field(default=None)
+    tz: Optional[str] = Field(default=None)
+
+    @field_validator("tz")
+    @classmethod
+    def validate_tz(cls, v: str) -> str:
+        if v:
+            if v not in VALID_TIMEZONES:
+                raise ValueError(f"Invalid timezone: {v}")
+            return v
 
 
 class SiteRespModel(DBModel):

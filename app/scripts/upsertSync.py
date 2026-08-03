@@ -1,6 +1,7 @@
 import json
 import os
 from datetime import datetime, timezone
+from decimal import Decimal
 
 import psycopg2
 from boto3.dynamodb.types import TypeDeserializer
@@ -8,6 +9,12 @@ from dateutil.relativedelta import relativedelta
 
 _conn = None
 _deser = TypeDeserializer()
+
+
+def decimal_default(obj):
+    if isinstance(obj, Decimal):
+        return float(obj)
+    raise TypeError(f"Object of type {type(obj)} is not JSON serializable")
 
 
 def get_conn():
@@ -163,13 +170,15 @@ def record_device_last_seen(conn, payload, site_uid: str):
                 cur.execute(
                     """
                     UPDATE devices
-                    SET last_seen_at = %(last_seen_at)s
+                    SET last_seen_at = %(last_seen_at)s,
+                        recent_telemetry_reading = %(recent_telemetry_reading)s
                     WHERE site_uid    = %(site_uid)s
-                      AND slave_id    = %(slave_id)s
-                      AND device_type = %(device_type)s
+                    AND slave_id    = %(slave_id)s
+                    AND device_type = %(device_type)s
                     """,
                     {
                         "last_seen_at": last_seen_at,
+                        "recent_telemetry_reading": json.dumps(device, default=decimal_default),
                         "site_uid": site_uid,
                         "slave_id": int(device["slave_id"]),
                         "device_type": device_type,

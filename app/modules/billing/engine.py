@@ -377,10 +377,11 @@ class BillingEngine:
             )
         ).scalar_one_or_none()
 
+        tz = ZoneInfo(contract.site.tz or contract.timezone)
         readings = celery_dynamo_client.get_readings_for_billing_period(
             gateway_id=gateway_id,
-            period_start=period_start.astimezone(tz=ZoneInfo(contract.timezone)),
-            period_end=period_end.astimezone(tz=ZoneInfo(contract.timezone)),
+            period_start=period_start.astimezone(tz),
+            period_end=period_end.astimezone(tz),
             is_multi_day=True,
         )
 
