@@ -41,7 +41,7 @@ ASSUMED_IRRADIANCE: dict[time, int] = {
 
 def compute_mppt_fn_check(site_uid: UUID, date_at: date):
     lock_key = Constants.MPPT_FN_CHECK_LOCK.format(
-        site_uid=site_uid,
+        site_uid=str(site_uid),
         date_at=date_at.isoformat(),
     )
     lock_acquired = sync_redis_client.client.set(lock_key, "1", nx=True, ex=300)

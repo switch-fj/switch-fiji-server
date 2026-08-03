@@ -107,7 +107,7 @@ class SiteMpptFunctionCheckTable(RootModel[List[MpptFnCheckItemModel]]):
                         mppt_key = f"{slave_id}.{n}"
                         expected_ip = expected_lookup.get((mppt_key, resolved_ir))
                         pct = float(round((float(pvn_ip) / float(expected_ip)) * 100, 2)) if expected_ip else 0.0
-                        mppt_keys.append(MpptKeyFnCheckItemModel(mppt_key=mppt_key, pct=pct, pvn_ip=float(pvn_ip or 0)))
+                        mppt_keys.append(MpptKeyFnCheckItemModel(mppt_key=mppt_key, pct=pct, pvn_ip=float(pvn_ip)))
 
             rows.append(
                 MpptFnCheckItemModel(
