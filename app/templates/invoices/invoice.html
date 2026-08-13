@@ -39,7 +39,7 @@
 
     <hr class="divider" />
 
-    
+
     <section class="chart-section">
         {% if day_pie_chart_usage %}
         <img class="donut-chart" src="{{ day_pie_chart_usage }}" alt="Pie chart of Day usage" />
@@ -54,9 +54,10 @@
         {% include "partials/meter_data.html" %}
     </div>
 
+    {% if contract == 'PPA' and system_mode == 'Off Grid' %}
     <div class="new-page">
         {% if ppa_off_grid_daily_usage %}
-        {% include "partials/ppa_off_grid_daily_usage.html" %}
+        {% include "partials/daily_usage.html" %}
         {% endif %}
 
         {% if ppa_off_grid_bar_chart %}
@@ -65,6 +66,21 @@
         </section>
         {% endif %}
     </div>
+    {% endif %}
+
+    {% if contract == 'PPA' and system_mode == 'On Grid' and with_battery == 'yes' %}
+    <div class="new-page">
+        {% if ppa_on_grid_battery_daily_usage %}
+        {% include "partials/daily_usage.html" %}
+        {% endif %}
+
+        {% if ppa_on_grid_battery_bar_chart %}
+        <section class="chart-section">
+            <img class="bar-chart" src="{{ ppa_on_grid_battery_bar_chart }}" alt="Bar chart of daily gen and solar usage" />
+        </section>
+        {% endif %}
+    </div>
+    {% endif %}
 
     
 

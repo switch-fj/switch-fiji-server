@@ -3,7 +3,7 @@ from typing import Optional
 from uuid import UUID
 
 from fastapi import Depends
-from sqlalchemy.orm import joinedload
+from sqlalchemy.orm import joinedload, selectinload
 from sqlmodel import func, select, update
 from sqlmodel.ext.asyncio.session import AsyncSession
 
@@ -225,9 +225,10 @@ class InvoiceRepository:
                 joinedload(Invoice.contract).options(
                     joinedload(Contract.client),
                     joinedload(Contract.site),
+                    joinedload(Contract.details),
                 ),
-                joinedload(Invoice.line_items),
-                joinedload(Invoice.meter_data),
+                selectinload(Invoice.line_items),
+                selectinload(Invoice.meter_data),
             )
             .where(Invoice.uid == invoice_uid)
             .execution_options(populate_existing=True)
@@ -356,6 +357,7 @@ class InvoiceRepository:
                 joinedload(Invoice.contract).options(
                     joinedload(Contract.client),
                     joinedload(Contract.site),
+                    joinedload(Contract.details),
                 ),
                 joinedload(Invoice.line_items),
                 joinedload(Invoice.meter_data),
