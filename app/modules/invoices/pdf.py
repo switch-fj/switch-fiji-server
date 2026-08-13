@@ -186,7 +186,6 @@ class InvoicePDF:
     def _get_ppa_off_grid_daily_usage(
         invoice_snapshots: list[InvoiceSnapshot],
         line_items: list[InvoiceLineItem],
-        contract: Contract,
         date_fmt: str,
         time_fmt: str,
     ):
@@ -234,10 +233,63 @@ class InvoicePDF:
         return {"meter": data, "day_item": day_item, "night_item": night_item}
 
     @staticmethod
-    def _render_bar_chart_base64(daily: dict, title: str = "") -> str:
+    def _get_ppa_on_grid_battery_daily_usage(
+        invoice_snapshots: list[InvoiceSnapshot],
+        line_items: list[InvoiceLineItem],
+        date_fmt: str,
+        time_fmt: str,
+    ):
+        data = [
+            {
+                "date": InvoicePDF._fmt_date(
+                    dt=item.period_start_at,
+                    date_fmt=date_fmt,
+                    time_fmt=time_fmt,
+                    show_year=False,
+                ),
+                "day": f"Day {idx + 1}",
+                "meter_data": {
+                    k: v
+                    for meter in item.meter_data
+                    if meter.label
+                    in (
+                        f"{InvoiceMeterLabelEnum.ESSENTIAL_LOAD_GENRATION.value} Day",
+                        f"{InvoiceMeterLabelEnum.ESSENTIAL_LOAD_GENRATION.value} Night",
+                        f"{InvoiceMeterLabelEnum.NON_ESSENTIAL_LOAD_GENRATION.value} Day",
+                        f"{InvoiceMeterLabelEnum.NON_ESSENTIAL_LOAD_GENRATION.value} Night",
+                    )
+                    for k, v in (
+                        {"day_usage": meter.usage}
+                        if (
+                            meter.label == f"{InvoiceMeterLabelEnum.ESSENTIAL_LOAD_GENRATION.value} Day"
+                            or meter.label == f"{InvoiceMeterLabelEnum.NON_ESSENTIAL_LOAD_GENRATION.value} Day"
+                        )
+                        else {"night_usage": meter.usage}
+                    ).items()
+                },
+            }
+            for idx, item in enumerate(invoice_snapshots)
+        ]
+
+        targets = {
+            "Billable Night Energy": "night",
+            "Billable Day Energy": "day",
+        }
+
+        lines = {
+            targets[item.description]: {"total": item.energy_kwh, "amount": item.amount}
+            for item in line_items
+            if item.description in targets
+        }
+
+        night_item = lines.get("night")
+        day_item = lines.get("day")
+
+        return {"meter": data, "day_item": day_item, "night_item": night_item}
+
+    @staticmethod
+    def _render_bar_chart_base64(daily: dict, series_keys: list[str], series_labels: list[str], title: str = "") -> str:
         dates = list(daily.keys())
-        series_keys = ["gen_night", "gen_day", "solar_night", "solar_day"]
-        series_labels = ["Gen Night", "Gen Day", "Solar Night", "Solar Day"]
         colors = ["#00CA47", "#FA4F19", "#024159", "#00AEEF"]
 
         x = np.arange(len(dates))
@@ -332,6 +384,42 @@ class InvoicePDF:
 
         return daily
 
+    @staticmethod
+    def _get_ppa_on_grid_battery_bar_chart_data(
+        invoice_snapshots: list[InvoiceSnapshot], date_fmt: str, time_fmt: str
+    ) -> dict:
+        label_map = {
+            f"{InvoiceMeterLabelEnum.ESSENTIAL_LOAD_GENRATION.value} Day": "essential_load_day",
+            f"{InvoiceMeterLabelEnum.ESSENTIAL_LOAD_GENRATION.value} Night": "essential_load_night",
+            f"{InvoiceMeterLabelEnum.NON_ESSENTIAL_LOAD_GENRATION.value} Day": "non_essential_load_day",
+            f"{InvoiceMeterLabelEnum.NON_ESSENTIAL_LOAD_GENRATION.value} Night": "non_essential_load_night",
+        }
+
+        daily = {}
+
+        for snapshot in invoice_snapshots:
+            day_label = InvoicePDF._fmt_date(
+                snapshot.period_start_at,
+                date_fmt=date_fmt,
+                time_fmt=time_fmt,
+                show_year=False,
+            )
+
+            if day_label not in daily:
+                daily[day_label] = {
+                    "essential_load_day": 0,
+                    "essential_load_night": 0,
+                    "non_essential_load_day": 0,
+                    "non_essential_load_night": 0,
+                }
+
+            for meter in snapshot.meter_data:
+                series = label_map.get(meter.label)
+                if series:
+                    daily[day_label][series] += float(meter.usage)
+
+        return daily
+
     @classmethod
     def render_invoice_pdf(
         cls,
@@ -390,6 +478,14 @@ class InvoicePDF:
                 pie_chart_data["day"][0]["usage"] = datum.usage
             elif datum.label == InvoiceMeterLabelEnum.SITE_METER_NIGHT.value:
                 pie_chart_data["night"][0]["usage"] = datum.usage
+            elif datum.label == f"{InvoiceMeterLabelEnum.ESSENTIAL_LOAD_GENRATION.value} Day":
+                pie_chart_data["day"][1]["usage"] = datum.usage
+            elif datum.label == f"{InvoiceMeterLabelEnum.ESSENTIAL_LOAD_GENRATION.value} Night":
+                pie_chart_data["night"][1]["usage"] = datum.usage
+            elif datum.label == f"{InvoiceMeterLabelEnum.NON_ESSENTIAL_LOAD_GENRATION.value} Day":
+                pie_chart_data["day"][0]["usage"] = datum.usage
+            elif datum.label == f"{InvoiceMeterLabelEnum.NON_ESSENTIAL_LOAD_GENRATION.value} Day":
+                pie_chart_data["night"][0]["usage"] = datum.usage
 
         day_chart_labels = [item["label"] for item in pie_chart_data["day"]]
         day_chart_values = [float(item["usage"]) for item in pie_chart_data["day"]]
@@ -419,7 +515,12 @@ class InvoicePDF:
 
         ppa_off_grid_daily_usage = cls._get_ppa_off_grid_daily_usage(
             invoice_snapshots=invoice_snapshots,
-            contract=contract,
+            line_items=line_items,
+            date_fmt=date_fmt,
+            time_fmt=time_fmt,
+        )
+        ppa_on_grid_battery_daily_usage = cls._get_ppa_on_grid_battery_daily_usage(
+            invoice_snapshots=invoice_snapshots,
             line_items=line_items,
             date_fmt=date_fmt,
             time_fmt=time_fmt,
@@ -430,7 +531,26 @@ class InvoicePDF:
             time_fmt=time_fmt,
         )
         ppa_off_grid_bar_chart = cls._render_bar_chart_base64(
-            daily=ppa_off_grid_daily_bar_chart_dict, title="Billing Period usage"
+            daily=ppa_off_grid_daily_bar_chart_dict,
+            series_keys=["gen_night", "gen_day", "solar_night", "solar_day"],
+            series_labels=["Gen Night", "Gen Day", "Solar Night", "Solar Day"],
+            title="Billing Period usage",
+        )
+        ppa_on_grid_battery_daily_bar_chart_dict = cls._get_ppa_on_grid_battery_bar_chart_data(
+            invoice_snapshots=invoice_snapshots,
+            date_fmt=date_fmt,
+            time_fmt=time_fmt,
+        )
+        ppa_on_grid_battery_bar_chart = cls._render_bar_chart_base64(
+            series_keys=[
+                "essential_load_day",
+                "essential_load_night",
+                "non_essential_load_day",
+                "non_essential_load_night",
+            ],
+            series_labels=["Ess. Night", "Ess. Day", "Non-Ess. Night", "Non-Ess. Day"],
+            daily=ppa_on_grid_battery_daily_bar_chart_dict,
+            title="Billing Period usage",
         )
 
         previous_period_start_at = previous_invoice.period_start_at if previous_invoice else None
@@ -514,6 +634,11 @@ class InvoicePDF:
             "night_pie_chart_usage": night_pie_chart_usage,
             "ppa_off_grid_daily_usage": ppa_off_grid_daily_usage,
             "ppa_off_grid_bar_chart": ppa_off_grid_bar_chart,
+            "ppa_on_grid_battery_daily_usage": ppa_on_grid_battery_daily_usage,
+            "ppa_on_grid_battery_bar_chart": ppa_on_grid_battery_bar_chart,
+            "contract": contract.contract_type,
+            "system_mode": contract.system_mode,
+            "with_battery": contract.details.with_battery,
         }
 
         html_content = _env.get_template("invoice.html").render(get_template_context(**context))
