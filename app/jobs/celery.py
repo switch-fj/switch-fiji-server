@@ -56,7 +56,9 @@ from app.jobs.automatic.schedulers import invoice as invoice_schedulers  # noqa
 from app.jobs.automatic.triggers import invoice as invoice_triggers  # noqa
 from app.jobs.automatic.schedulers import snapshot as snapshot_schedulers  # noqa
 from app.jobs.automatic.triggers import snapshot as snapshot_triggers  # noqa
-from app.jobs.automatic.triggers import mppt_fn_check as mppt_fn_check_triggers  # noqa
+from app.jobs.automatic.triggers import (  # noqa
+    mppt_battery_soc as mppt_fn_check_triggers,
+)  # noqa
 
 from app.jobs.on_demand.triggers import invoice as invoice_on_demand_triggers  # noqa
 from app.jobs.on_demand.schedulers import (  # noqa
@@ -75,5 +77,5 @@ from app.jobs.on_demand.schedulers import (  # noqa
     string_wiring as string_wiring_on_demand_schedulers,
 )  # noqa
 from app.jobs.on_demand.schedulers import (  # noqa
-    mppt_fn_check as mppt_fn_check_on_demand_schedulers,
+    mppt_battery_soc as mppt_fn_check_on_demand_schedulers,
 )  # noqa

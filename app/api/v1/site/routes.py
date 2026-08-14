@@ -9,8 +9,13 @@ from fastapi.responses import StreamingResponse
 from app.core.logger import setup_logger
 from app.core.security import AdminAccessBearer, EngineerAccessBearer
 from app.database.redis import async_redis_client
+from app.modules.batteries_soc.schema import (
+    BatterySOCConfigModel,
+    BatterySOCRespModel,
+    ConfigBatterySOCInputModel,
+)
 from app.modules.mppt_function_check.schema import (
-    MPPTFnCheckQuery,
+    DateCheckQuery,
     SiteMpptFunctionRespModel,
 )
 from app.modules.panel_references.schema import (
@@ -276,7 +281,7 @@ async def update_year_one_degradation(
         site_uid=site_uid, user_uid=token_user_uid, payload=payload
     )
 
-    return ServerRespModel[Optional[PVDegradationModel]](
+    return ServerRespModel(
         data=PVDegradationModel.model_validate(result) if result else None,
         message="Site degradation updated!",
     )
@@ -294,7 +299,7 @@ async def get_site_degradation(
 ):
     result = await site_config_service.get_degradation_by_site(site_uid=site_uid)
 
-    return ServerRespModel[Optional[PVDegradationModel]](
+    return ServerRespModel(
         data=PVDegradationModel.model_validate(result) if result else None,
         message="Site degradation retrieved!",
     )
@@ -316,7 +321,7 @@ async def configure_string_wiring(
     token_user_uid = token_user.get("uid")
     result = await site_config_service.create_string_wiring(site_uid=site_uid, user_uid=token_user_uid, payload=payload)
 
-    return ServerRespModel[StringWiringRespModel](
+    return ServerRespModel(
         data=StringWiringRespModel.model_validate(result),
         message="Site string summary configured!",
     )
@@ -342,7 +347,7 @@ async def update_string_writing(
         payload=payload,
     )
 
-    return ServerRespModel[bool](
+    return ServerRespModel(
         data=result,
         message="Site string summary configured!",
     )
@@ -360,7 +365,7 @@ async def get_site_wiring(
 ):
     result = await site_config_service.get_str_wiring(site_uid=site_uid)
 
-    return ServerRespModel[StringWiringRespModel](
+    return ServerRespModel(
         data=result,
         message="Site string wiring retrieved!",
     )
@@ -373,13 +378,69 @@ async def get_site_wiring(
 )
 async def get_site_mppt_fn_check(
     site_uid: UUID,
-    params: Annotated[MPPTFnCheckQuery, Query()],
+    params: Annotated[DateCheckQuery, Query()],
     site_config_service: SiteConfigService = Depends(get_site_configs_service),
     token_payload: dict = Depends(EngineerAccessBearer()),
 ):
     result = await site_config_service.mppt_fn_check(token_payload=token_payload, site_uid=site_uid, params=params)
 
-    return ServerRespModel[SiteMpptFunctionRespModel | None](
+    return ServerRespModel(
         data=result,
         message=("Computing..." if result is None else "Site string wiring retrieved!"),
+    )
+
+
+@site_router.get(
+    "/sites/{site_uid}/battery-config",
+    status_code=status.HTTP_200_OK,
+    response_model=ServerRespModel[BatterySOCConfigModel | None],
+)
+async def get_battery_config(
+    site_uid: UUID,
+    site_config_service: SiteConfigService = Depends(get_site_configs_service),
+    _: dict = Depends(EngineerAccessBearer()),
+):
+    result = await site_config_service.get_site_battery_soc_config(site_uid=site_uid)
+
+    return ServerRespModel(
+        data=BatterySOCConfigModel.model_validate(result) if result else None,
+        message="Site Battery SOC Config retrieved!",
+    )
+
+
+@site_router.post(
+    "/sites/{site_uid}/battery-config",
+    status_code=status.HTTP_200_OK,
+    response_model=ServerRespModel[bool],
+)
+async def create_config(
+    site_uid: UUID,
+    payload: ConfigBatterySOCInputModel,
+    site_config_service: SiteConfigService = Depends(get_site_configs_service),
+    token_payload: dict = Depends(EngineerAccessBearer()),
+):
+    await site_config_service.config_battery_soc_input(site_uid=site_uid, token_payload=token_payload, payload=payload)
+
+    return ServerRespModel(
+        data=True,
+        message="Site Battery SOC created!",
+    )
+
+
+@site_router.get(
+    "/sites/{site_uid}/battery-soc",
+    status_code=status.HTTP_200_OK,
+    response_model=ServerRespModel[BatterySOCRespModel],
+)
+async def get_battery_soc(
+    site_uid: UUID,
+    params: Annotated[DateCheckQuery, Query()],
+    site_config_service: SiteConfigService = Depends(get_site_configs_service),
+    _: dict = Depends(EngineerAccessBearer()),
+):
+    ba3_soc = await site_config_service.battery_soc(site_uid=site_uid, params=params)
+
+    return ServerRespModel(
+        data=ba3_soc,
+        message="Site Battery SOC retrieved!",
     )

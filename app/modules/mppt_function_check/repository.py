@@ -26,12 +26,12 @@ class SiteMpptFnCheckRepository:
             SiteMPPTFunctionCheck.date_at == date_at,
         )
         result = await self.session.exec(statement)
-        site_mppt_fn_check = result.one_or_none()
+        site_create_mppt_fn_check = result.one_or_none()
 
-        return site_mppt_fn_check
+        return site_create_mppt_fn_check
 
     async def create_mppt_fn_check(self, user_uid: UUID, site_uid: UUID, date_at: date):
-        site_mppt_fn_check = SiteMPPTFunctionCheck(
+        site_create_mppt_fn_check = SiteMPPTFunctionCheck(
             user_uid=user_uid,
             site_uid=site_uid,
             date_at=date_at,
@@ -40,10 +40,10 @@ class SiteMpptFnCheckRepository:
             interval_in_minutes=30,
             is_completed=False,
         )
-        self.session.add(site_mppt_fn_check)
+        self.session.add(site_create_mppt_fn_check)
         await self.session.commit()
 
-        return site_mppt_fn_check
+        return site_create_mppt_fn_check
 
 
 def get_site_mppt_fn_check_repo(session: AsyncSession = Depends(get_session)):

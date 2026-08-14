@@ -166,7 +166,7 @@ class CeleryDynamoClient:
             logger.error(f"Error fetching billing period readings for gateway {gateway_id}: {e}")
             return None
 
-    def get_site_readings_for_mppt_fn_check(
+    def get_site_readings_by_date_and_interval(
         self, gateway_id: str, date_at: date, tz: str, interval_minutes: int = 30
     ) -> Optional[list[dict]]:
         """Fetch nearest-prior DynamoDB readings for a gateway at fixed intervals.

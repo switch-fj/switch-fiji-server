@@ -9,7 +9,7 @@ from app.shared.schema import DBModel
 from app.utils import uuid_serializer
 
 
-class MPPTFnCheckQuery(BaseModel):
+class DateCheckQuery(BaseModel):
     date_at: int
 
     model_config = ConfigDict(extra="forbid")

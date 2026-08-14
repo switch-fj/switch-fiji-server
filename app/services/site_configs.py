@@ -15,8 +15,8 @@ from app.core.exceptions import (
 )
 from app.database.postgres import get_session
 from app.database.redis import async_redis_client
-from app.jobs.on_demand.schedulers.mppt_fn_check import (
-    schedule_site_mppt_fn_check_on_demand,
+from app.jobs.on_demand.schedulers.mppt_battery_soc import (
+    schedule_site_mppt_and_ba3_soc_on_demand,
 )
 from app.jobs.on_demand.triggers.degradation import (
     trigger_compute_site_yearly_degradation_on_demand,
@@ -24,10 +24,15 @@ from app.jobs.on_demand.triggers.degradation import (
 from app.jobs.on_demand.triggers.string_wiring import (
     trigger_compute_string_wiring_on_demand,
 )
+from app.modules.batteries_soc.repository import BatterySOCRepository
+from app.modules.batteries_soc.schema import (
+    BatterySOCRespModel,
+    ConfigBatterySOCInputModel,
+)
 from app.modules.clients.repository import ClientRepository
 from app.modules.mppt_function_check.repository import SiteMpptFnCheckRepository
 from app.modules.mppt_function_check.schema import (
-    MPPTFnCheckQuery,
+    DateCheckQuery,
     SiteMpptFunctionRespModel,
 )
 from app.modules.panel_references.repository import PanelRefRepository
@@ -67,6 +72,7 @@ class SiteConfigService(SiteService):
         self.pv_degradation_repo = PvDegradationRepository(session=session)
         self.st_wiring_repo = StringWiringRepository(session=session)
         self.site_mppt_fn_check_repo = SiteMpptFnCheckRepository(session=session)
+        self.battery_soc_repo = BatterySOCRepository(session=session)
 
         super().__init__(site_repo=self.site_repo, client_repo=self.client_repo)
 
@@ -269,7 +275,64 @@ class SiteConfigService(SiteService):
 
         return StringWiringRespModel.model_validate(result.model_dump())
 
-    async def mppt_fn_check(self, token_payload: dict, site_uid: UUID, params: MPPTFnCheckQuery):
+    async def config_battery_soc_input(self, site_uid: UUID, token_payload: dict, payload: ConfigBatterySOCInputModel):
+        token_user = token_payload.get("user")
+        token_user_uid = token_user.get("uid")
+        site = await self.site_repo.get_site_by_uid(site_uid=site_uid)
+
+        if site is None:
+            raise NotFound("site not found!")
+
+        await self.battery_soc_repo.config_battery_soc_input(
+            user_uid=token_user_uid, site_uid=site_uid, battery_soc_input=payload
+        )
+
+        return True
+
+    async def get_site_battery_soc_config(self, site_uid: UUID):
+        current_ba3_soc_config = await self.battery_soc_repo.get_site_current_config(site_uid=site_uid)
+        return current_ba3_soc_config
+
+    async def battery_soc(self, site_uid: UUID, params: DateCheckQuery):
+        site = await self.site_repo.get_site_by_uid(site_uid=site_uid)
+        if site is None:
+            raise NotFound("site not found!")
+
+        tz = site.tz or site.contract.timezone
+        date_at = datetime.fromtimestamp(params.date_at, tz=ZoneInfo(tz)).date()
+
+        if is_future_date(date_at, tz):
+            raise BadRequest("Only current and past date allowed.")
+
+        cache_key = Constants.BA3_SOC.replace("site_uid", str(site_uid)).replace("date_at", date_at.isoformat())
+        cached = await async_redis_client.client.get(cache_key)
+        if cached:
+            return BatterySOCRespModel.model_validate(json.loads(cached))
+
+        battery_soc_config = await self.battery_soc_repo.get_site_current_config(site_uid=site_uid)
+
+        if battery_soc_config is None:
+            raise NotFound("Battery soc config needs to be created!")
+
+        batter_soc = await self.battery_soc_repo.get_battery_soc_by_date(site_uid=site_uid, date_at=date_at)
+
+        if batter_soc is None:
+            batter_soc = await self.battery_soc_repo.create_battery_soc(
+                site_uid=site_uid,
+                battery_soc_config_history_uid=battery_soc_config.uid,
+                date_at=date_at,
+            )
+
+        lock_key = Constants.MPPT_BA3_SOC_LOCK.replace("site_uid", str(site_uid)).replace(
+            "date_at", date_at.isoformat()
+        )
+        lock_acquired = await async_redis_client.client.set(lock_key, "1", nx=True, ex=300)
+        if lock_acquired:
+            schedule_site_mppt_and_ba3_soc_on_demand.delay(site_uid, date_at)
+
+        return BatterySOCRespModel.model_validate(batter_soc)
+
+    async def mppt_fn_check(self, token_payload: dict, site_uid: UUID, params: DateCheckQuery):
         token_user = token_payload.get("user")
         token_user_uid = token_user.get("uid")
         site = await self.site_repo.get_site_by_uid(site_uid=site_uid)
@@ -294,12 +357,12 @@ class SiteConfigService(SiteService):
                 user_uid=token_user_uid, site_uid=site_uid, date_at=date_at
             )
 
-        lock_key = Constants.MPPT_FN_CHECK_LOCK.replace("site_uid", str(site_uid)).replace(
+        lock_key = Constants.MPPT_BA3_SOC_LOCK.replace("site_uid", str(site_uid)).replace(
             "date_at", date_at.isoformat()
         )
         lock_acquired = await async_redis_client.client.set(lock_key, "1", nx=True, ex=300)
         if lock_acquired:
-            schedule_site_mppt_fn_check_on_demand.delay(site_uid, date_at)
+            schedule_site_mppt_and_ba3_soc_on_demand.delay(site_uid, date_at)
 
         return SiteMpptFunctionRespModel.model_validate(mppt_fn_check)
 
