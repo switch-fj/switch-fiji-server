@@ -147,7 +147,6 @@ async def get_portfolio_stats(
 
     target_year = year or now.year
     target_month = month if month is not None else (None if year is not None else now.month)
-    Constants.ENERGY_PORTFOLIO.replace()
     cache_key = (
         Constants.ENERGY_PORTFOLIO.replace("y", f"{target_year}")
         if target_month is None
