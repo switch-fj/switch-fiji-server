@@ -24,9 +24,9 @@ class SiteMPPTFunctionCheck(MyAbstractSQLModel, table=True):
             "from_",
             "to",
             "interval_in_minutes",
-            name="uq_site_mppt_fn_check",
+            name="uq_site_create_mppt_fn_check",
         ),
-        Index("ix_site_mppt_fn_check_site_date", "site_uid", "date_at"),
+        Index("uq_site_create_mppt_fn_check", "site_uid", "date_at"),
     )
 
     site_uid: UUID = Field(foreign_key="sites.uid", nullable=False, index=True)

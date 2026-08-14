@@ -9,6 +9,7 @@ from app.shared.model import MyAbstractSQLModel
 from app.shared.schema import IdentityTypeEnum, UserRoleEnum
 
 if TYPE_CHECKING:
+    from app.modules.batteries_soc.model import BatterySOCConfigHistory
     from app.modules.clients.model import Client
     from app.modules.mppt_function_check.model import SiteMPPTFunctionCheck
     from app.modules.panel_references.model import PanelReference
@@ -71,3 +72,4 @@ class User(MyAbstractSQLModel, table=True):
     pv_degradation: Optional["PvDegradation"] = Relationship(back_populates="user")
     string_wiring: Optional["StringWiring"] = Relationship(back_populates="user")
     site_mppt_fn_check: list["SiteMPPTFunctionCheck"] = Relationship(back_populates="user")
+    battery_soc_config: list["BatterySOCConfigHistory"] = Relationship(back_populates="user")

@@ -8,6 +8,10 @@ from sqlmodel import Field, Relationship, UniqueConstraint
 from app.shared.model import MyAbstractSQLModel
 
 if TYPE_CHECKING:
+    from app.modules.batteries_soc.model import (
+        BatterySOCConfigHistory,
+        BatteryStateofCharge,
+    )
     from app.modules.clients.model import Client
     from app.modules.contracts.model import Contract
     from app.modules.devices.model import Device
@@ -87,3 +91,5 @@ class Site(MyAbstractSQLModel, table=True):
     pv_degradation: Optional["PvDegradation"] = Relationship(back_populates="site")
     string_wiring: Optional["StringWiring"] = Relationship(back_populates="site")
     site_mppt_fn_check: list["SiteMPPTFunctionCheck"] = Relationship(back_populates="site")
+    battery_soc_config: list["BatterySOCConfigHistory"] = Relationship(back_populates="site")
+    battery_state_of_charge: list["BatteryStateofCharge"] = Relationship(back_populates="site")

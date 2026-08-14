@@ -7,7 +7,7 @@ from sqlmodel import select
 from app.core.logger import setup_logger
 from app.database.celery import get_celery_db_session
 from app.jobs.celery import celery_app
-from app.jobs.on_demand.schedulers.mppt_fn_check import compute_mppt_fn_check
+from app.jobs.on_demand.schedulers.mppt_battery_soc import compute_mppt_and_ba3_soc
 from app.modules.mppt_function_check.model import SiteMPPTFunctionCheck
 from app.modules.sites.model import Site
 
@@ -15,12 +15,12 @@ logger = setup_logger(__name__)
 
 
 @celery_app.task(
-    name="trigger_todays_site_mppt_fn_check_on_auto",
+    name="trigger_todays_site_mppt_and_ba3_soc_on_auto",
     bind=True,
     max_retries=3,
     default_retry_delay=5,
 )
-def trigger_todays_site_mppt_fn_check_on_auto(self):
+def trigger_todays_site_mppt_and_ba3_soc_on_auto(self):
     """
     Runs every 30 min, 09:01-15:31 site-local window trigger times.
     Refreshes mppt-function-check entries only for sites that already
@@ -54,7 +54,7 @@ def trigger_todays_site_mppt_fn_check_on_auto(self):
                 try:
                     tz = site.tz
                     date_at = datetime.now(ZoneInfo(tz)).date()
-                    compute_mppt_fn_check(site_uid=site.uid, date_at=date_at)
+                    compute_mppt_and_ba3_soc(site_uid=site.uid, date_at=date_at)
                 except Exception as e:
                     logger.error(f"MPPT fn check failed for site {site.uid}: {e}")
                     continue
