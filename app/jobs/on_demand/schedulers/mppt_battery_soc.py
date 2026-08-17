@@ -196,6 +196,7 @@ def compute_mppt_and_ba3_soc(site_uid: UUID, date_at: date):
                 telemetry_reading_str=telemetry_reading_str,
                 expected_mppt_a_table=expected_mppt_a_table,
                 is_completed=is_completed,
+                string_wiring=string_wiring,
             )
             handle_battery_soc(
                 session=session,
