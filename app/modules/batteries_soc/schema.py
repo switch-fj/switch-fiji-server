@@ -27,7 +27,7 @@ class BatteryReadingItem(BaseModel):
     battery_current_a: float
 
 
-class BatterySOCTableModel(BaseModel):
+class BatterySOCRowModel(BaseModel):
     time_at: time
     batteries: list[BatteryReadingItem]
 
@@ -40,12 +40,12 @@ class ConfigBatterySOCInputModel(BaseModel):
         return cls.model_validate_json(raw)
 
 
-class BatterySOCTableModel(RootModel[List[BatterySOCTableModel]]):
+class BatterySOCTableModel(RootModel[List[BatterySOCRowModel]]):
     def to_json(self) -> str:
         return self.model_dump_json()
 
     @classmethod
-    def from_json(cls, raw: str) -> "BatterySOCTableModel":
+    def from_json(cls, raw: str) -> "BatterySOCRowModel":
         return cls.model_validate_json(raw)
 
     @classmethod
@@ -54,7 +54,7 @@ class BatterySOCTableModel(RootModel[List[BatterySOCTableModel]]):
         telemetry_reading: List[dict | None],
         time_boundaries: list[time],
         battery_soc_input: ConfigBatterySOCInputModel,
-    ) -> "BatterySOCTableModel":
+    ) -> "BatterySOCRowModel":
         rows = []
         config_by_slave_id = {item.inverter_slave_id: item.battery_data for item in battery_soc_input.config_input}
 
@@ -83,11 +83,11 @@ class BatterySOCTableModel(RootModel[List[BatterySOCTableModel]]):
                         )
                     )
 
-            rows.append(BatterySOCTableModel(time_at=time_at, batteries=batteries))
+            rows.append(BatterySOCRowModel(time_at=time_at, batteries=batteries))
 
         return cls(root=rows)
 
-    def to_list(self) -> List[BatterySOCTableModel]:
+    def to_list(self) -> List[BatterySOCRowModel]:
         return self.root
 
 

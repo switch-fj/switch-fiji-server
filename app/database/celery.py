@@ -203,6 +203,7 @@ class CeleryDynamoClient:
             current += timedelta(minutes=interval_minutes)
 
         results = []
+        seen_timestamps = set()
         try:
             for boundary in boundaries:
                 boundary_ts = int(boundary.astimezone(timezone.utc).timestamp() * 1000)
@@ -213,7 +214,13 @@ class CeleryDynamoClient:
                 )
                 items = response.get("Items", [])
                 if len(items):
-                    results.append(items[0])
+                    item = items[0]
+                    ts = item.get("ts_epoch_ms")
+                    if ts in seen_timestamps:
+                        results.append(None)
+                    else:
+                        seen_timestamps.add(ts)
+                        results.append(item)
                 else:
                     results.append(None)
 
