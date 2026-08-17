@@ -18,7 +18,7 @@ class BatterySOCConfigHistory(MyAbstractSQLModel, table=True):
 
     __tablename__ = "battery_soc_config_history"
 
-    site_uid: UUID = Field(foreign_key="sites.uid", nullable=False, index=True, unique=True)
+    site_uid: UUID = Field(foreign_key="sites.uid", nullable=False, index=True)
     user_uid: UUID = Field(foreign_key="users.uid", nullable=False, index=True)
     config_input_str: str = Field(description="JSON-serialized StringsInputItemModel")
     effective_from: datetime = Field(
