@@ -1,5 +1,5 @@
-from datetime import datetime
-from typing import Optional
+from datetime import date, datetime
+from typing import Optional, Union
 from uuid import UUID
 
 from pydantic import BaseModel, Field, field_serializer, field_validator
@@ -94,3 +94,37 @@ class SiteDailyStatsRespModel(BaseModel):
     performance_vs_baseline_pct: float
     last_invoice_date: Optional[str]
     last_invoice_amount: Optional[float]
+
+
+class SiteEnergyUsageModel(DBModel):
+    site_uid: UUID
+    date_at: date
+    interval_in_minutes: int
+    telemetry_reading_str: Optional[str]
+    energy_usage_table_str: Optional[str]
+    is_completed: bool
+
+    @field_serializer("date_at")
+    def serialize_dt(self, value: Union[datetime, date]):
+        """Serialise datetime fields to ISO-8601 strings.
+
+        Args:
+            value: The datetime value to serialise.
+
+        Returns:
+            ISO-8601 formatted string, or None if value is falsy.
+        """
+        if value:
+            return value.isoformat()
+
+    @field_serializer("site_uid")
+    def serialize_uuid(self, value: UUID):
+        """Serialise the uid UUID to a plain string.
+
+        Args:
+            value: The UUID value to serialise.
+
+        Returns:
+            A string representation of the UUID.
+        """
+        return uuid_serializer(value)

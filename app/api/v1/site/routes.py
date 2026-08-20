@@ -31,6 +31,7 @@ from app.modules.pv_summary.schema import PVSModel, SitePVSItemModel, UpdatePVSI
 from app.modules.sites.schema import (
     CreateSiteModel,
     SiteDailyStatsRespModel,
+    SiteEnergyUsageModel,
     SiteRespModel,
 )
 from app.modules.string_wiring.schema import (
@@ -444,3 +445,35 @@ async def get_battery_soc(
         data=ba3_soc,
         message="Site Battery SOC retrieved!",
     )
+
+
+@site_router.get(
+    "/sites/{site_uid}/energy-usage",
+    status_code=status.HTTP_200_OK,
+    response_model=ServerRespModel[SiteEnergyUsageModel],
+)
+async def energy_usage(
+    site_uid: UUID,
+    params: Annotated[DateCheckQuery, Query()],
+    site_service: SiteService = Depends(get_site_service),
+    _: dict = Depends(EngineerAccessBearer()),
+):
+    site_energy_usage = await site_service.site_energy_usage(site_uid=site_uid, date_at=params.date_at)
+
+    return ServerRespModel(
+        data=site_energy_usage,
+        message="Site Energy usage retrieved!",
+    )
+
+
+# @site_router.get(
+#     "/site/{site_uid}/flow-graph/stream",
+#     status_code=status.HTTP_200_OK,
+#     summary="Stream live stats for a single site via SSE",
+# )
+# async def site_dashboard(
+#     site_uid: UUID,
+#     params: Annotated[DateCheckQuery, Query()],
+#     _: dict = Depends(EngineerAccessBearer()),
+# ):
+#     pass
