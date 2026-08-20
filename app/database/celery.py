@@ -20,7 +20,10 @@ _engine = create_engine(
     max_overflow=10,
     pool_timeout=30,
     pool_recycle=1800,
-    connect_args={"options": "-ctimezone=UTC"},
+    connect_args={
+        "options": "-ctimezone=UTC",
+        "sslmode": "require",
+    },
 )
 _SessionLocal = sessionmaker(bind=_engine, expire_on_commit=False)
 
