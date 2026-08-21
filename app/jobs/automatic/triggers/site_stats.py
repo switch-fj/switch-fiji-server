@@ -23,7 +23,7 @@ def trigger_site_stats_computation_on_auto(self):
     """
     try:
         with get_celery_db_session() as session:
-            result = session.execute(select(Site))
+            result = session.execute(select(Site).where(Site.deleted_at.is_(None)))
             sites = result.scalars().all()
 
         for site in sites:

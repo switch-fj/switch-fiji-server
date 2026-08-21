@@ -79,3 +79,6 @@ from app.jobs.on_demand.schedulers import (  # noqa
 from app.jobs.on_demand.schedulers import (  # noqa
     mppt_battery_soc as mppt_fn_check_on_demand_schedulers,
 )  # noqa
+from app.jobs.on_demand.schedulers import (  # noqa
+    site_energy_usage as site_energy_usage_on_demand_schedulers,
+)  # noqa

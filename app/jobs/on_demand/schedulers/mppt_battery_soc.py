@@ -24,30 +24,14 @@ from app.modules.string_wiring.model import StringWiring
 from app.modules.string_wiring.schema import (
     ExpectedMPPT_ATable,
 )
-from app.shared.constants import Constants
+from app.shared.constants import ASSUMED_IRRADIANCE, Constants
 from app.utils import some
 from app.utils.json_encoders import json_default
 
 logger = setup_logger(__name__)
 
-ASSUMED_IRRADIANCE: dict[time, int] = {
-    time(9, 0): 700,
-    time(9, 30): 750,
-    time(10, 0): 750,
-    time(10, 30): 800,
-    time(11, 0): 850,
-    time(11, 30): 850,
-    time(12, 0): 900,
-    time(12, 30): 900,
-    time(13, 0): 900,
-    time(13, 30): 850,
-    time(14, 0): 800,
-    time(14, 30): 750,
-    time(15, 0): 700,
-}
 
-
-def handle_battery_soc(
+def update_ba3_soc(
     telemetry_reading_list: list[dict],
     telemetry_reading_str: str,
     session: Session,
@@ -59,6 +43,7 @@ def handle_battery_soc(
         select(BatterySOCConfigHistory).where(
             BatterySOCConfigHistory.site_uid == site_uid,
             BatterySOCConfigHistory.effective_to.is_(None),
+            BatterySOCConfigHistory.deleted_at.is_(None),
         )
     ).scalar_one_or_none()
 
@@ -70,6 +55,7 @@ def handle_battery_soc(
         select(BatteryStateofCharge).where(
             BatteryStateofCharge.site_uid == site_uid,
             BatteryStateofCharge.date_at == date_at,
+            BatteryStateofCharge.deleted_at.is_(None),
         )
     ).scalar_one_or_none()
 
@@ -101,7 +87,7 @@ def handle_battery_soc(
     return
 
 
-def handle_mppt_fn(
+def update_mppt_fn(
     telemetry_reading_list: list[dict],
     telemetry_reading_str: str,
     session: Session,
@@ -146,7 +132,7 @@ def compute_mppt_and_ba3_soc(site_uid: UUID, date_at: date):
     lock_acquired = sync_redis_client.client.set(lock_key, "1", nx=True, ex=300)
 
     if not lock_acquired:
-        logger.info(f"Skipping compute for {site_uid}/{date_at} — already in progress")
+        logger.info(f"Skipping compute for mppt and ba3_soc {site_uid}/{date_at} — already in progress")
         return
 
     try:
@@ -178,17 +164,21 @@ def compute_mppt_and_ba3_soc(site_uid: UUID, date_at: date):
             telemetry_reading_list = celery_dynamo_client.get_site_readings_by_date_and_interval(
                 gateway_id=string_wiring.site.gateway_id,
                 date_at=date_at,
+                _from=time(9, 0),
+                to=time(15, 0),
                 tz=string_wiring.site.tz or contract.timezone,
             )
 
             if telemetry_reading_list is None:
-                logger.info(f"Telemetry data for site {site_uid} at date: {date_at} not found")
+                logger.info(
+                    f"Telemetry data for computing mppt fn and ba3 soc for site {site_uid} at date: {date_at} not found"
+                )
                 return
 
             telemetry_reading_str = json.dumps(telemetry_reading_list, default=json_default)
             is_completed = True if not some(telemetry_reading_list, lambda reading: reading is None) else False
 
-            handle_mppt_fn(
+            update_mppt_fn(
                 session=session,
                 site_uid=site_uid,
                 date_at=date_at,
@@ -198,7 +188,7 @@ def compute_mppt_and_ba3_soc(site_uid: UUID, date_at: date):
                 is_completed=is_completed,
                 string_wiring=string_wiring,
             )
-            handle_battery_soc(
+            update_ba3_soc(
                 session=session,
                 site_uid=site_uid,
                 date_at=date_at,
