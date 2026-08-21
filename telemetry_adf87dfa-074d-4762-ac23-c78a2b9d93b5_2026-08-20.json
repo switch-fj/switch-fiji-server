@@ -1,0 +1,7835 @@
+[
+  {
+    "ac_units": [
+      {
+        "temperature_c": 0.0,
+        "slave_id": 21.0,
+        "status": "ok"
+      },
+      {
+        "temperature_c": 0.0,
+        "slave_id": 22.0,
+        "status": "ok"
+      }
+    ],
+    "client": {
+      "client_email": "allan@paradiseinfiji.com",
+      "site_id": 1.0,
+      "client_name": "Paradise Resort",
+      "client_id": 1.0
+    },
+    "timestamp": {
+      "ts_epoch_ms": 1787140776292.0
+    },
+    "meters": [
+      {
+        "p_total_w": 0.0,
+        "kwh_total": 62423.0,
+        "i1": 0.0,
+        "p3_w": 0.0,
+        "description": "gen_meter",
+        "i2": 0.0,
+        "p2_w": 0.0,
+        "i3": 0.0,
+        "p1_w": 0.0,
+        "freq_hz": 0.0,
+        "tariff": {
+          "kwh_t1": 48424.719,
+          "kwh_t2": 13998.493
+        },
+        "v1": 0.0,
+        "v2": 0.0,
+        "v3": 0.0,
+        "slave_id": 12.0
+      },
+      {
+        "p_total_w": 33235.172,
+        "kwh_total": 247695.0,
+        "i1": 19.456,
+        "p3_w": 21810.236,
+        "description": "load_meter",
+        "i2": 33.536,
+        "p2_w": 7266.546,
+        "i3": 96.371,
+        "p1_w": 4197.69,
+        "tariff": {
+          "kwh_t1": 131055.938,
+          "kwh_t2": 116638.938
+        },
+        "v1": 233.006,
+        "v2": 233.163,
+        "v3": 228.193,
+        "slave_id": 13.0
+      },
+      {
+        "p_total_w": 898.7,
+        "kwh_total": 8797.2,
+        "i1": 1.21,
+        "p3_w": 0.0,
+        "description": "aux_loads",
+        "i2": 3.11,
+        "p2_w": 705.225,
+        "i3": 0.202,
+        "p1_w": 172.224,
+        "freq_hz": 50.0,
+        "v1": 233.306,
+        "v2": 233.033,
+        "v3": 228.192,
+        "slave_id": 14.0
+      },
+      {
+        "p_total_w": 0.0,
+        "kwh_total": 20096.039,
+        "i1": 0.609,
+        "p3_w": 0.0,
+        "description": "micro_inv",
+        "i2": 0.623,
+        "p2_w": 0.0,
+        "i3": 0.558,
+        "p1_w": 0.0,
+        "freq_hz": 50.0,
+        "v1": 233.255,
+        "v2": 233.062,
+        "v3": 228.176,
+        "slave_id": 15.0
+      }
+    ],
+    "gateway": {
+      "firmware": "m300-taveuni-1.0",
+      "gateway_id": "M300-TAVEUNI-001"
+    },
+    "irradiance_meters": [
+      {
+        "slave_id": 30.0,
+        "irradiance_w_per_m2": 0.0
+      }
+    ],
+    "gateway_id": "M300-TAVEUNI-001",
+    "inverters": [
+      {
+        "p_total_w": 15585.0,
+        "pv1_v": 0.0,
+        "pv1_w": 0.0,
+        "pv2_v": 0.0,
+        "pv2_w": 0.0,
+        "pv3_v": 16.7,
+        "pv3_w": 0.0,
+        "pv4_v": 75.3,
+        "pv4_w": 10.0,
+        "battery_soc2": 43.0,
+        "battery_soc": 43.0,
+        "freq_hz": 50.0,
+        "pv1_i": 0.0,
+        "battery_power_w": 8140.0,
+        "pv2_i": 0.0,
+        "pv3_i": 0.0,
+        "pv4_i": 0.2,
+        "battery_current_a": 15.58,
+        "slave_id": 1.0,
+        "status": "running"
+      },
+      {
+        "p_total_w": 8903.0,
+        "pv1_v": 0.0,
+        "pv1_w": 0.0,
+        "pv2_v": 20.0,
+        "pv2_w": 0.0,
+        "pv3_v": 19.3,
+        "pv3_w": 0.0,
+        "pv4_v": 0.0,
+        "pv4_w": 0.0,
+        "battery_soc": 51.0,
+        "freq_hz": 50.0,
+        "pv1_i": 0.0,
+        "battery_power_w": 9670.0,
+        "pv2_i": 0.0,
+        "pv3_i": 0.0,
+        "pv4_i": 0.0,
+        "battery_current_a": 18.53,
+        "slave_id": 2.0,
+        "status": "running"
+      },
+      {
+        "p_total_w": 9227.0,
+        "pv1_v": 0.0,
+        "pv1_w": 0.0,
+        "pv2_v": 23.8,
+        "pv2_w": 0.0,
+        "pv3_v": 0.0,
+        "pv3_w": 0.0,
+        "pv4_v": 0.0,
+        "pv4_w": 0.0,
+        "battery_soc": 50.0,
+        "freq_hz": 50.0,
+        "pv1_i": 0.0,
+        "battery_power_w": 9460.0,
+        "pv2_i": 0.0,
+        "pv3_i": 0.0,
+        "pv4_i": 0.0,
+        "battery_current_a": 18.1,
+        "slave_id": 3.0,
+        "status": "running"
+      }
+    ],
+    "ts_epoch_ms": 1787140777505.0
+  },
+  {
+    "ac_units": [
+      {
+        "temperature_c": 0.0,
+        "slave_id": 21.0,
+        "status": "ok"
+      },
+      {
+        "temperature_c": 0.0,
+        "slave_id": 22.0,
+        "status": "ok"
+      }
+    ],
+    "client": {
+      "client_email": "allan@paradiseinfiji.com",
+      "site_id": 1.0,
+      "client_name": "Paradise Resort",
+      "client_id": 1.0
+    },
+    "timestamp": {
+      "ts_epoch_ms": 1787142576389.0
+    },
+    "meters": [
+      {
+        "p_total_w": 0.0,
+        "kwh_total": 62423.0,
+        "i1": 0.0,
+        "p3_w": 0.0,
+        "description": "gen_meter",
+        "i2": 0.0,
+        "p2_w": 0.0,
+        "i3": 0.0,
+        "p1_w": 0.0,
+        "freq_hz": 0.0,
+        "tariff": {
+          "kwh_t1": 48424.719,
+          "kwh_t2": 13998.493
+        },
+        "v1": 0.0,
+        "v2": 0.0,
+        "v3": 0.0,
+        "slave_id": 12.0
+      },
+      {
+        "p_total_w": 21626.977,
+        "kwh_total": 247707.0,
+        "i1": 31.47,
+        "p3_w": 6861.467,
+        "description": "load_meter",
+        "i2": 32.97,
+        "p2_w": 7218.119,
+        "i3": 31.167,
+        "p1_w": 9384.084,
+        "tariff": {
+          "kwh_t1": 131068.484,
+          "kwh_t2": 116638.938
+        },
+        "v1": 232.699,
+        "v2": 233.205,
+        "v3": 230.962,
+        "slave_id": 13.0
+      },
+      {
+        "p_total_w": 896.4,
+        "kwh_total": 8797.62,
+        "i1": 1.22,
+        "p3_w": 0.0,
+        "description": "aux_loads",
+        "i2": 3.108,
+        "p2_w": 703.996,
+        "i3": 0.2,
+        "p1_w": 169.767,
+        "freq_hz": 50.0,
+        "v1": 233.335,
+        "v2": 232.731,
+        "v3": 230.967,
+        "slave_id": 14.0
+      },
+      {
+        "p_total_w": 0.0,
+        "kwh_total": 20096.061,
+        "i1": 0.612,
+        "p3_w": 0.0,
+        "description": "micro_inv",
+        "i2": 0.603,
+        "p2_w": 0.0,
+        "i3": 0.569,
+        "p1_w": 0.0,
+        "freq_hz": 50.0,
+        "v1": 233.229,
+        "v2": 232.794,
+        "v3": 230.747,
+        "slave_id": 15.0
+      }
+    ],
+    "gateway": {
+      "firmware": "m300-taveuni-1.0",
+      "gateway_id": "M300-TAVEUNI-001"
+    },
+    "irradiance_meters": [
+      {
+        "slave_id": 30.0,
+        "irradiance_w_per_m2": 0.0
+      }
+    ],
+    "gateway_id": "M300-TAVEUNI-001",
+    "inverters": [
+      {
+        "p_total_w": 9948.0,
+        "pv1_v": 0.0,
+        "pv1_w": 0.0,
+        "pv2_v": 0.0,
+        "pv2_w": 0.0,
+        "pv3_v": 0.0,
+        "pv3_w": 0.0,
+        "pv4_v": 71.8,
+        "pv4_w": 10.0,
+        "battery_soc2": 41.0,
+        "battery_soc": 40.0,
+        "freq_hz": 50.0,
+        "pv1_i": 0.0,
+        "battery_power_w": 4670.0,
+        "pv2_i": 0.0,
+        "pv3_i": 0.0,
+        "pv4_i": 0.2,
+        "battery_current_a": 8.92,
+        "slave_id": 1.0,
+        "status": "running"
+      },
+      {
+        "p_total_w": 6052.0,
+        "pv1_v": 0.0,
+        "pv1_w": 0.0,
+        "pv2_v": 18.8,
+        "pv2_w": 0.0,
+        "pv3_v": 18.1,
+        "pv3_w": 0.0,
+        "pv4_v": 0.0,
+        "pv4_w": 0.0,
+        "battery_soc": 48.0,
+        "freq_hz": 50.0,
+        "pv1_i": 0.0,
+        "battery_power_w": 6370.0,
+        "pv2_i": 0.0,
+        "pv3_i": 0.0,
+        "pv4_i": 0.0,
+        "battery_current_a": 12.19,
+        "slave_id": 2.0,
+        "status": "running"
+      },
+      {
+        "p_total_w": 6430.0,
+        "pv1_v": 0.0,
+        "pv1_w": 0.0,
+        "pv2_v": 22.5,
+        "pv2_w": 0.0,
+        "pv3_v": 0.0,
+        "pv3_w": 0.0,
+        "pv4_v": 0.0,
+        "pv4_w": 0.0,
+        "battery_soc": 47.0,
+        "freq_hz": 50.0,
+        "pv1_i": 0.0,
+        "battery_power_w": 6280.0,
+        "pv2_i": 0.0,
+        "pv3_i": 0.0,
+        "pv4_i": 0.0,
+        "battery_current_a": 12.0,
+        "slave_id": 3.0,
+        "status": "running"
+      }
+    ],
+    "ts_epoch_ms": 1787142577510.0
+  },
+  {
+    "ac_units": [
+      {
+        "temperature_c": 0.0,
+        "slave_id": 21.0,
+        "status": "ok"
+      },
+      {
+        "temperature_c": 0.0,
+        "slave_id": 22.0,
+        "status": "ok"
+      }
+    ],
+    "client": {
+      "client_email": "allan@paradiseinfiji.com",
+      "site_id": 1.0,
+      "client_name": "Paradise Resort",
+      "client_id": 1.0
+    },
+    "timestamp": {
+      "ts_epoch_ms": 1787144376047.0
+    },
+    "meters": [
+      {
+        "p_total_w": 0.0,
+        "kwh_total": 62423.0,
+        "i1": 0.0,
+        "p3_w": 0.0,
+        "description": "gen_meter",
+        "i2": 0.0,
+        "p2_w": 0.0,
+        "i3": 0.0,
+        "p1_w": 0.0,
+        "freq_hz": 0.0,
+        "tariff": {
+          "kwh_t1": 48424.719,
+          "kwh_t2": 13998.493
+        },
+        "v1": 0.0,
+        "v2": 0.0,
+        "v3": 0.0,
+        "slave_id": 12.0
+      },
+      {
+        "p_total_w": 20685.082,
+        "kwh_total": 247719.0,
+        "i1": 32.184,
+        "p3_w": 6297.712,
+        "description": "load_meter",
+        "i2": 32.668,
+        "p2_w": 7131.274,
+        "i3": 28.752,
+        "p1_w": 7266.84,
+        "tariff": {
+          "kwh_t1": 131080.016,
+          "kwh_t2": 116638.938
+        },
+        "v1": 232.76,
+        "v2": 233.316,
+        "v3": 230.959,
+        "slave_id": 13.0
+      },
+      {
+        "p_total_w": 894.7,
+        "kwh_total": 8798.1,
+        "i1": 1.209,
+        "p3_w": 0.0,
+        "description": "aux_loads",
+        "i2": 3.108,
+        "p2_w": 704.171,
+        "i3": 0.0,
+        "p1_w": 169.415,
+        "freq_hz": 50.0,
+        "v1": 233.42,
+        "v2": 232.783,
+        "v3": 230.957,
+        "slave_id": 14.0
+      },
+      {
+        "p_total_w": 0.0,
+        "kwh_total": 20096.08,
+        "i1": 0.615,
+        "p3_w": 0.0,
+        "description": "micro_inv",
+        "i2": 0.597,
+        "p2_w": 0.0,
+        "i3": 0.571,
+        "p1_w": 0.0,
+        "freq_hz": 50.0,
+        "v1": 233.303,
+        "v2": 232.773,
+        "v3": 230.973,
+        "slave_id": 15.0
+      }
+    ],
+    "gateway": {
+      "firmware": "m300-taveuni-1.0",
+      "gateway_id": "M300-TAVEUNI-001"
+    },
+    "irradiance_meters": [
+      {
+        "slave_id": 30.0,
+        "irradiance_w_per_m2": 0.0
+      }
+    ],
+    "gateway_id": "M300-TAVEUNI-001",
+    "inverters": [
+      {
+        "p_total_w": 9448.0,
+        "pv1_v": 0.0,
+        "pv1_w": 0.0,
+        "pv2_v": 0.0,
+        "pv2_w": 0.0,
+        "pv3_v": 0.0,
+        "pv3_w": 0.0,
+        "pv4_v": 71.7,
+        "pv4_w": 10.0,
+        "battery_soc2": 39.0,
+        "battery_soc": 38.0,
+        "freq_hz": 50.0,
+        "pv1_i": 0.0,
+        "battery_power_w": 4540.0,
+        "pv2_i": 0.0,
+        "pv3_i": 0.0,
+        "pv4_i": 0.2,
+        "battery_current_a": 8.69,
+        "slave_id": 1.0,
+        "status": "running"
+      },
+      {
+        "p_total_w": 6032.0,
+        "pv1_v": 0.0,
+        "pv1_w": 0.0,
+        "pv2_v": 18.5,
+        "pv2_w": 0.0,
+        "pv3_v": 17.8,
+        "pv3_w": 0.0,
+        "pv4_v": 0.0,
+        "pv4_w": 0.0,
+        "battery_soc": 46.0,
+        "freq_hz": 50.0,
+        "pv1_i": 0.0,
+        "battery_power_w": 6330.0,
+        "pv2_i": 0.0,
+        "pv3_i": 0.0,
+        "pv4_i": 0.0,
+        "battery_current_a": 12.12,
+        "slave_id": 2.0,
+        "status": "running"
+      },
+      {
+        "p_total_w": 5917.0,
+        "pv1_v": 0.0,
+        "pv1_w": 0.0,
+        "pv2_v": 22.2,
+        "pv2_w": 0.0,
+        "pv3_v": 0.0,
+        "pv3_w": 0.0,
+        "pv4_v": 0.0,
+        "pv4_w": 0.0,
+        "battery_soc": 45.0,
+        "freq_hz": 50.0,
+        "pv1_i": 0.0,
+        "battery_power_w": 5950.0,
+        "pv2_i": 0.0,
+        "pv3_i": 0.0,
+        "pv4_i": 0.0,
+        "battery_current_a": 11.39,
+        "slave_id": 3.0,
+        "status": "running"
+      }
+    ],
+    "ts_epoch_ms": 1787144377497.0
+  },
+  {
+    "ac_units": [
+      {
+        "temperature_c": 0.0,
+        "slave_id": 21.0,
+        "status": "ok"
+      },
+      {
+        "temperature_c": 0.0,
+        "slave_id": 22.0,
+        "status": "ok"
+      }
+    ],
+    "client": {
+      "client_email": "allan@paradiseinfiji.com",
+      "site_id": 1.0,
+      "client_name": "Paradise Resort",
+      "client_id": 1.0
+    },
+    "timestamp": {
+      "ts_epoch_ms": 1787146176973.0
+    },
+    "meters": [
+      {
+        "p_total_w": 0.0,
+        "kwh_total": 62423.0,
+        "i1": 0.0,
+        "p3_w": 0.0,
+        "description": "gen_meter",
+        "i2": 0.0,
+        "p2_w": 0.0,
+        "i3": 0.0,
+        "p1_w": 0.0,
+        "freq_hz": 0.0,
+        "tariff": {
+          "kwh_t1": 48424.719,
+          "kwh_t2": 13998.493
+        },
+        "v1": 0.0,
+        "v2": 0.0,
+        "v3": 0.0,
+        "slave_id": 12.0
+      },
+      {
+        "p_total_w": 20371.703,
+        "kwh_total": 247730.0,
+        "i1": 15.219,
+        "p3_w": 9463.717,
+        "description": "load_meter",
+        "i2": 35.088,
+        "p2_w": 7779.371,
+        "i3": 42.014,
+        "p1_w": 3145.839,
+        "tariff": {
+          "kwh_t1": 131091.469,
+          "kwh_t2": 116638.938
+        },
+        "v1": 232.92,
+        "v2": 233.404,
+        "v3": 230.782,
+        "slave_id": 13.0
+      },
+      {
+        "p_total_w": 895.4,
+        "kwh_total": 8798.54,
+        "i1": 1.216,
+        "p3_w": 0.0,
+        "description": "aux_loads",
+        "i2": 3.109,
+        "p2_w": 704.698,
+        "i3": 0.2,
+        "p1_w": 170.293,
+        "freq_hz": 50.0,
+        "v1": 233.524,
+        "v2": 232.906,
+        "v3": 230.781,
+        "slave_id": 14.0
+      },
+      {
+        "p_total_w": 0.0,
+        "kwh_total": 20096.08,
+        "i1": 0.613,
+        "p3_w": 0.0,
+        "description": "micro_inv",
+        "i2": 0.608,
+        "p2_w": 0.0,
+        "i3": 0.563,
+        "p1_w": 0.0,
+        "freq_hz": 50.0,
+        "v1": 233.433,
+        "v2": 232.93,
+        "v3": 230.437,
+        "slave_id": 15.0
+      }
+    ],
+    "gateway": {
+      "firmware": "m300-taveuni-1.0",
+      "gateway_id": "M300-TAVEUNI-001"
+    },
+    "irradiance_meters": [
+      {
+        "slave_id": 30.0,
+        "irradiance_w_per_m2": 0.0
+      }
+    ],
+    "gateway_id": "M300-TAVEUNI-001",
+    "inverters": [
+      {
+        "p_total_w": 10006.0,
+        "pv1_v": 0.0,
+        "pv1_w": 0.0,
+        "pv2_v": 0.0,
+        "pv2_w": 0.0,
+        "pv3_v": 0.0,
+        "pv3_w": 0.0,
+        "pv4_v": 71.9,
+        "pv4_w": 10.0,
+        "battery_soc2": 37.0,
+        "battery_soc": 37.0,
+        "freq_hz": 50.0,
+        "pv1_i": 0.0,
+        "battery_power_w": 5070.0,
+        "pv2_i": 0.0,
+        "pv3_i": 0.0,
+        "pv4_i": 0.2,
+        "battery_current_a": 9.72,
+        "slave_id": 1.0,
+        "status": "running"
+      },
+      {
+        "p_total_w": 6277.0,
+        "pv1_v": 0.0,
+        "pv1_w": 0.0,
+        "pv2_v": 17.8,
+        "pv2_w": 0.0,
+        "pv3_v": 17.2,
+        "pv3_w": 0.0,
+        "pv4_v": 0.0,
+        "pv4_w": 0.0,
+        "battery_soc": 43.0,
+        "freq_hz": 50.0,
+        "pv1_i": 0.0,
+        "battery_power_w": 6580.0,
+        "pv2_i": 0.0,
+        "pv3_i": 0.0,
+        "pv4_i": 0.0,
+        "battery_current_a": 12.62,
+        "slave_id": 2.0,
+        "status": "running"
+      },
+      {
+        "p_total_w": 5998.0,
+        "pv1_v": 0.0,
+        "pv1_w": 0.0,
+        "pv2_v": 22.0,
+        "pv2_w": 0.0,
+        "pv3_v": 0.0,
+        "pv3_w": 0.0,
+        "pv4_v": 0.0,
+        "pv4_w": 0.0,
+        "battery_soc": 42.0,
+        "freq_hz": 50.0,
+        "pv1_i": 0.0,
+        "battery_power_w": 6350.0,
+        "pv2_i": 0.0,
+        "pv3_i": 0.0,
+        "pv4_i": 0.0,
+        "battery_current_a": 12.16,
+        "slave_id": 3.0,
+        "status": "running"
+      }
+    ],
+    "ts_epoch_ms": 1787146177456.0
+  },
+  {
+    "ac_units": [
+      {
+        "temperature_c": 0.0,
+        "slave_id": 21.0,
+        "status": "ok"
+      },
+      {
+        "temperature_c": 0.0,
+        "slave_id": 22.0,
+        "status": "ok"
+      }
+    ],
+    "client": {
+      "client_email": "allan@paradiseinfiji.com",
+      "site_id": 1.0,
+      "client_name": "Paradise Resort",
+      "client_id": 1.0
+    },
+    "timestamp": {
+      "ts_epoch_ms": 1787147976929.0
+    },
+    "meters": [
+      {
+        "p_total_w": 0.0,
+        "kwh_total": 62423.0,
+        "i1": 0.0,
+        "p3_w": 0.0,
+        "description": "gen_meter",
+        "i2": 0.0,
+        "p2_w": 0.0,
+        "i3": 0.0,
+        "p1_w": 0.0,
+        "freq_hz": 0.0,
+        "tariff": {
+          "kwh_t1": 48424.719,
+          "kwh_t2": 13998.493
+        },
+        "v1": 0.0,
+        "v2": 0.0,
+        "v3": 0.0,
+        "slave_id": 12.0
+      },
+      {
+        "p_total_w": 28471.664,
+        "kwh_total": 247742.0,
+        "i1": 14.837,
+        "p3_w": 16873.482,
+        "description": "load_meter",
+        "i2": 38.471,
+        "p2_w": 8467.946,
+        "i3": 74.618,
+        "p1_w": 3126.556,
+        "tariff": {
+          "kwh_t1": 131103.25,
+          "kwh_t2": 116638.938
+        },
+        "v1": 232.843,
+        "v2": 233.469,
+        "v3": 229.298,
+        "slave_id": 13.0
+      },
+      {
+        "p_total_w": 896.1,
+        "kwh_total": 8798.98,
+        "i1": 1.213,
+        "p3_w": 0.0,
+        "description": "aux_loads",
+        "i2": 3.108,
+        "p2_w": 704.171,
+        "i3": 0.201,
+        "p1_w": 171.522,
+        "freq_hz": 50.0,
+        "v1": 233.609,
+        "v2": 232.866,
+        "v3": 229.295,
+        "slave_id": 14.0
+      },
+      {
+        "p_total_w": 0.0,
+        "kwh_total": 20096.1,
+        "i1": 0.612,
+        "p3_w": 0.0,
+        "description": "micro_inv",
+        "i2": 0.614,
+        "p2_w": 0.0,
+        "i3": 0.559,
+        "p1_w": 0.0,
+        "freq_hz": 50.0,
+        "v1": 233.548,
+        "v2": 232.859,
+        "v3": 229.251,
+        "slave_id": 15.0
+      }
+    ],
+    "gateway": {
+      "firmware": "m300-taveuni-1.0",
+      "gateway_id": "M300-TAVEUNI-001"
+    },
+    "irradiance_meters": [
+      {
+        "slave_id": 30.0,
+        "irradiance_w_per_m2": 0.0
+      }
+    ],
+    "gateway_id": "M300-TAVEUNI-001",
+    "inverters": [
+      {
+        "p_total_w": 13211.0,
+        "pv1_v": 0.0,
+        "pv1_w": 0.0,
+        "pv2_v": 0.0,
+        "pv2_w": 0.0,
+        "pv3_v": 0.0,
+        "pv3_w": 0.0,
+        "pv4_v": 71.2,
+        "pv4_w": 10.0,
+        "battery_soc2": 35.0,
+        "battery_soc": 35.0,
+        "freq_hz": 50.0,
+        "pv1_i": 0.0,
+        "battery_power_w": 6890.0,
+        "pv2_i": 0.0,
+        "pv3_i": 0.0,
+        "pv4_i": 0.2,
+        "battery_current_a": 13.21,
+        "slave_id": 1.0,
+        "status": "running"
+      },
+      {
+        "p_total_w": 8142.0,
+        "pv1_v": 0.0,
+        "pv1_w": 0.0,
+        "pv2_v": 18.4,
+        "pv2_w": 0.0,
+        "pv3_v": 17.5,
+        "pv3_w": 0.0,
+        "pv4_v": 0.0,
+        "pv4_w": 0.0,
+        "battery_soc": 41.0,
+        "freq_hz": 50.0,
+        "pv1_i": 0.0,
+        "battery_power_w": 8510.0,
+        "pv2_i": 0.0,
+        "pv3_i": 0.0,
+        "pv4_i": 0.0,
+        "battery_current_a": 16.34,
+        "slave_id": 2.0,
+        "status": "running"
+      },
+      {
+        "p_total_w": 7931.0,
+        "pv1_v": 0.0,
+        "pv1_w": 0.0,
+        "pv2_v": 22.6,
+        "pv2_w": 0.0,
+        "pv3_v": 0.0,
+        "pv3_w": 0.0,
+        "pv4_v": 0.0,
+        "pv4_w": 0.0,
+        "battery_soc": 40.0,
+        "freq_hz": 50.0,
+        "pv1_i": 0.0,
+        "battery_power_w": 8170.0,
+        "pv2_i": 0.0,
+        "pv3_i": 0.0,
+        "pv4_i": 0.0,
+        "battery_current_a": 15.69,
+        "slave_id": 3.0,
+        "status": "running"
+      }
+    ],
+    "ts_epoch_ms": 1787147977489.0
+  },
+  {
+    "ac_units": [
+      {
+        "temperature_c": 0.0,
+        "slave_id": 21.0,
+        "status": "ok"
+      },
+      {
+        "temperature_c": 0.0,
+        "slave_id": 22.0,
+        "status": "ok"
+      }
+    ],
+    "client": {
+      "client_email": "allan@paradiseinfiji.com",
+      "site_id": 1.0,
+      "client_name": "Paradise Resort",
+      "client_id": 1.0
+    },
+    "timestamp": {
+      "ts_epoch_ms": 1787149776940.0
+    },
+    "meters": [
+      {
+        "p_total_w": 0.0,
+        "kwh_total": 62423.0,
+        "i1": 0.0,
+        "p3_w": 0.0,
+        "description": "gen_meter",
+        "i2": 0.0,
+        "p2_w": 0.0,
+        "i3": 0.0,
+        "p1_w": 0.0,
+        "freq_hz": 0.0,
+        "tariff": {
+          "kwh_t1": 48424.719,
+          "kwh_t2": 13998.493
+        },
+        "v1": 0.0,
+        "v2": 0.0,
+        "v3": 0.0,
+        "slave_id": 12.0
+      },
+      {
+        "p_total_w": 17443.566,
+        "kwh_total": 247752.0,
+        "i1": 16.605,
+        "p3_w": 10298.75,
+        "description": "load_meter",
+        "i2": 31.793,
+        "p2_w": 6933.445,
+        "i3": 45.791,
+        "p1_w": 3610.384,
+        "tariff": {
+          "kwh_t1": 131113.047,
+          "kwh_t2": 116638.938
+        },
+        "v1": 233.065,
+        "v2": 233.471,
+        "v3": 230.54,
+        "slave_id": 13.0
+      },
+      {
+        "p_total_w": 875.9,
+        "kwh_total": 8799.42,
+        "i1": 1.215,
+        "p3_w": 0.0,
+        "description": "aux_loads",
+        "i2": 3.108,
+        "p2_w": 704.698,
+        "i3": 0.0,
+        "p1_w": 170.118,
+        "freq_hz": 50.0,
+        "v1": 233.551,
+        "v2": 233.105,
+        "v3": 230.582,
+        "slave_id": 14.0
+      },
+      {
+        "p_total_w": 0.0,
+        "kwh_total": 20096.1,
+        "i1": 0.614,
+        "p3_w": 0.0,
+        "description": "micro_inv",
+        "i2": 0.608,
+        "p2_w": 0.0,
+        "i3": 0.567,
+        "p1_w": 0.0,
+        "freq_hz": 50.0,
+        "v1": 233.414,
+        "v2": 233.155,
+        "v3": 230.581,
+        "slave_id": 15.0
+      }
+    ],
+    "gateway": {
+      "firmware": "m300-taveuni-1.0",
+      "gateway_id": "M300-TAVEUNI-001"
+    },
+    "irradiance_meters": [
+      {
+        "slave_id": 30.0,
+        "irradiance_w_per_m2": 0.0
+      }
+    ],
+    "gateway_id": "M300-TAVEUNI-001",
+    "inverters": [
+      {
+        "p_total_w": 9531.0,
+        "pv1_v": 0.0,
+        "pv1_w": 0.0,
+        "pv2_v": 0.0,
+        "pv2_w": 0.0,
+        "pv3_v": 0.0,
+        "pv3_w": 0.0,
+        "pv4_v": 70.8,
+        "pv4_w": 10.0,
+        "battery_soc2": 33.0,
+        "battery_soc": 33.0,
+        "freq_hz": 50.0,
+        "pv1_i": 0.0,
+        "battery_power_w": 4940.0,
+        "pv2_i": 0.0,
+        "pv3_i": 0.0,
+        "pv4_i": 0.2,
+        "battery_current_a": 9.48,
+        "slave_id": 1.0,
+        "status": "running"
+      },
+      {
+        "p_total_w": 5994.0,
+        "pv1_v": 0.0,
+        "pv1_w": 0.0,
+        "pv2_v": 18.2,
+        "pv2_w": 0.0,
+        "pv3_v": 16.7,
+        "pv3_w": 0.0,
+        "pv4_v": 0.0,
+        "pv4_w": 0.0,
+        "battery_soc": 39.0,
+        "freq_hz": 50.0,
+        "pv1_i": 0.0,
+        "battery_power_w": 6160.0,
+        "pv2_i": 0.0,
+        "pv3_i": 0.0,
+        "pv4_i": 0.0,
+        "battery_current_a": 11.83,
+        "slave_id": 2.0,
+        "status": "running"
+      },
+      {
+        "p_total_w": 6070.0,
+        "pv1_v": 0.0,
+        "pv1_w": 0.0,
+        "pv2_v": 22.4,
+        "pv2_w": 0.0,
+        "pv3_v": 0.0,
+        "pv3_w": 0.0,
+        "pv4_v": 0.0,
+        "pv4_w": 0.0,
+        "battery_soc": 38.0,
+        "freq_hz": 50.0,
+        "pv1_i": 0.0,
+        "battery_power_w": 6250.0,
+        "pv2_i": 0.0,
+        "pv3_i": 0.0,
+        "pv4_i": 0.0,
+        "battery_current_a": 12.01,
+        "slave_id": 3.0,
+        "status": "running"
+      }
+    ],
+    "ts_epoch_ms": 1787149777494.0
+  },
+  {
+    "ac_units": [
+      {
+        "temperature_c": 0.0,
+        "slave_id": 21.0,
+        "status": "ok"
+      },
+      {
+        "temperature_c": 0.0,
+        "slave_id": 22.0,
+        "status": "ok"
+      }
+    ],
+    "client": {
+      "client_email": "allan@paradiseinfiji.com",
+      "site_id": 1.0,
+      "client_name": "Paradise Resort",
+      "client_id": 1.0
+    },
+    "timestamp": {
+      "ts_epoch_ms": 1787151576941.0
+    },
+    "meters": [
+      {
+        "p_total_w": 0.0,
+        "kwh_total": 62423.0,
+        "i1": 0.0,
+        "p3_w": 0.0,
+        "description": "gen_meter",
+        "i2": 0.0,
+        "p2_w": 0.0,
+        "i3": 0.0,
+        "p1_w": 0.0,
+        "freq_hz": 0.0,
+        "tariff": {
+          "kwh_t1": 48424.719,
+          "kwh_t2": 13998.493
+        },
+        "v1": 0.0,
+        "v2": 0.0,
+        "v3": 0.0,
+        "slave_id": 12.0
+      },
+      {
+        "p_total_w": 17302.26,
+        "kwh_total": 247762.0,
+        "i1": 9.864,
+        "p3_w": 8985.924,
+        "description": "load_meter",
+        "i2": 26.31,
+        "p2_w": 6062.201,
+        "i3": 39.464,
+        "p1_w": 2260.17,
+        "tariff": {
+          "kwh_t1": 131123.453,
+          "kwh_t2": 116638.938
+        },
+        "v1": 233.135,
+        "v2": 232.998,
+        "v3": 230.616,
+        "slave_id": 13.0
+      },
+      {
+        "p_total_w": 875.3,
+        "kwh_total": 8799.9,
+        "i1": 1.215,
+        "p3_w": 0.0,
+        "description": "aux_loads",
+        "i2": 3.109,
+        "p2_w": 705.049,
+        "i3": 0.0,
+        "p1_w": 170.118,
+        "freq_hz": 50.0,
+        "v1": 233.087,
+        "v2": 233.151,
+        "v3": 230.635,
+        "slave_id": 14.0
+      },
+      {
+        "p_total_w": 0.0,
+        "kwh_total": 20096.1,
+        "i1": 0.611,
+        "p3_w": 0.0,
+        "description": "micro_inv",
+        "i2": 0.609,
+        "p2_w": 0.0,
+        "i3": 0.567,
+        "p1_w": 0.0,
+        "freq_hz": 50.0,
+        "v1": 232.996,
+        "v2": 233.137,
+        "v3": 230.618,
+        "slave_id": 15.0
+      }
+    ],
+    "gateway": {
+      "firmware": "m300-taveuni-1.0",
+      "gateway_id": "M300-TAVEUNI-001"
+    },
+    "irradiance_meters": [
+      {
+        "slave_id": 30.0,
+        "irradiance_w_per_m2": 0.0
+      }
+    ],
+    "gateway_id": "M300-TAVEUNI-001",
+    "inverters": [
+      {
+        "p_total_w": 7999.0,
+        "pv1_v": 0.0,
+        "pv1_w": 0.0,
+        "pv2_v": 0.0,
+        "pv2_w": 0.0,
+        "pv3_v": 0.0,
+        "pv3_w": 0.0,
+        "pv4_v": 70.7,
+        "pv4_w": 10.0,
+        "battery_soc2": 31.0,
+        "battery_soc": 31.0,
+        "freq_hz": 50.0,
+        "pv1_i": 0.0,
+        "battery_power_w": 4220.0,
+        "pv2_i": 0.0,
+        "pv3_i": 0.0,
+        "pv4_i": 0.2,
+        "battery_current_a": 8.1,
+        "slave_id": 1.0,
+        "status": "running"
+      },
+      {
+        "p_total_w": 5201.0,
+        "pv1_v": 0.0,
+        "pv1_w": 0.0,
+        "pv2_v": 17.9,
+        "pv2_w": 0.0,
+        "pv3_v": 15.4,
+        "pv3_w": 0.0,
+        "pv4_v": 0.0,
+        "pv4_w": 0.0,
+        "battery_soc": 37.0,
+        "freq_hz": 50.0,
+        "pv1_i": 0.0,
+        "battery_power_w": 5460.0,
+        "pv2_i": 0.0,
+        "pv3_i": 0.0,
+        "pv4_i": 0.0,
+        "battery_current_a": 10.5,
+        "slave_id": 2.0,
+        "status": "running"
+      },
+      {
+        "p_total_w": 6122.0,
+        "pv1_v": 0.0,
+        "pv1_w": 0.0,
+        "pv2_v": 22.1,
+        "pv2_w": 0.0,
+        "pv3_v": 0.0,
+        "pv3_w": 0.0,
+        "pv4_v": 0.0,
+        "pv4_w": 0.0,
+        "battery_soc": 36.0,
+        "freq_hz": 50.0,
+        "pv1_i": 0.0,
+        "battery_power_w": 6330.0,
+        "pv2_i": 0.0,
+        "pv3_i": 0.0,
+        "pv4_i": 0.0,
+        "battery_current_a": 12.17,
+        "slave_id": 3.0,
+        "status": "running"
+      }
+    ],
+    "ts_epoch_ms": 1787151577488.0
+  },
+  {
+    "ac_units": [
+      {
+        "temperature_c": 0.0,
+        "slave_id": 21.0,
+        "status": "ok"
+      },
+      {
+        "temperature_c": 0.0,
+        "slave_id": 22.0,
+        "status": "ok"
+      }
+    ],
+    "client": {
+      "client_email": "allan@paradiseinfiji.com",
+      "site_id": 1.0,
+      "client_name": "Paradise Resort",
+      "client_id": 1.0
+    },
+    "timestamp": {
+      "ts_epoch_ms": 1787153376502.0
+    },
+    "meters": [
+      {
+        "p_total_w": 0.0,
+        "kwh_total": 62423.0,
+        "i1": 0.0,
+        "p3_w": 0.0,
+        "description": "gen_meter",
+        "i2": 0.0,
+        "p2_w": 0.0,
+        "i3": 0.0,
+        "p1_w": 0.0,
+        "freq_hz": 0.0,
+        "tariff": {
+          "kwh_t1": 48424.719,
+          "kwh_t2": 13998.493
+        },
+        "v1": 0.0,
+        "v2": 0.0,
+        "v3": 0.0,
+        "slave_id": 12.0
+      },
+      {
+        "p_total_w": 19287.766,
+        "kwh_total": 247773.0,
+        "i1": 11.216,
+        "p3_w": 9116.338,
+        "description": "load_meter",
+        "i2": 33.09,
+        "p2_w": 7619.812,
+        "i3": 40.206,
+        "p1_w": 2561.771,
+        "tariff": {
+          "kwh_t1": 131134.469,
+          "kwh_t2": 116638.938
+        },
+        "v1": 233.006,
+        "v2": 233.068,
+        "v3": 230.71,
+        "slave_id": 13.0
+      },
+      {
+        "p_total_w": 874.8,
+        "kwh_total": 8800.34,
+        "i1": 1.213,
+        "p3_w": 0.0,
+        "description": "aux_loads",
+        "i2": 3.109,
+        "p2_w": 704.698,
+        "i3": 0.0,
+        "p1_w": 169.767,
+        "freq_hz": 50.0,
+        "v1": 233.196,
+        "v2": 232.996,
+        "v3": 230.719,
+        "slave_id": 14.0
+      },
+      {
+        "p_total_w": 0.0,
+        "kwh_total": 20096.141,
+        "i1": 0.613,
+        "p3_w": 0.0,
+        "description": "micro_inv",
+        "i2": 0.608,
+        "p2_w": 0.0,
+        "i3": 0.567,
+        "p1_w": 0.0,
+        "freq_hz": 50.0,
+        "v1": 233.113,
+        "v2": 232.974,
+        "v3": 230.701,
+        "slave_id": 15.0
+      }
+    ],
+    "gateway": {
+      "firmware": "m300-taveuni-1.0",
+      "gateway_id": "M300-TAVEUNI-001"
+    },
+    "irradiance_meters": [
+      {
+        "slave_id": 30.0,
+        "irradiance_w_per_m2": 0.0
+      }
+    ],
+    "gateway_id": "M300-TAVEUNI-001",
+    "inverters": [
+      {
+        "p_total_w": 8833.0,
+        "pv1_v": 0.0,
+        "pv1_w": 0.0,
+        "pv2_v": 0.0,
+        "pv2_w": 0.0,
+        "pv3_v": 0.0,
+        "pv3_w": 0.0,
+        "pv4_v": 70.4,
+        "pv4_w": 10.0,
+        "battery_soc2": 30.0,
+        "battery_soc": 29.0,
+        "freq_hz": 50.0,
+        "pv1_i": 0.0,
+        "battery_power_w": 5830.0,
+        "pv2_i": 0.0,
+        "pv3_i": 0.0,
+        "pv4_i": 0.2,
+        "battery_current_a": 11.2,
+        "slave_id": 1.0,
+        "status": "running"
+      },
+      {
+        "p_total_w": 5677.0,
+        "pv1_v": 0.0,
+        "pv1_w": 0.0,
+        "pv2_v": 18.6,
+        "pv2_w": 0.0,
+        "pv3_v": 16.7,
+        "pv3_w": 0.0,
+        "pv4_v": 0.0,
+        "pv4_w": 0.0,
+        "battery_soc": 34.0,
+        "freq_hz": 50.0,
+        "pv1_i": 0.0,
+        "battery_power_w": 5970.0,
+        "pv2_i": 0.0,
+        "pv3_i": 0.0,
+        "pv4_i": 0.0,
+        "battery_current_a": 11.51,
+        "slave_id": 2.0,
+        "status": "running"
+      },
+      {
+        "p_total_w": 5601.0,
+        "pv1_v": 0.0,
+        "pv1_w": 0.0,
+        "pv2_v": 22.9,
+        "pv2_w": 0.0,
+        "pv3_v": 0.0,
+        "pv3_w": 0.0,
+        "pv4_v": 0.0,
+        "pv4_w": 0.0,
+        "battery_soc": 33.0,
+        "freq_hz": 50.0,
+        "pv1_i": 0.0,
+        "battery_power_w": 5630.0,
+        "pv2_i": 0.0,
+        "pv3_i": 0.0,
+        "pv4_i": 0.0,
+        "battery_current_a": 10.85,
+        "slave_id": 3.0,
+        "status": "running"
+      }
+    ],
+    "ts_epoch_ms": 1787153377470.0
+  },
+  {
+    "ac_units": [
+      {
+        "temperature_c": 0.0,
+        "slave_id": 21.0,
+        "status": "ok"
+      },
+      {
+        "temperature_c": 0.0,
+        "slave_id": 22.0,
+        "status": "ok"
+      }
+    ],
+    "client": {
+      "client_email": "allan@paradiseinfiji.com",
+      "site_id": 1.0,
+      "client_name": "Paradise Resort",
+      "client_id": 1.0
+    },
+    "timestamp": {
+      "ts_epoch_ms": 1787155176405.0
+    },
+    "meters": [
+      {
+        "p_total_w": 0.0,
+        "kwh_total": 62423.0,
+        "i1": 0.0,
+        "p3_w": 0.0,
+        "description": "gen_meter",
+        "i2": 0.0,
+        "p2_w": 0.0,
+        "i3": 0.0,
+        "p1_w": 0.0,
+        "freq_hz": 0.0,
+        "tariff": {
+          "kwh_t1": 48424.719,
+          "kwh_t2": 13998.493
+        },
+        "v1": 0.0,
+        "v2": 0.0,
+        "v3": 0.0,
+        "slave_id": 12.0
+      },
+      {
+        "p_total_w": 21995.26,
+        "kwh_total": 247787.0,
+        "i1": 21.067,
+        "p3_w": 9594.425,
+        "description": "load_meter",
+        "i2": 36.729,
+        "p2_w": 8010.172,
+        "i3": 43.309,
+        "p1_w": 4396.108,
+        "tariff": {
+          "kwh_t1": 131147.594,
+          "kwh_t2": 116638.938
+        },
+        "v1": 232.64,
+        "v2": 233.185,
+        "v3": 230.396,
+        "slave_id": 13.0
+      },
+      {
+        "p_total_w": 872.7,
+        "kwh_total": 8800.78,
+        "i1": 1.211,
+        "p3_w": 0.0,
+        "description": "aux_loads",
+        "i2": 3.106,
+        "p2_w": 703.293,
+        "i3": 0.201,
+        "p1_w": 169.591,
+        "freq_hz": 50.0,
+        "v1": 233.322,
+        "v2": 232.672,
+        "v3": 230.368,
+        "slave_id": 14.0
+      },
+      {
+        "p_total_w": 0.0,
+        "kwh_total": 20096.141,
+        "i1": 0.614,
+        "p3_w": 0.0,
+        "description": "micro_inv",
+        "i2": 0.603,
+        "p2_w": 0.0,
+        "i3": 0.566,
+        "p1_w": 0.0,
+        "freq_hz": 50.0,
+        "v1": 233.22,
+        "v2": 232.648,
+        "v3": 230.395,
+        "slave_id": 15.0
+      }
+    ],
+    "gateway": {
+      "firmware": "m300-taveuni-1.0",
+      "gateway_id": "M300-TAVEUNI-001"
+    },
+    "irradiance_meters": [
+      {
+        "slave_id": 30.0,
+        "irradiance_w_per_m2": 0.0
+      }
+    ],
+    "gateway_id": "M300-TAVEUNI-001",
+    "inverters": [
+      {
+        "p_total_w": 9917.0,
+        "pv1_v": 0.0,
+        "pv1_w": 0.0,
+        "pv2_v": 0.0,
+        "pv2_w": 0.0,
+        "pv3_v": 0.0,
+        "pv3_w": 0.0,
+        "pv4_v": 71.0,
+        "pv4_w": 10.0,
+        "battery_soc2": 27.0,
+        "battery_soc": 27.0,
+        "freq_hz": 50.0,
+        "pv1_i": 0.0,
+        "battery_power_w": 5380.0,
+        "pv2_i": 0.0,
+        "pv3_i": 0.0,
+        "pv4_i": 0.2,
+        "battery_current_a": 10.36,
+        "slave_id": 1.0,
+        "status": "running"
+      },
+      {
+        "p_total_w": 6485.0,
+        "pv1_v": 0.0,
+        "pv1_w": 0.0,
+        "pv2_v": 17.9,
+        "pv2_w": 0.0,
+        "pv3_v": 16.0,
+        "pv3_w": 0.0,
+        "pv4_v": 0.0,
+        "pv4_w": 0.0,
+        "battery_soc": 32.0,
+        "freq_hz": 50.0,
+        "pv1_i": 0.0,
+        "battery_power_w": 6840.0,
+        "pv2_i": 0.0,
+        "pv3_i": 0.0,
+        "pv4_i": 0.0,
+        "battery_current_a": 13.22,
+        "slave_id": 2.0,
+        "status": "running"
+      },
+      {
+        "p_total_w": 7568.0,
+        "pv1_v": 0.0,
+        "pv1_w": 0.0,
+        "pv2_v": 21.8,
+        "pv2_w": 0.0,
+        "pv3_v": 0.0,
+        "pv3_w": 0.0,
+        "pv4_v": 0.0,
+        "pv4_w": 0.0,
+        "battery_soc": 31.0,
+        "freq_hz": 50.0,
+        "pv1_i": 0.0,
+        "battery_power_w": 7880.0,
+        "pv2_i": 0.0,
+        "pv3_i": 0.0,
+        "pv4_i": 0.0,
+        "battery_current_a": 15.24,
+        "slave_id": 3.0,
+        "status": "running"
+      }
+    ],
+    "ts_epoch_ms": 1787155177459.0
+  },
+  {
+    "ac_units": [
+      {
+        "temperature_c": 0.0,
+        "slave_id": 21.0,
+        "status": "ok"
+      },
+      {
+        "temperature_c": 0.0,
+        "slave_id": 22.0,
+        "status": "ok"
+      }
+    ],
+    "client": {
+      "client_email": "allan@paradiseinfiji.com",
+      "site_id": 1.0,
+      "client_name": "Paradise Resort",
+      "client_id": 1.0
+    },
+    "timestamp": {
+      "ts_epoch_ms": 1787156976118.0
+    },
+    "meters": [
+      {
+        "p_total_w": 0.0,
+        "kwh_total": 62423.0,
+        "i1": 0.0,
+        "p3_w": 0.0,
+        "description": "gen_meter",
+        "i2": 0.0,
+        "p2_w": 0.0,
+        "i3": 0.0,
+        "p1_w": 0.0,
+        "freq_hz": 0.0,
+        "tariff": {
+          "kwh_t1": 48424.719,
+          "kwh_t2": 13998.493
+        },
+        "v1": 0.0,
+        "v2": 0.0,
+        "v3": 0.0,
+        "slave_id": 12.0
+      },
+      {
+        "p_total_w": 35939.574,
+        "kwh_total": 247799.0,
+        "i1": 46.814,
+        "p3_w": 17276.943,
+        "description": "load_meter",
+        "i2": 36.121,
+        "p2_w": 7984.708,
+        "i3": 76.461,
+        "p1_w": 10703.535,
+        "tariff": {
+          "kwh_t1": 131160.391,
+          "kwh_t2": 116638.938
+        },
+        "v1": 232.879,
+        "v2": 232.819,
+        "v3": 229.241,
+        "slave_id": 13.0
+      },
+      {
+        "p_total_w": 880.1,
+        "kwh_total": 8801.3,
+        "i1": 1.204,
+        "p3_w": 0.0,
+        "description": "aux_loads",
+        "i2": 3.138,
+        "p2_w": 709.262,
+        "i3": 0.0,
+        "p1_w": 170.469,
+        "freq_hz": 50.0,
+        "v1": 232.95,
+        "v2": 232.903,
+        "v3": 229.245,
+        "slave_id": 14.0
+      },
+      {
+        "p_total_w": 0.0,
+        "kwh_total": 20096.141,
+        "i1": 0.609,
+        "p3_w": 0.0,
+        "description": "micro_inv",
+        "i2": 0.609,
+        "p2_w": 0.0,
+        "i3": 0.564,
+        "p1_w": 0.0,
+        "freq_hz": 50.0,
+        "v1": 232.869,
+        "v2": 232.923,
+        "v3": 229.244,
+        "slave_id": 15.0
+      }
+    ],
+    "gateway": {
+      "firmware": "m300-taveuni-1.0",
+      "gateway_id": "M300-TAVEUNI-001"
+    },
+    "irradiance_meters": [
+      {
+        "slave_id": 30.0,
+        "irradiance_w_per_m2": 0.0
+      }
+    ],
+    "gateway_id": "M300-TAVEUNI-001",
+    "inverters": [
+      {
+        "p_total_w": 16269.0,
+        "pv1_v": 0.0,
+        "pv1_w": 0.0,
+        "pv2_v": 0.0,
+        "pv2_w": 0.0,
+        "pv3_v": 0.0,
+        "pv3_w": 0.0,
+        "pv4_v": 71.3,
+        "pv4_w": 10.0,
+        "battery_soc2": 25.0,
+        "battery_soc": 25.0,
+        "freq_hz": 50.0,
+        "pv1_i": 0.0,
+        "battery_power_w": 8460.0,
+        "pv2_i": 0.0,
+        "pv3_i": 0.0,
+        "pv4_i": 0.2,
+        "battery_current_a": 16.34,
+        "slave_id": 1.0,
+        "status": "running"
+      },
+      {
+        "p_total_w": 10393.0,
+        "pv1_v": 0.0,
+        "pv1_w": 0.0,
+        "pv2_v": 17.5,
+        "pv2_w": 0.0,
+        "pv3_v": 16.2,
+        "pv3_w": 0.0,
+        "pv4_v": 0.0,
+        "pv4_w": 0.0,
+        "battery_soc": 29.0,
+        "freq_hz": 50.0,
+        "pv1_i": 0.0,
+        "battery_power_w": 10890.0,
+        "pv2_i": 0.0,
+        "pv3_i": 0.0,
+        "pv4_i": 0.0,
+        "battery_current_a": 21.14,
+        "slave_id": 2.0,
+        "status": "running"
+      },
+      {
+        "p_total_w": 10021.0,
+        "pv1_v": 0.0,
+        "pv1_w": 0.0,
+        "pv2_v": 21.5,
+        "pv2_w": 0.0,
+        "pv3_v": 0.0,
+        "pv3_w": 0.0,
+        "pv4_v": 0.0,
+        "pv4_w": 0.0,
+        "battery_soc": 28.0,
+        "freq_hz": 50.0,
+        "pv1_i": 0.0,
+        "battery_power_w": 10390.0,
+        "pv2_i": 0.0,
+        "pv3_i": 0.0,
+        "pv4_i": 0.0,
+        "battery_current_a": 20.17,
+        "slave_id": 3.0,
+        "status": "running"
+      }
+    ],
+    "ts_epoch_ms": 1787156977455.0
+  },
+  {
+    "ac_units": [
+      {
+        "temperature_c": 0.0,
+        "slave_id": 21.0,
+        "status": "ok"
+      },
+      {
+        "temperature_c": 0.0,
+        "slave_id": 22.0,
+        "status": "ok"
+      }
+    ],
+    "client": {
+      "client_email": "allan@paradiseinfiji.com",
+      "site_id": 1.0,
+      "client_name": "Paradise Resort",
+      "client_id": 1.0
+    },
+    "timestamp": {
+      "ts_epoch_ms": 1787158776964.0
+    },
+    "meters": [
+      {
+        "p_total_w": 0.0,
+        "kwh_total": 62423.0,
+        "i1": 0.0,
+        "p3_w": 0.0,
+        "description": "gen_meter",
+        "i2": 0.0,
+        "p2_w": 0.0,
+        "i3": 0.0,
+        "p1_w": 0.0,
+        "freq_hz": 0.0,
+        "tariff": {
+          "kwh_t1": 48424.719,
+          "kwh_t2": 13998.493
+        },
+        "v1": 0.0,
+        "v2": 0.0,
+        "v3": 0.0,
+        "slave_id": 12.0
+      },
+      {
+        "p_total_w": 43222.898,
+        "kwh_total": 247812.0,
+        "i1": 65.812,
+        "p3_w": 19711.98,
+        "description": "load_meter",
+        "i2": 37.894,
+        "p2_w": 8325.904,
+        "i3": 86.665,
+        "p1_w": 15191.786,
+        "tariff": {
+          "kwh_t1": 131173.297,
+          "kwh_t2": 116638.938
+        },
+        "v1": 232.72,
+        "v2": 232.126,
+        "v3": 228.989,
+        "slave_id": 13.0
+      },
+      {
+        "p_total_w": 877.6,
+        "kwh_total": 8801.74,
+        "i1": 1.207,
+        "p3_w": 0.0,
+        "description": "aux_loads",
+        "i2": 3.127,
+        "p2_w": 706.278,
+        "i3": 0.0,
+        "p1_w": 170.995,
+        "freq_hz": 50.0,
+        "v1": 232.225,
+        "v2": 232.772,
+        "v3": 228.999,
+        "slave_id": 14.0
+      },
+      {
+        "p_total_w": 0.0,
+        "kwh_total": 20096.16,
+        "i1": 0.607,
+        "p3_w": 0.0,
+        "description": "micro_inv",
+        "i2": 0.609,
+        "p2_w": 0.0,
+        "i3": 0.568,
+        "p1_w": 0.0,
+        "freq_hz": 50.0,
+        "v1": 232.138,
+        "v2": 232.969,
+        "v3": 228.991,
+        "slave_id": 15.0
+      }
+    ],
+    "gateway": {
+      "firmware": "m300-taveuni-1.0",
+      "gateway_id": "M300-TAVEUNI-001"
+    },
+    "irradiance_meters": [
+      {
+        "slave_id": 30.0,
+        "irradiance_w_per_m2": 0.0
+      }
+    ],
+    "gateway_id": "M300-TAVEUNI-001",
+    "inverters": [
+      {
+        "p_total_w": 19836.0,
+        "pv1_v": 0.0,
+        "pv1_w": 0.0,
+        "pv2_v": 0.0,
+        "pv2_w": 0.0,
+        "pv3_v": 0.0,
+        "pv3_w": 0.0,
+        "pv4_v": 71.8,
+        "pv4_w": 10.0,
+        "battery_soc2": 23.0,
+        "battery_soc": 23.0,
+        "freq_hz": 50.0,
+        "pv1_i": 0.0,
+        "battery_power_w": 10570.0,
+        "pv2_i": 0.0,
+        "pv3_i": 0.0,
+        "pv4_i": 0.2,
+        "battery_current_a": 20.5,
+        "slave_id": 1.0,
+        "status": "running"
+      },
+      {
+        "p_total_w": 12320.0,
+        "pv1_v": 0.0,
+        "pv1_w": 0.0,
+        "pv2_v": 17.5,
+        "pv2_w": 0.0,
+        "pv3_v": 16.4,
+        "pv3_w": 0.0,
+        "pv4_v": 0.0,
+        "pv4_w": 0.0,
+        "battery_soc": 26.0,
+        "freq_hz": 50.0,
+        "pv1_i": 0.0,
+        "battery_power_w": 12900.0,
+        "pv2_i": 0.0,
+        "pv3_i": 0.0,
+        "pv4_i": 0.0,
+        "battery_current_a": 25.16,
+        "slave_id": 2.0,
+        "status": "running"
+      },
+      {
+        "p_total_w": 11430.0,
+        "pv1_v": 0.0,
+        "pv1_w": 0.0,
+        "pv2_v": 21.4,
+        "pv2_w": 0.0,
+        "pv3_v": 0.0,
+        "pv3_w": 0.0,
+        "pv4_v": 0.0,
+        "pv4_w": 0.0,
+        "battery_soc": 25.0,
+        "freq_hz": 50.0,
+        "pv1_i": 0.0,
+        "battery_power_w": 12080.0,
+        "pv2_i": 0.0,
+        "pv3_i": 0.0,
+        "pv4_i": 0.0,
+        "battery_current_a": 23.56,
+        "slave_id": 3.0,
+        "status": "running"
+      }
+    ],
+    "ts_epoch_ms": 1787158777456.0
+  },
+  {
+    "ac_units": [
+      {
+        "temperature_c": 0.0,
+        "slave_id": 21.0,
+        "status": "ok"
+      },
+      {
+        "temperature_c": 0.0,
+        "slave_id": 22.0,
+        "status": "ok"
+      }
+    ],
+    "client": {
+      "client_email": "allan@paradiseinfiji.com",
+      "site_id": 1.0,
+      "client_name": "Paradise Resort",
+      "client_id": 1.0
+    },
+    "timestamp": {
+      "ts_epoch_ms": 1787160576834.0
+    },
+    "meters": [
+      {
+        "p_total_w": 0.0,
+        "kwh_total": 62423.0,
+        "i1": 0.0,
+        "p3_w": 0.0,
+        "description": "gen_meter",
+        "i2": 0.0,
+        "p2_w": 0.0,
+        "i3": 0.0,
+        "p1_w": 0.0,
+        "freq_hz": 0.0,
+        "tariff": {
+          "kwh_t1": 48424.719,
+          "kwh_t2": 13998.493
+        },
+        "v1": 0.0,
+        "v2": 0.0,
+        "v3": 0.0,
+        "slave_id": 12.0
+      },
+      {
+        "p_total_w": 38837.094,
+        "kwh_total": 247828.0,
+        "i1": 53.233,
+        "p3_w": 14761.537,
+        "description": "load_meter",
+        "i2": 54.493,
+        "p2_w": 11739.931,
+        "i3": 64.5,
+        "p1_w": 12333.124,
+        "tariff": {
+          "kwh_t1": 131188.625,
+          "kwh_t2": 116638.938
+        },
+        "v1": 231.76,
+        "v2": 232.619,
+        "v3": 229.471,
+        "slave_id": 13.0
+      },
+      {
+        "p_total_w": 1069.9,
+        "kwh_total": 8802.26,
+        "i1": 1.231,
+        "p3_w": 0.0,
+        "description": "aux_loads",
+        "i2": 3.951,
+        "p2_w": 892.723,
+        "i3": 0.0,
+        "p1_w": 178.193,
+        "freq_hz": 50.0,
+        "v1": 232.243,
+        "v2": 231.687,
+        "v3": 229.674,
+        "slave_id": 14.0
+      },
+      {
+        "p_total_w": 0.0,
+        "kwh_total": 20096.16,
+        "i1": 0.614,
+        "p3_w": 0.0,
+        "description": "micro_inv",
+        "i2": 0.607,
+        "p2_w": 0.0,
+        "i3": 0.566,
+        "p1_w": 0.0,
+        "freq_hz": 50.0,
+        "v1": 232.677,
+        "v2": 231.791,
+        "v3": 229.481,
+        "slave_id": 15.0
+      }
+    ],
+    "gateway": {
+      "firmware": "m300-taveuni-1.0",
+      "gateway_id": "M300-TAVEUNI-001"
+    },
+    "irradiance_meters": [
+      {
+        "slave_id": 30.0,
+        "irradiance_w_per_m2": 0.0
+      }
+    ],
+    "gateway_id": "M300-TAVEUNI-001",
+    "inverters": [
+      {
+        "p_total_w": 17268.0,
+        "pv1_v": 0.0,
+        "pv1_w": 0.0,
+        "pv2_v": 0.0,
+        "pv2_w": 0.0,
+        "pv3_v": 0.0,
+        "pv3_w": 0.0,
+        "pv4_v": 72.1,
+        "pv4_w": 10.0,
+        "battery_soc2": 20.0,
+        "battery_soc": 20.0,
+        "freq_hz": 50.0,
+        "pv1_i": 0.0,
+        "battery_power_w": 9580.0,
+        "pv2_i": 0.0,
+        "pv3_i": 0.0,
+        "pv4_i": 0.2,
+        "battery_current_a": 18.65,
+        "slave_id": 1.0,
+        "status": "running"
+      },
+      {
+        "p_total_w": 11662.0,
+        "pv1_v": 0.0,
+        "pv1_w": 0.0,
+        "pv2_v": 18.3,
+        "pv2_w": 0.0,
+        "pv3_v": 17.5,
+        "pv3_w": 0.0,
+        "pv4_v": 0.0,
+        "pv4_w": 0.0,
+        "battery_soc": 23.0,
+        "freq_hz": 50.0,
+        "pv1_i": 0.0,
+        "battery_power_w": 12310.0,
+        "pv2_i": 0.0,
+        "pv3_i": 0.0,
+        "pv4_i": 0.0,
+        "battery_current_a": 24.1,
+        "slave_id": 2.0,
+        "status": "running"
+      },
+      {
+        "p_total_w": 10661.0,
+        "pv1_v": 0.0,
+        "pv1_w": 0.0,
+        "pv2_v": 21.7,
+        "pv2_w": 0.0,
+        "pv3_v": 0.0,
+        "pv3_w": 0.0,
+        "pv4_v": 0.0,
+        "pv4_w": 0.0,
+        "battery_soc": 22.0,
+        "freq_hz": 50.0,
+        "pv1_i": 0.0,
+        "battery_power_w": 11050.0,
+        "pv2_i": 0.0,
+        "pv3_i": 0.0,
+        "pv4_i": 0.0,
+        "battery_current_a": 21.64,
+        "slave_id": 3.0,
+        "status": "running"
+      }
+    ],
+    "ts_epoch_ms": 1787160577502.0
+  },
+  {
+    "ac_units": [
+      {
+        "temperature_c": 0.0,
+        "slave_id": 21.0,
+        "status": "ok"
+      },
+      {
+        "temperature_c": 0.0,
+        "slave_id": 22.0,
+        "status": "ok"
+      }
+    ],
+    "client": {
+      "client_email": "allan@paradiseinfiji.com",
+      "site_id": 1.0,
+      "client_name": "Paradise Resort",
+      "client_id": 1.0
+    },
+    "timestamp": {
+      "ts_epoch_ms": 1787162376646.0
+    },
+    "meters": [
+      {
+        "p_total_w": 0.0,
+        "kwh_total": 62423.0,
+        "i1": 0.0,
+        "p3_w": 0.0,
+        "description": "gen_meter",
+        "i2": 0.0,
+        "p2_w": 0.0,
+        "i3": 0.0,
+        "p1_w": 0.0,
+        "freq_hz": 0.0,
+        "tariff": {
+          "kwh_t1": 48424.719,
+          "kwh_t2": 13998.493
+        },
+        "v1": 0.0,
+        "v2": 0.0,
+        "v3": 0.0,
+        "slave_id": 12.0
+      },
+      {
+        "p_total_w": 31093.49,
+        "kwh_total": 247842.0,
+        "i1": 41.084,
+        "p3_w": 12149.867,
+        "description": "load_meter",
+        "i2": 37.629,
+        "p2_w": 8508.425,
+        "i3": 54.422,
+        "p1_w": 9181.104,
+        "tariff": {
+          "kwh_t1": 131202.703,
+          "kwh_t2": 116638.938
+        },
+        "v1": 232.832,
+        "v2": 232.878,
+        "v3": 229.992,
+        "slave_id": 13.0
+      },
+      {
+        "p_total_w": 877.8,
+        "kwh_total": 8802.7,
+        "i1": 1.211,
+        "p3_w": 0.0,
+        "description": "aux_loads",
+        "i2": 3.133,
+        "p2_w": 707.156,
+        "i3": 0.0,
+        "p1_w": 170.82,
+        "freq_hz": 50.0,
+        "v1": 232.811,
+        "v2": 232.863,
+        "v3": 230.033,
+        "slave_id": 14.0
+      },
+      {
+        "p_total_w": 0.0,
+        "kwh_total": 20096.18,
+        "i1": 0.611,
+        "p3_w": 0.0,
+        "description": "micro_inv",
+        "i2": 0.601,
+        "p2_w": 0.0,
+        "i3": 0.567,
+        "p1_w": 0.0,
+        "freq_hz": 50.0,
+        "v1": 233.105,
+        "v2": 232.953,
+        "v3": 229.93,
+        "slave_id": 15.0
+      }
+    ],
+    "gateway": {
+      "firmware": "m300-taveuni-1.0",
+      "gateway_id": "M300-TAVEUNI-001"
+    },
+    "irradiance_meters": [
+      {
+        "slave_id": 30.0,
+        "irradiance_w_per_m2": 0.0
+      }
+    ],
+    "gateway_id": "M300-TAVEUNI-001",
+    "inverters": [
+      {
+        "p_total_w": 14110.0,
+        "pv1_v": 399.3,
+        "pv1_w": 50.0,
+        "pv2_v": 518.8,
+        "pv2_w": 40.0,
+        "pv3_v": 469.7,
+        "pv3_w": 70.0,
+        "pv4_v": 488.9,
+        "pv4_w": 120.0,
+        "battery_soc2": 18.0,
+        "battery_soc": 18.0,
+        "freq_hz": 50.0,
+        "pv1_i": 0.1,
+        "battery_power_w": 7220.0,
+        "pv2_i": 0.1,
+        "pv3_i": 0.1,
+        "pv4_i": 0.2,
+        "battery_current_a": 14.06,
+        "slave_id": 1.0,
+        "status": "running"
+      },
+      {
+        "p_total_w": 8874.0,
+        "pv1_v": 493.5,
+        "pv1_w": 40.0,
+        "pv2_v": 452.3,
+        "pv2_w": 60.0,
+        "pv3_v": 450.7,
+        "pv3_w": 50.0,
+        "pv4_v": 436.6,
+        "pv4_w": 110.0,
+        "battery_soc": 20.0,
+        "freq_hz": 50.0,
+        "pv1_i": 0.0,
+        "battery_power_w": 9240.0,
+        "pv2_i": 0.1,
+        "pv3_i": 0.1,
+        "pv4_i": 0.2,
+        "battery_current_a": 18.15,
+        "slave_id": 2.0,
+        "status": "running"
+      },
+      {
+        "p_total_w": 7744.0,
+        "pv1_v": 506.8,
+        "pv1_w": 60.0,
+        "pv2_v": 431.6,
+        "pv2_w": 40.0,
+        "pv3_v": 0.0,
+        "pv3_w": 0.0,
+        "pv4_v": 491.4,
+        "pv4_w": 120.0,
+        "battery_soc": 19.0,
+        "freq_hz": 50.0,
+        "pv1_i": 0.1,
+        "battery_power_w": 8510.0,
+        "pv2_i": 0.1,
+        "pv3_i": 0.0,
+        "pv4_i": 0.2,
+        "battery_current_a": 16.71,
+        "slave_id": 3.0,
+        "status": "running"
+      }
+    ],
+    "ts_epoch_ms": 1787162377547.0
+  },
+  null,
+  {
+    "ac_units": [
+      {
+        "temperature_c": 0.0,
+        "slave_id": 21.0,
+        "status": "ok"
+      },
+      {
+        "temperature_c": 0.0,
+        "slave_id": 22.0,
+        "status": "ok"
+      }
+    ],
+    "client": {
+      "client_email": "allan@paradiseinfiji.com",
+      "site_id": 1.0,
+      "client_name": "Paradise Resort",
+      "client_id": 1.0
+    },
+    "timestamp": {
+      "ts_epoch_ms": 1787165976314.0
+    },
+    "meters": [
+      {
+        "p_total_w": 37623.3,
+        "kwh_total": 62449.0,
+        "i1": 68.892,
+        "p3_w": 11299.378,
+        "description": "gen_meter",
+        "i2": 78.721,
+        "p2_w": 15132.614,
+        "i3": 65.497,
+        "p1_w": 11323.37,
+        "freq_hz": 49.91,
+        "tariff": {
+          "kwh_t1": 48450.0,
+          "kwh_t2": 13998.493
+        },
+        "v1": 236.622,
+        "v2": 233.125,
+        "v3": 234.437,
+        "slave_id": 12.0
+      },
+      {
+        "p_total_w": 36759.738,
+        "kwh_total": 247874.0,
+        "i1": 50.686,
+        "p3_w": 10581.069,
+        "description": "load_meter",
+        "i2": 66.373,
+        "p2_w": 14799.367,
+        "i3": 49.315,
+        "p1_w": 11486.462,
+        "tariff": {
+          "kwh_t1": 131235.125,
+          "kwh_t2": 116638.938
+        },
+        "v1": 232.764,
+        "v2": 236.206,
+        "v3": 234.355,
+        "slave_id": 13.0
+      },
+      {
+        "p_total_w": 747.4,
+        "kwh_total": 8803.62,
+        "i1": 0.279,
+        "p3_w": 0.0,
+        "description": "aux_loads",
+        "i2": 3.164,
+        "p2_w": 708.56,
+        "i3": 0.0,
+        "p1_w": 40.028,
+        "freq_hz": 49.9,
+        "v1": 236.481,
+        "v2": 232.772,
+        "v3": 234.326,
+        "slave_id": 14.0
+      },
+      {
+        "p_total_w": 691.2,
+        "kwh_total": 20096.381,
+        "i1": 1.502,
+        "p3_w": 244.204,
+        "description": "micro_inv",
+        "i2": 1.53,
+        "p2_w": 230.51,
+        "i3": 1.571,
+        "p1_w": 214.71,
+        "freq_hz": 49.91,
+        "v1": 236.357,
+        "v2": 232.783,
+        "v3": 234.345,
+        "slave_id": 15.0
+      }
+    ],
+    "gateway": {
+      "firmware": "m300-taveuni-1.0",
+      "gateway_id": "M300-TAVEUNI-001"
+    },
+    "irradiance_meters": [
+      {
+        "slave_id": 30.0,
+        "irradiance_w_per_m2": 0.0
+      }
+    ],
+    "gateway_id": "M300-TAVEUNI-001",
+    "inverters": [
+      {
+        "p_total_w": -169.0,
+        "pv1_v": 262.9,
+        "pv1_w": 150.0,
+        "pv2_v": 466.8,
+        "pv2_w": 460.0,
+        "pv3_v": 252.8,
+        "pv3_w": 170.0,
+        "pv4_v": 203.4,
+        "pv4_w": 140.0,
+        "battery_soc2": 17.0,
+        "battery_soc": 17.0,
+        "freq_hz": 49.87,
+        "pv1_i": 0.6,
+        "battery_power_w": -280.0,
+        "pv2_i": 1.0,
+        "pv3_i": 0.7,
+        "pv4_i": 0.7,
+        "battery_current_a": -0.55,
+        "slave_id": 1.0,
+        "status": "running"
+      },
+      {
+        "p_total_w": -80.0,
+        "pv1_v": 215.9,
+        "pv1_w": 120.0,
+        "pv2_v": 265.5,
+        "pv2_w": 180.0,
+        "pv3_v": 165.4,
+        "pv3_w": 100.0,
+        "pv4_v": 232.0,
+        "pv4_w": 180.0,
+        "battery_soc": 18.0,
+        "freq_hz": 49.95,
+        "pv1_i": 0.5,
+        "battery_power_w": -310.0,
+        "pv2_i": 0.6,
+        "pv3_i": 0.6,
+        "pv4_i": 0.8,
+        "battery_current_a": -0.62,
+        "slave_id": 2.0,
+        "status": "running"
+      },
+      {
+        "p_total_w": -90.0,
+        "pv1_v": 420.7,
+        "pv1_w": 430.0,
+        "pv2_v": 240.5,
+        "pv2_w": 160.0,
+        "pv3_v": 0.0,
+        "pv3_w": 0.0,
+        "pv4_v": 196.8,
+        "pv4_w": 130.0,
+        "battery_soc": 17.0,
+        "freq_hz": 49.91,
+        "pv1_i": 0.9,
+        "battery_power_w": -450.0,
+        "pv2_i": 0.6,
+        "pv3_i": 0.0,
+        "pv4_i": 0.7,
+        "battery_current_a": -0.89,
+        "slave_id": 3.0,
+        "status": "running"
+      }
+    ],
+    "ts_epoch_ms": 1787165977517.0
+  },
+  {
+    "ac_units": [
+      {
+        "temperature_c": 0.0,
+        "slave_id": 21.0,
+        "status": "ok"
+      },
+      {
+        "temperature_c": 0.0,
+        "slave_id": 22.0,
+        "status": "ok"
+      }
+    ],
+    "client": {
+      "client_email": "allan@paradiseinfiji.com",
+      "site_id": 1.0,
+      "client_name": "Paradise Resort",
+      "client_id": 1.0
+    },
+    "timestamp": {
+      "ts_epoch_ms": 1787167776228.0
+    },
+    "meters": [
+      {
+        "p_total_w": 43105.7,
+        "kwh_total": 62467.0,
+        "i1": 81.392,
+        "p3_w": 13245.435,
+        "description": "gen_meter",
+        "i2": 77.782,
+        "p2_w": 14666.156,
+        "i3": 71.995,
+        "p1_w": 15124.813,
+        "freq_hz": 49.89,
+        "tariff": {
+          "kwh_t1": 48468.766,
+          "kwh_t2": 13998.493
+        },
+        "v1": 234.414,
+        "v2": 233.246,
+        "v3": 234.253,
+        "slave_id": 12.0
+      },
+      {
+        "p_total_w": 44872.063,
+        "kwh_total": 247893.0,
+        "i1": 69.818,
+        "p3_w": 12930.732,
+        "description": "load_meter",
+        "i2": 68.802,
+        "p2_w": 15352.965,
+        "i3": 59.088,
+        "p1_w": 15981.779,
+        "tariff": {
+          "kwh_t1": 131253.953,
+          "kwh_t2": 116638.938
+        },
+        "v1": 232.897,
+        "v2": 234.24,
+        "v3": 234.276,
+        "slave_id": 13.0
+      },
+      {
+        "p_total_w": 733.8,
+        "kwh_total": 8803.98,
+        "i1": 0.213,
+        "p3_w": 0.0,
+        "description": "aux_loads",
+        "i2": 3.162,
+        "p2_w": 706.102,
+        "i3": 0.0,
+        "p1_w": 0.0,
+        "freq_hz": 49.88,
+        "v1": 234.406,
+        "v2": 232.783,
+        "v3": 234.324,
+        "slave_id": 14.0
+      },
+      {
+        "p_total_w": 1882.0,
+        "kwh_total": 20097.119,
+        "i1": 2.97,
+        "p3_w": 637.81,
+        "description": "micro_inv",
+        "i2": 2.958,
+        "p2_w": 626.925,
+        "i3": 3.057,
+        "p1_w": 612.178,
+        "freq_hz": 49.89,
+        "v1": 233.945,
+        "v2": 232.882,
+        "v3": 234.066,
+        "slave_id": 15.0
+      }
+    ],
+    "gateway": {
+      "firmware": "m300-taveuni-1.0",
+      "gateway_id": "M300-TAVEUNI-001"
+    },
+    "irradiance_meters": [
+      {
+        "slave_id": 30.0,
+        "irradiance_w_per_m2": 0.0
+      }
+    ],
+    "gateway_id": "M300-TAVEUNI-001",
+    "inverters": [
+      {
+        "p_total_w": -166.0,
+        "pv1_v": 631.6,
+        "pv1_w": 690.0,
+        "pv2_v": 772.4,
+        "pv2_w": 1710.0,
+        "pv3_v": 563.1,
+        "pv3_w": 800.0,
+        "pv4_v": 486.9,
+        "pv4_w": 670.0,
+        "battery_soc2": 17.0,
+        "battery_soc": 17.0,
+        "freq_hz": 49.91,
+        "pv1_i": 1.1,
+        "battery_power_w": -1660.0,
+        "pv2_i": 2.1,
+        "pv3_i": 1.4,
+        "pv4_i": 1.3,
+        "battery_current_a": -3.2,
+        "slave_id": 1.0,
+        "status": "running"
+      },
+      {
+        "p_total_w": -121.0,
+        "pv1_v": 768.6,
+        "pv1_w": 870.0,
+        "pv2_v": 706.6,
+        "pv2_w": 940.0,
+        "pv3_v": 567.4,
+        "pv3_w": 750.0,
+        "pv4_v": 542.8,
+        "pv4_w": 820.0,
+        "battery_soc": 18.0,
+        "freq_hz": 49.91,
+        "pv1_i": 1.1,
+        "battery_power_w": -2950.0,
+        "pv2_i": 1.3,
+        "pv3_i": 1.3,
+        "pv4_i": 1.5,
+        "battery_current_a": -5.72,
+        "slave_id": 2.0,
+        "status": "running"
+      },
+      {
+        "p_total_w": -116.0,
+        "pv1_v": 767.3,
+        "pv1_w": 1700.0,
+        "pv2_v": 723.1,
+        "pv2_w": 910.0,
+        "pv3_v": 0.0,
+        "pv3_w": 0.0,
+        "pv4_v": 471.1,
+        "pv4_w": 630.0,
+        "battery_soc": 18.0,
+        "freq_hz": 49.91,
+        "pv1_i": 2.1,
+        "battery_power_w": -2810.0,
+        "pv2_i": 1.2,
+        "pv3_i": 0.0,
+        "pv4_i": 1.3,
+        "battery_current_a": -5.45,
+        "slave_id": 3.0,
+        "status": "running"
+      }
+    ],
+    "ts_epoch_ms": 1787167777444.0
+  },
+  {
+    "ac_units": [
+      {
+        "temperature_c": 0.0,
+        "slave_id": 21.0,
+        "status": "ok"
+      },
+      {
+        "temperature_c": 0.0,
+        "slave_id": 22.0,
+        "status": "ok"
+      }
+    ],
+    "client": {
+      "client_email": "allan@paradiseinfiji.com",
+      "site_id": 1.0,
+      "client_name": "Paradise Resort",
+      "client_id": 1.0
+    },
+    "timestamp": {
+      "ts_epoch_ms": 1787169576175.0
+    },
+    "meters": [
+      {
+        "p_total_w": 26565.2,
+        "kwh_total": 62485.0,
+        "i1": 75.301,
+        "p3_w": 7132.894,
+        "description": "gen_meter",
+        "i2": 60.55,
+        "p2_w": 6955.818,
+        "i3": 58.215,
+        "p1_w": 12541.993,
+        "freq_hz": 49.9,
+        "tariff": {
+          "kwh_t1": 48471.969,
+          "kwh_t2": 14013.212
+        },
+        "v1": 231.511,
+        "v2": 233.125,
+        "v3": 234.933,
+        "slave_id": 12.0
+      },
+      {
+        "p_total_w": 33685.438,
+        "kwh_total": 247913.0,
+        "i1": 57.53,
+        "p3_w": 12550.53,
+        "description": "load_meter",
+        "i2": 37.142,
+        "p2_w": 8211.387,
+        "i3": 56.655,
+        "p1_w": 13019.491,
+        "tariff": {
+          "kwh_t1": 131257.406,
+          "kwh_t2": 116655.289
+        },
+        "v1": 234.002,
+        "v2": 232.023,
+        "v3": 232.735,
+        "slave_id": 13.0
+      },
+      {
+        "p_total_w": 738.9,
+        "kwh_total": 8804.42,
+        "i1": 0.208,
+        "p3_w": 0.0,
+        "description": "aux_loads",
+        "i2": 3.164,
+        "p2_w": 709.087,
+        "i3": 0.0,
+        "p1_w": 0.0,
+        "freq_hz": 49.89,
+        "v1": 230.98,
+        "v2": 233.735,
+        "v3": 233.277,
+        "slave_id": 14.0
+      },
+      {
+        "p_total_w": 7507.5,
+        "kwh_total": 20099.48,
+        "i1": 10.873,
+        "p3_w": 2511.035,
+        "description": "micro_inv",
+        "i2": 10.859,
+        "p2_w": 2517.179,
+        "i3": 10.869,
+        "p1_w": 2491.021,
+        "freq_hz": 49.86,
+        "v1": 231.123,
+        "v2": 233.748,
+        "v3": 233.392,
+        "slave_id": 15.0
+      }
+    ],
+    "gateway": {
+      "firmware": "m300-taveuni-1.0",
+      "gateway_id": "M300-TAVEUNI-001"
+    },
+    "irradiance_meters": [
+      {
+        "slave_id": 30.0,
+        "irradiance_w_per_m2": 0.0
+      }
+    ],
+    "gateway_id": "M300-TAVEUNI-001",
+    "inverters": [
+      {
+        "p_total_w": -122.0,
+        "pv1_v": 649.7,
+        "pv1_w": 2460.0,
+        "pv2_v": 807.6,
+        "pv2_w": 6240.0,
+        "pv3_v": 763.0,
+        "pv3_w": 3410.0,
+        "pv4_v": 803.6,
+        "pv4_w": 3380.0,
+        "battery_soc2": 19.0,
+        "battery_soc": 19.0,
+        "freq_hz": 49.87,
+        "pv1_i": 3.8,
+        "battery_power_w": -7370.0,
+        "pv2_i": 7.7,
+        "pv3_i": 4.4,
+        "pv4_i": 4.2,
+        "battery_current_a": -14.08,
+        "slave_id": 1.0,
+        "status": "running"
+      },
+      {
+        "p_total_w": -73.0,
+        "pv1_v": 803.5,
+        "pv1_w": 3100.0,
+        "pv2_v": 733.6,
+        "pv2_w": 3460.0,
+        "pv3_v": 756.9,
+        "pv3_w": 3300.0,
+        "pv4_v": 743.1,
+        "pv4_w": 3340.0,
+        "battery_soc": 21.0,
+        "freq_hz": 49.87,
+        "pv1_i": 3.8,
+        "battery_power_w": -12670.0,
+        "pv2_i": 4.7,
+        "pv3_i": 4.4,
+        "pv4_i": 4.5,
+        "battery_current_a": -24.26,
+        "slave_id": 2.0,
+        "status": "running"
+      },
+      {
+        "p_total_w": -119.0,
+        "pv1_v": 807.3,
+        "pv1_w": 6160.0,
+        "pv2_v": 743.1,
+        "pv2_w": 2750.0,
+        "pv3_v": 0.0,
+        "pv3_w": 0.0,
+        "pv4_v": 804.5,
+        "pv4_w": 3280.0,
+        "battery_soc": 21.0,
+        "freq_hz": 49.87,
+        "pv1_i": 7.6,
+        "battery_power_w": -11330.0,
+        "pv2_i": 3.7,
+        "pv3_i": 0.0,
+        "pv4_i": 4.0,
+        "battery_current_a": -21.68,
+        "slave_id": 3.0,
+        "status": "running"
+      }
+    ],
+    "ts_epoch_ms": 1787169577429.0
+  },
+  {
+    "ac_units": [
+      {
+        "temperature_c": 0.0,
+        "slave_id": 21.0,
+        "status": "ok"
+      },
+      {
+        "temperature_c": 0.0,
+        "slave_id": 22.0,
+        "status": "ok"
+      }
+    ],
+    "client": {
+      "client_email": "allan@paradiseinfiji.com",
+      "site_id": 1.0,
+      "client_name": "Paradise Resort",
+      "client_id": 1.0
+    },
+    "timestamp": {
+      "ts_epoch_ms": 1787171376225.0
+    },
+    "meters": [
+      {
+        "p_total_w": 41639.7,
+        "kwh_total": 62502.0,
+        "i1": 89.81,
+        "p3_w": 12367.42,
+        "description": "gen_meter",
+        "i2": 72.608,
+        "p2_w": 12363.299,
+        "i3": 70.929,
+        "p1_w": 16904.688,
+        "freq_hz": 49.88,
+        "tariff": {
+          "kwh_t1": 48471.969,
+          "kwh_t2": 14030.196
+        },
+        "v1": 232.425,
+        "v2": 233.417,
+        "v3": 234.677,
+        "slave_id": 12.0
+      },
+      {
+        "p_total_w": 45741.836,
+        "kwh_total": 247933.0,
+        "i1": 83.479,
+        "p3_w": 14309.503,
+        "description": "load_meter",
+        "i2": 56.739,
+        "p2_w": 12439.692,
+        "i3": 64.234,
+        "p1_w": 19150.58,
+        "tariff": {
+          "kwh_t1": 131257.406,
+          "kwh_t2": 116675.539
+        },
+        "v1": 233.219,
+        "v2": 231.944,
+        "v3": 234.425,
+        "slave_id": 13.0
+      },
+      {
+        "p_total_w": 737.0,
+        "kwh_total": 8804.86,
+        "i1": 0.211,
+        "p3_w": 0.0,
+        "description": "aux_loads",
+        "i2": 3.164,
+        "p2_w": 708.209,
+        "i3": 0.0,
+        "p1_w": 0.0,
+        "freq_hz": 49.9,
+        "v1": 231.889,
+        "v2": 233.172,
+        "v3": 234.325,
+        "slave_id": 14.0
+      },
+      {
+        "p_total_w": 5685.9,
+        "kwh_total": 20103.32,
+        "i1": 8.246,
+        "p3_w": 1904.124,
+        "description": "micro_inv",
+        "i2": 8.247,
+        "p2_w": 1896.75,
+        "i3": 8.269,
+        "p1_w": 1878.317,
+        "freq_hz": 49.91,
+        "v1": 231.912,
+        "v2": 233.173,
+        "v3": 234.388,
+        "slave_id": 15.0
+      }
+    ],
+    "gateway": {
+      "firmware": "m300-taveuni-1.0",
+      "gateway_id": "M300-TAVEUNI-001"
+    },
+    "irradiance_meters": [
+      {
+        "slave_id": 30.0,
+        "irradiance_w_per_m2": 0.0
+      }
+    ],
+    "gateway_id": "M300-TAVEUNI-001",
+    "inverters": [
+      {
+        "p_total_w": -172.0,
+        "pv1_v": 628.4,
+        "pv1_w": 1850.0,
+        "pv2_v": 797.5,
+        "pv2_w": 4670.0,
+        "pv3_v": 740.0,
+        "pv3_w": 2550.0,
+        "pv4_v": 800.5,
+        "pv4_w": 2560.0,
+        "battery_soc2": 22.0,
+        "battery_soc": 21.0,
+        "freq_hz": 49.91,
+        "pv1_i": 2.9,
+        "battery_power_w": -5680.0,
+        "pv2_i": 5.8,
+        "pv3_i": 3.4,
+        "pv4_i": 3.2,
+        "battery_current_a": -10.81,
+        "slave_id": 1.0,
+        "status": "running"
+      },
+      {
+        "p_total_w": -63.0,
+        "pv1_v": 798.5,
+        "pv1_w": 2320.0,
+        "pv2_v": 743.6,
+        "pv2_w": 2400.0,
+        "pv3_v": 746.9,
+        "pv3_w": 2450.0,
+        "pv4_v": 753.1,
+        "pv4_w": 2480.0,
+        "battery_soc": 26.0,
+        "freq_hz": 49.91,
+        "pv1_i": 2.9,
+        "battery_power_w": -8950.0,
+        "pv2_i": 3.2,
+        "pv3_i": 3.2,
+        "pv4_i": 3.3,
+        "battery_current_a": -17.02,
+        "slave_id": 2.0,
+        "status": "running"
+      },
+      {
+        "p_total_w": -91.0,
+        "pv1_v": 792.3,
+        "pv1_w": 4620.0,
+        "pv2_v": 742.0,
+        "pv2_w": 2470.0,
+        "pv3_v": 0.0,
+        "pv3_w": 0.0,
+        "pv4_v": 804.6,
+        "pv4_w": 2470.0,
+        "battery_soc": 25.0,
+        "freq_hz": 49.91,
+        "pv1_i": 5.8,
+        "battery_power_w": -8830.0,
+        "pv2_i": 3.3,
+        "pv3_i": 0.0,
+        "pv4_i": 3.0,
+        "battery_current_a": -16.78,
+        "slave_id": 3.0,
+        "status": "running"
+      }
+    ],
+    "ts_epoch_ms": 1787171377508.0
+  },
+  {
+    "ac_units": [
+      {
+        "temperature_c": 0.0,
+        "slave_id": 21.0,
+        "status": "ok"
+      },
+      {
+        "temperature_c": 0.0,
+        "slave_id": 22.0,
+        "status": "ok"
+      }
+    ],
+    "client": {
+      "client_email": "allan@paradiseinfiji.com",
+      "site_id": 1.0,
+      "client_name": "Paradise Resort",
+      "client_id": 1.0
+    },
+    "timestamp": {
+      "ts_epoch_ms": 1787173176398.0
+    },
+    "meters": [
+      {
+        "p_total_w": 49895.4,
+        "kwh_total": 62520.0,
+        "i1": 96.789,
+        "p3_w": 15330.296,
+        "description": "gen_meter",
+        "i2": 81.266,
+        "p2_w": 16020.491,
+        "i3": 87.605,
+        "p1_w": 18679.412,
+        "freq_hz": 49.88,
+        "tariff": {
+          "kwh_t1": 48471.969,
+          "kwh_t2": 14047.758
+        },
+        "v1": 232.886,
+        "v2": 231.107,
+        "v3": 235.434,
+        "slave_id": 12.0
+      },
+      {
+        "p_total_w": 59913.414,
+        "kwh_total": 247954.0,
+        "i1": 98.324,
+        "p3_w": 18043.678,
+        "description": "load_meter",
+        "i2": 86.869,
+        "p2_w": 19250.82,
+        "i3": 77.491,
+        "p1_w": 22668.525,
+        "tariff": {
+          "kwh_t1": 131257.406,
+          "kwh_t2": 116696.977
+        },
+        "v1": 230.745,
+        "v2": 232.323,
+        "v3": 235.214,
+        "slave_id": 13.0
+      },
+      {
+        "p_total_w": 730.9,
+        "kwh_total": 8805.28,
+        "i1": 0.219,
+        "p3_w": 0.0,
+        "description": "aux_loads",
+        "i2": 3.176,
+        "p2_w": 701.362,
+        "i3": 0.0,
+        "p1_w": 0.0,
+        "freq_hz": 49.89,
+        "v1": 232.186,
+        "v2": 230.685,
+        "v3": 235.173,
+        "slave_id": 14.0
+      },
+      {
+        "p_total_w": 11377.7,
+        "kwh_total": 20107.619,
+        "i1": 16.472,
+        "p3_w": 3820.01,
+        "description": "micro_inv",
+        "i2": 16.516,
+        "p2_w": 3767.342,
+        "i3": 16.428,
+        "p1_w": 3774.891,
+        "freq_hz": 49.91,
+        "v1": 232.445,
+        "v2": 230.835,
+        "v3": 235.256,
+        "slave_id": 15.0
+      }
+    ],
+    "gateway": {
+      "firmware": "m300-taveuni-1.0",
+      "gateway_id": "M300-TAVEUNI-001"
+    },
+    "irradiance_meters": [
+      {
+        "slave_id": 30.0,
+        "irradiance_w_per_m2": 0.0
+      }
+    ],
+    "gateway_id": "M300-TAVEUNI-001",
+    "inverters": [
+      {
+        "p_total_w": -153.0,
+        "pv1_v": 638.3,
+        "pv1_w": 3550.0,
+        "pv2_v": 812.6,
+        "pv2_w": 9070.0,
+        "pv3_v": 755.1,
+        "pv3_w": 4850.0,
+        "pv4_v": 803.7,
+        "pv4_w": 4770.0,
+        "battery_soc2": 24.0,
+        "battery_soc": 24.0,
+        "freq_hz": 49.91,
+        "pv1_i": 5.5,
+        "battery_power_w": -10600.0,
+        "pv2_i": 11.1,
+        "pv3_i": 6.4,
+        "pv4_i": 5.9,
+        "battery_current_a": -19.99,
+        "slave_id": 1.0,
+        "status": "running"
+      },
+      {
+        "p_total_w": -113.0,
+        "pv1_v": 793.6,
+        "pv1_w": 4400.0,
+        "pv2_v": 743.7,
+        "pv2_w": 4800.0,
+        "pv3_v": 757.0,
+        "pv3_w": 4660.0,
+        "pv4_v": 753.2,
+        "pv4_w": 4620.0,
+        "battery_soc": 30.0,
+        "freq_hz": 49.91,
+        "pv1_i": 5.5,
+        "battery_power_w": -18390.0,
+        "pv2_i": 6.4,
+        "pv3_i": 6.1,
+        "pv4_i": 6.1,
+        "battery_current_a": -34.59,
+        "slave_id": 2.0,
+        "status": "running"
+      },
+      {
+        "p_total_w": -50.0,
+        "pv1_v": 802.4,
+        "pv1_w": 8830.0,
+        "pv2_v": 768.2,
+        "pv2_w": 4210.0,
+        "pv3_v": 0.0,
+        "pv3_w": 0.0,
+        "pv4_v": 809.7,
+        "pv4_w": 4580.0,
+        "battery_soc": 29.0,
+        "freq_hz": 49.14,
+        "pv1_i": 10.9,
+        "battery_power_w": -16630.0,
+        "pv2_i": 5.4,
+        "pv3_i": 0.0,
+        "pv4_i": 5.6,
+        "battery_current_a": -31.27,
+        "slave_id": 3.0,
+        "status": "running"
+      }
+    ],
+    "ts_epoch_ms": 1787173177527.0
+  },
+  null,
+  {
+    "ac_units": [
+      {
+        "temperature_c": 0.0,
+        "slave_id": 21.0,
+        "status": "ok"
+      },
+      {
+        "temperature_c": 0.0,
+        "slave_id": 22.0,
+        "status": "ok"
+      }
+    ],
+    "client": {
+      "client_email": "allan@paradiseinfiji.com",
+      "site_id": 1.0,
+      "client_name": "Paradise Resort",
+      "client_id": 1.0
+    },
+    "timestamp": {
+      "ts_epoch_ms": 1787176776948.0
+    },
+    "meters": [
+      {
+        "p_total_w": 0.0,
+        "kwh_total": 62527.0,
+        "i1": 0.0,
+        "p3_w": 0.0,
+        "description": "gen_meter",
+        "i2": 0.0,
+        "p2_w": 0.0,
+        "i3": 0.0,
+        "p1_w": 0.0,
+        "freq_hz": 0.0,
+        "tariff": {
+          "kwh_t1": 48471.969,
+          "kwh_t2": 14055.134
+        },
+        "v1": 0.0,
+        "v2": 0.0,
+        "v3": 0.0,
+        "slave_id": 12.0
+      },
+      {
+        "p_total_w": 30131.135,
+        "kwh_total": 247996.0,
+        "i1": 36.39,
+        "p3_w": 11484.99,
+        "description": "load_meter",
+        "i2": 48.306,
+        "p2_w": 10596.378,
+        "i3": 50.829,
+        "p1_w": 8066.547,
+        "tariff": {
+          "kwh_t1": 131257.406,
+          "kwh_t2": 116738.711
+        },
+        "v1": 234.48,
+        "v2": 233.263,
+        "v3": 232.371,
+        "slave_id": 13.0
+      },
+      {
+        "p_total_w": 701.9,
+        "kwh_total": 8806.16,
+        "i1": 0.0,
+        "p3_w": 0.0,
+        "description": "aux_loads",
+        "i2": 3.08,
+        "p2_w": 701.889,
+        "i3": 0.0,
+        "p1_w": 0.0,
+        "freq_hz": 50.0,
+        "v1": 233.635,
+        "v2": 233.553,
+        "v3": 232.165,
+        "slave_id": 14.0
+      },
+      {
+        "p_total_w": 8611.4,
+        "kwh_total": 20118.539,
+        "i1": 12.324,
+        "p3_w": 2859.521,
+        "description": "micro_inv",
+        "i2": 12.35,
+        "p2_w": 2877.253,
+        "i3": 12.346,
+        "p1_w": 2873.566,
+        "freq_hz": 50.0,
+        "v1": 233.635,
+        "v2": 233.68,
+        "v3": 232.2,
+        "slave_id": 15.0
+      }
+    ],
+    "gateway": {
+      "firmware": "m300-taveuni-1.0",
+      "gateway_id": "M300-TAVEUNI-001"
+    },
+    "irradiance_meters": [
+      {
+        "slave_id": 30.0,
+        "irradiance_w_per_m2": 0.0
+      }
+    ],
+    "gateway_id": "M300-TAVEUNI-001",
+    "inverters": [
+      {
+        "p_total_w": 8459.0,
+        "pv1_v": 646.3,
+        "pv1_w": 2750.0,
+        "pv2_v": 785.8,
+        "pv2_w": 7000.0,
+        "pv3_v": 753.0,
+        "pv3_w": 3730.0,
+        "pv4_v": 809.6,
+        "pv4_w": 3740.0,
+        "battery_soc2": 29.0,
+        "battery_soc": 28.0,
+        "freq_hz": 50.0,
+        "pv1_i": 4.2,
+        "battery_power_w": -4300.0,
+        "pv2_i": 8.8,
+        "pv3_i": 4.9,
+        "pv4_i": 4.6,
+        "battery_current_a": -8.12,
+        "slave_id": 1.0,
+        "status": "running"
+      },
+      {
+        "p_total_w": 8627.0,
+        "pv1_v": 804.8,
+        "pv1_w": 3540.0,
+        "pv2_v": 745.3,
+        "pv2_w": 3790.0,
+        "pv3_v": 755.6,
+        "pv3_w": 3700.0,
+        "pv4_v": 763.8,
+        "pv4_w": 3810.0,
+        "battery_soc": 37.0,
+        "freq_hz": 50.0,
+        "pv1_i": 4.3,
+        "battery_power_w": -5550.0,
+        "pv2_i": 5.1,
+        "pv3_i": 4.8,
+        "pv4_i": 5.0,
+        "battery_current_a": -10.47,
+        "slave_id": 2.0,
+        "status": "running"
+      },
+      {
+        "p_total_w": 9127.0,
+        "pv1_v": 808.0,
+        "pv1_w": 6900.0,
+        "pv2_v": 764.9,
+        "pv2_w": 3650.0,
+        "pv3_v": 0.0,
+        "pv3_w": 0.0,
+        "pv4_v": 849.9,
+        "pv4_w": 3430.0,
+        "battery_soc": 34.0,
+        "freq_hz": 50.0,
+        "pv1_i": 8.5,
+        "battery_power_w": -5430.0,
+        "pv2_i": 4.7,
+        "pv3_i": 0.0,
+        "pv4_i": 4.0,
+        "battery_current_a": -10.23,
+        "slave_id": 3.0,
+        "status": "running"
+      }
+    ],
+    "ts_epoch_ms": 1787176777427.0
+  },
+  {
+    "ac_units": [
+      {
+        "temperature_c": 0.0,
+        "slave_id": 21.0,
+        "status": "ok"
+      },
+      {
+        "temperature_c": 0.0,
+        "slave_id": 22.0,
+        "status": "ok"
+      }
+    ],
+    "client": {
+      "client_email": "allan@paradiseinfiji.com",
+      "site_id": 1.0,
+      "client_name": "Paradise Resort",
+      "client_id": 1.0
+    },
+    "timestamp": {
+      "ts_epoch_ms": 1787178576942.0
+    },
+    "meters": [
+      {
+        "p_total_w": 0.0,
+        "kwh_total": 62527.0,
+        "i1": 0.0,
+        "p3_w": 0.0,
+        "description": "gen_meter",
+        "i2": 0.0,
+        "p2_w": 0.0,
+        "i3": 0.0,
+        "p1_w": 0.0,
+        "freq_hz": 0.0,
+        "tariff": {
+          "kwh_t1": 48471.969,
+          "kwh_t2": 14055.134
+        },
+        "v1": 0.0,
+        "v2": 0.0,
+        "v3": 0.0,
+        "slave_id": 12.0
+      },
+      {
+        "p_total_w": 39529.938,
+        "kwh_total": 248014.0,
+        "i1": 41.526,
+        "p3_w": 13138.425,
+        "description": "load_meter",
+        "i2": 73.843,
+        "p2_w": 17014.789,
+        "i3": 57.86,
+        "p1_w": 9422.208,
+        "tariff": {
+          "kwh_t1": 131257.406,
+          "kwh_t2": 116756.586
+        },
+        "v1": 233.215,
+        "v2": 233.358,
+        "v3": 231.64,
+        "slave_id": 13.0
+      },
+      {
+        "p_total_w": 755.6,
+        "kwh_total": 8806.68,
+        "i1": 0.21,
+        "p3_w": 0.0,
+        "description": "aux_loads",
+        "i2": 3.156,
+        "p2_w": 723.307,
+        "i3": 0.0,
+        "p1_w": 0.0,
+        "freq_hz": 51.5,
+        "v1": 233.62,
+        "v2": 233.339,
+        "v3": 231.587,
+        "slave_id": 14.0
+      },
+      {
+        "p_total_w": 13545.0,
+        "kwh_total": 20124.92,
+        "i1": 20.873,
+        "p3_w": 4486.962,
+        "description": "micro_inv",
+        "i2": 20.932,
+        "p2_w": 4502.938,
+        "i3": 20.906,
+        "p1_w": 4527.166,
+        "freq_hz": 51.5,
+        "v1": 233.648,
+        "v2": 233.224,
+        "v3": 231.83,
+        "slave_id": 15.0
+      }
+    ],
+    "gateway": {
+      "firmware": "m300-taveuni-1.0",
+      "gateway_id": "M300-TAVEUNI-001"
+    },
+    "irradiance_meters": [
+      {
+        "slave_id": 30.0,
+        "irradiance_w_per_m2": 0.0
+      }
+    ],
+    "gateway_id": "M300-TAVEUNI-001",
+    "inverters": [
+      {
+        "p_total_w": 8685.0,
+        "pv1_v": 639.2,
+        "pv1_w": 4180.0,
+        "pv2_v": 805.8,
+        "pv2_w": 10750.0,
+        "pv3_v": 748.0,
+        "pv3_w": 5670.0,
+        "pv4_v": 814.6,
+        "pv4_w": 5620.0,
+        "battery_soc2": 31.0,
+        "battery_soc": 31.0,
+        "freq_hz": 51.5,
+        "pv1_i": 6.5,
+        "battery_power_w": -8760.0,
+        "pv2_i": 13.3,
+        "pv3_i": 7.5,
+        "pv4_i": 6.9,
+        "battery_current_a": -16.45,
+        "slave_id": 1.0,
+        "status": "running"
+      },
+      {
+        "p_total_w": 10074.0,
+        "pv1_v": 804.7,
+        "pv1_w": 5460.0,
+        "pv2_v": 753.3,
+        "pv2_w": 5800.0,
+        "pv3_v": 745.5,
+        "pv3_w": 5690.0,
+        "pv4_v": 773.7,
+        "pv4_w": 5670.0,
+        "battery_soc": 41.0,
+        "freq_hz": 51.5,
+        "pv1_i": 6.7,
+        "battery_power_w": -11630.0,
+        "pv2_i": 7.7,
+        "pv3_i": 7.6,
+        "pv4_i": 7.3,
+        "battery_current_a": -21.81,
+        "slave_id": 2.0,
+        "status": "running"
+      },
+      {
+        "p_total_w": 9346.0,
+        "pv1_v": 799.9,
+        "pv1_w": 10940.0,
+        "pv2_v": 755.0,
+        "pv2_w": 5590.0,
+        "pv3_v": 0.0,
+        "pv3_w": 0.0,
+        "pv4_v": 849.9,
+        "pv4_w": 5400.0,
+        "battery_soc": 38.0,
+        "freq_hz": 51.5,
+        "pv1_i": 13.6,
+        "battery_power_w": -10500.0,
+        "pv2_i": 7.3,
+        "pv3_i": 0.0,
+        "pv4_i": 6.3,
+        "battery_current_a": -19.66,
+        "slave_id": 3.0,
+        "status": "running"
+      }
+    ],
+    "ts_epoch_ms": 1787178577448.0
+  },
+  {
+    "ac_units": [
+      {
+        "temperature_c": 0.0,
+        "slave_id": 21.0,
+        "status": "ok"
+      },
+      {
+        "temperature_c": 0.0,
+        "slave_id": 22.0,
+        "status": "ok"
+      }
+    ],
+    "client": {
+      "client_email": "allan@paradiseinfiji.com",
+      "site_id": 1.0,
+      "client_name": "Paradise Resort",
+      "client_id": 1.0
+    },
+    "timestamp": {
+      "ts_epoch_ms": 1787180376810.0
+    },
+    "meters": [
+      {
+        "p_total_w": 0.0,
+        "kwh_total": 62527.0,
+        "i1": 0.0,
+        "p3_w": 0.0,
+        "description": "gen_meter",
+        "i2": 0.0,
+        "p2_w": 0.0,
+        "i3": 0.0,
+        "p1_w": 0.0,
+        "freq_hz": 0.0,
+        "tariff": {
+          "kwh_t1": 48471.969,
+          "kwh_t2": 14055.134
+        },
+        "v1": 0.0,
+        "v2": 0.0,
+        "v3": 0.0,
+        "slave_id": 12.0
+      },
+      {
+        "p_total_w": 42517.984,
+        "kwh_total": 248035.0,
+        "i1": 58.388,
+        "p3_w": 13798.886,
+        "description": "load_meter",
+        "i2": 65.82,
+        "p2_w": 15143.654,
+        "i3": 60.752,
+        "p1_w": 13516.715,
+        "tariff": {
+          "kwh_t1": 131257.406,
+          "kwh_t2": 116777.352
+        },
+        "v1": 233.239,
+        "v2": 233.599,
+        "v3": 231.617,
+        "slave_id": 13.0
+      },
+      {
+        "p_total_w": 748.8,
+        "kwh_total": 8807.22,
+        "i1": 0.204,
+        "p3_w": 0.0,
+        "description": "aux_loads",
+        "i2": 3.133,
+        "p2_w": 719.62,
+        "i3": 0.0,
+        "p1_w": 0.0,
+        "freq_hz": 51.5,
+        "v1": 233.647,
+        "v2": 233.264,
+        "v3": 231.696,
+        "slave_id": 14.0
+      },
+      {
+        "p_total_w": 13721.9,
+        "kwh_total": 20133.439,
+        "i1": 21.196,
+        "p3_w": 4552.797,
+        "description": "micro_inv",
+        "i2": 21.25,
+        "p2_w": 4585.627,
+        "i3": 21.201,
+        "p1_w": 4585.803,
+        "freq_hz": 51.5,
+        "v1": 233.634,
+        "v2": 233.286,
+        "v3": 231.741,
+        "slave_id": 15.0
+      }
+    ],
+    "gateway": {
+      "firmware": "m300-taveuni-1.0",
+      "gateway_id": "M300-TAVEUNI-001"
+    },
+    "irradiance_meters": [
+      {
+        "slave_id": 30.0,
+        "irradiance_w_per_m2": 0.0
+      }
+    ],
+    "gateway_id": "M300-TAVEUNI-001",
+    "inverters": [
+      {
+        "p_total_w": 7766.0,
+        "pv1_v": 646.3,
+        "pv1_w": 4330.0,
+        "pv2_v": 810.7,
+        "pv2_w": 11110.0,
+        "pv3_v": 753.0,
+        "pv3_w": 5910.0,
+        "pv4_v": 819.5,
+        "pv4_w": 5810.0,
+        "battery_soc2": 35.0,
+        "battery_soc": 35.0,
+        "freq_hz": 51.5,
+        "pv1_i": 6.6,
+        "battery_power_w": -9810.0,
+        "pv2_i": 13.6,
+        "pv3_i": 7.8,
+        "pv4_i": 7.0,
+        "battery_current_a": -18.39,
+        "slave_id": 1.0,
+        "status": "running"
+      },
+      {
+        "p_total_w": 9047.0,
+        "pv1_v": 799.9,
+        "pv1_w": 5590.0,
+        "pv2_v": 749.6,
+        "pv2_w": 5940.0,
+        "pv3_v": 747.1,
+        "pv3_w": 5840.0,
+        "pv4_v": 769.4,
+        "pv4_w": 5840.0,
+        "battery_soc": 47.0,
+        "freq_hz": 51.5,
+        "pv1_i": 6.9,
+        "battery_power_w": -14400.0,
+        "pv2_i": 7.9,
+        "pv3_i": 7.8,
+        "pv4_i": 7.6,
+        "battery_current_a": -26.95,
+        "slave_id": 2.0,
+        "status": "running"
+      },
+      {
+        "p_total_w": 6957.0,
+        "pv1_v": 801.3,
+        "pv1_w": 11020.0,
+        "pv2_v": 752.3,
+        "pv2_w": 5770.0,
+        "pv3_v": 0.0,
+        "pv3_w": 0.0,
+        "pv4_v": 849.9,
+        "pv4_w": 5380.0,
+        "battery_soc": 44.0,
+        "freq_hz": 51.5,
+        "pv1_i": 13.7,
+        "battery_power_w": -11310.0,
+        "pv2_i": 7.6,
+        "pv3_i": 0.0,
+        "pv4_i": 6.3,
+        "battery_current_a": -21.14,
+        "slave_id": 3.0,
+        "status": "running"
+      }
+    ],
+    "ts_epoch_ms": 1787180377547.0
+  },
+  {
+    "ac_units": [
+      {
+        "temperature_c": 0.0,
+        "slave_id": 21.0,
+        "status": "ok"
+      },
+      {
+        "temperature_c": 0.0,
+        "slave_id": 22.0,
+        "status": "ok"
+      }
+    ],
+    "client": {
+      "client_email": "allan@paradiseinfiji.com",
+      "site_id": 1.0,
+      "client_name": "Paradise Resort",
+      "client_id": 1.0
+    },
+    "timestamp": {
+      "ts_epoch_ms": 1787182176697.0
+    },
+    "meters": [
+      {
+        "p_total_w": 0.0,
+        "kwh_total": 62527.0,
+        "i1": 0.0,
+        "p3_w": 0.0,
+        "description": "gen_meter",
+        "i2": 0.0,
+        "p2_w": 0.0,
+        "i3": 0.0,
+        "p1_w": 0.0,
+        "freq_hz": 0.0,
+        "tariff": {
+          "kwh_t1": 48471.969,
+          "kwh_t2": 14055.134
+        },
+        "v1": 0.0,
+        "v2": 0.0,
+        "v3": 0.0,
+        "slave_id": 12.0
+      },
+      {
+        "p_total_w": 38596.434,
+        "kwh_total": 248055.0,
+        "i1": 47.975,
+        "p3_w": 13114.432,
+        "description": "load_meter",
+        "i2": 64.233,
+        "p2_w": 14688.677,
+        "i3": 57.126,
+        "p1_w": 10982.321,
+        "tariff": {
+          "kwh_t1": 131257.406,
+          "kwh_t2": 116797.727
+        },
+        "v1": 233.095,
+        "v2": 233.432,
+        "v3": 231.556,
+        "slave_id": 13.0
+      },
+      {
+        "p_total_w": 749.1,
+        "kwh_total": 8807.74,
+        "i1": 0.204,
+        "p3_w": 0.0,
+        "description": "aux_loads",
+        "i2": 3.141,
+        "p2_w": 720.498,
+        "i3": 0.0,
+        "p1_w": 0.0,
+        "freq_hz": 51.5,
+        "v1": 233.42,
+        "v2": 233.076,
+        "v3": 231.569,
+        "slave_id": 14.0
+      },
+      {
+        "p_total_w": 16287.2,
+        "kwh_total": 20140.98,
+        "i1": 25.099,
+        "p3_w": 5395.661,
+        "description": "micro_inv",
+        "i2": 25.148,
+        "p2_w": 5434.636,
+        "i3": 25.1,
+        "p1_w": 5443.238,
+        "freq_hz": 51.5,
+        "v1": 233.399,
+        "v2": 233.11,
+        "v3": 231.651,
+        "slave_id": 15.0
+      }
+    ],
+    "gateway": {
+      "firmware": "m300-taveuni-1.0",
+      "gateway_id": "M300-TAVEUNI-001"
+    },
+    "irradiance_meters": [
+      {
+        "slave_id": 30.0,
+        "irradiance_w_per_m2": 0.0
+      }
+    ],
+    "gateway_id": "M300-TAVEUNI-001",
+    "inverters": [
+      {
+        "p_total_w": 7440.0,
+        "pv1_v": 631.4,
+        "pv1_w": 5070.0,
+        "pv2_v": 805.9,
+        "pv2_w": 13010.0,
+        "pv3_v": 758.1,
+        "pv3_w": 6980.0,
+        "pv4_v": 814.6,
+        "pv4_w": 6780.0,
+        "battery_soc2": 39.0,
+        "battery_soc": 39.0,
+        "freq_hz": 51.5,
+        "pv1_i": 8.0,
+        "battery_power_w": -11820.0,
+        "pv2_i": 16.1,
+        "pv3_i": 9.2,
+        "pv4_i": 8.3,
+        "battery_current_a": -22.11,
+        "slave_id": 1.0,
+        "status": "running"
+      },
+      {
+        "p_total_w": 9012.0,
+        "pv1_v": 790.6,
+        "pv1_w": 6500.0,
+        "pv2_v": 752.3,
+        "pv2_w": 6850.0,
+        "pv3_v": 758.9,
+        "pv3_w": 6910.0,
+        "pv4_v": 774.2,
+        "pv4_w": 6670.0,
+        "battery_soc": 52.0,
+        "freq_hz": 51.5,
+        "pv1_i": 8.2,
+        "battery_power_w": -17180.0,
+        "pv2_i": 9.1,
+        "pv3_i": 9.1,
+        "pv4_i": 8.6,
+        "battery_current_a": -32.08,
+        "slave_id": 2.0,
+        "status": "running"
+      },
+      {
+        "p_total_w": 7871.0,
+        "pv1_v": 801.1,
+        "pv1_w": 13010.0,
+        "pv2_v": 762.1,
+        "pv2_w": 6740.0,
+        "pv3_v": 0.0,
+        "pv3_w": 0.0,
+        "pv4_v": 849.8,
+        "pv4_w": 6360.0,
+        "battery_soc": 49.0,
+        "freq_hz": 51.5,
+        "pv1_i": 16.2,
+        "battery_power_w": -17140.0,
+        "pv2_i": 8.8,
+        "pv3_i": 0.0,
+        "pv4_i": 7.5,
+        "battery_current_a": -31.94,
+        "slave_id": 3.0,
+        "status": "running"
+      }
+    ],
+    "ts_epoch_ms": 1787182177438.0
+  },
+  {
+    "ac_units": [
+      {
+        "temperature_c": 0.0,
+        "slave_id": 21.0,
+        "status": "ok"
+      },
+      {
+        "temperature_c": 0.0,
+        "slave_id": 22.0,
+        "status": "ok"
+      }
+    ],
+    "client": {
+      "client_email": "allan@paradiseinfiji.com",
+      "site_id": 1.0,
+      "client_name": "Paradise Resort",
+      "client_id": 1.0
+    },
+    "timestamp": {
+      "ts_epoch_ms": 1787183976911.0
+    },
+    "meters": [
+      {
+        "p_total_w": 0.0,
+        "kwh_total": 62527.0,
+        "i1": 0.0,
+        "p3_w": 0.0,
+        "description": "gen_meter",
+        "i2": 0.0,
+        "p2_w": 0.0,
+        "i3": 0.0,
+        "p1_w": 0.0,
+        "freq_hz": 0.0,
+        "tariff": {
+          "kwh_t1": 48471.969,
+          "kwh_t2": 14055.134
+        },
+        "v1": 0.0,
+        "v2": 0.0,
+        "v3": 0.0,
+        "slave_id": 12.0
+      },
+      {
+        "p_total_w": 51768.566,
+        "kwh_total": 248080.0,
+        "i1": 77.239,
+        "p3_w": 17175.084,
+        "description": "load_meter",
+        "i2": 75.975,
+        "p2_w": 16937.658,
+        "i3": 77.955,
+        "p1_w": 17256.188,
+        "tariff": {
+          "kwh_t1": 131257.406,
+          "kwh_t2": 116822.805
+        },
+        "v1": 232.484,
+        "v2": 232.729,
+        "v3": 230.986,
+        "slave_id": 13.0
+      },
+      {
+        "p_total_w": 743.8,
+        "kwh_total": 8808.26,
+        "i1": 0.203,
+        "p3_w": 0.0,
+        "description": "aux_loads",
+        "i2": 3.127,
+        "p2_w": 716.285,
+        "i3": 0.0,
+        "p1_w": 0.0,
+        "freq_hz": 51.5,
+        "v1": 232.809,
+        "v2": 232.554,
+        "v3": 230.999,
+        "slave_id": 14.0
+      },
+      {
+        "p_total_w": 24986.8,
+        "kwh_total": 20151.301,
+        "i1": 38.662,
+        "p3_w": 8330.146,
+        "description": "micro_inv",
+        "i2": 38.727,
+        "p2_w": 8386.326,
+        "i3": 38.655,
+        "p1_w": 8395.104,
+        "freq_hz": 51.5,
+        "v1": 232.836,
+        "v2": 232.652,
+        "v3": 231.12,
+        "slave_id": 15.0
+      }
+    ],
+    "gateway": {
+      "firmware": "m300-taveuni-1.0",
+      "gateway_id": "M300-TAVEUNI-001"
+    },
+    "irradiance_meters": [
+      {
+        "slave_id": 30.0,
+        "irradiance_w_per_m2": 0.0
+      }
+    ],
+    "gateway_id": "M300-TAVEUNI-001",
+    "inverters": [
+      {
+        "p_total_w": 8829.0,
+        "pv1_v": 634.1,
+        "pv1_w": 8200.0,
+        "pv2_v": 796.1,
+        "pv2_w": 20270.0,
+        "pv3_v": 748.9,
+        "pv3_w": 11160.0,
+        "pv4_v": 792.5,
+        "pv4_w": 10020.0,
+        "battery_soc2": 44.0,
+        "battery_soc": 44.0,
+        "freq_hz": 51.5,
+        "pv1_i": 12.9,
+        "battery_power_w": -19940.0,
+        "pv2_i": 25.4,
+        "pv3_i": 14.8,
+        "pv4_i": 12.5,
+        "battery_current_a": -37.13,
+        "slave_id": 1.0,
+        "status": "running"
+      },
+      {
+        "p_total_w": 10548.0,
+        "pv1_v": 856.0,
+        "pv1_w": 8380.0,
+        "pv2_v": 815.9,
+        "pv2_w": 8670.0,
+        "pv3_v": 805.1,
+        "pv3_w": 9310.0,
+        "pv4_v": 812.9,
+        "pv4_w": 8650.0,
+        "battery_soc": 60.0,
+        "freq_hz": 51.5,
+        "pv1_i": 9.3,
+        "battery_power_w": -25880.0,
+        "pv2_i": 9.9,
+        "pv3_i": 11.1,
+        "pv4_i": 10.2,
+        "battery_current_a": -48.02,
+        "slave_id": 2.0,
+        "status": "running"
+      },
+      {
+        "p_total_w": 6960.0,
+        "pv1_v": 814.8,
+        "pv1_w": 18820.0,
+        "pv2_v": 809.8,
+        "pv2_w": 8820.0,
+        "pv3_v": 0.0,
+        "pv3_w": 0.0,
+        "pv4_v": 859.8,
+        "pv4_w": 8690.0,
+        "battery_soc": 56.0,
+        "freq_hz": 51.5,
+        "pv1_i": 23.7,
+        "battery_power_w": -26870.0,
+        "pv2_i": 11.2,
+        "pv3_i": 0.0,
+        "pv4_i": 10.6,
+        "battery_current_a": -49.76,
+        "slave_id": 3.0,
+        "status": "running"
+      }
+    ],
+    "ts_epoch_ms": 1787183977494.0
+  },
+  {
+    "ac_units": [
+      {
+        "temperature_c": 0.0,
+        "slave_id": 21.0,
+        "status": "ok"
+      },
+      {
+        "temperature_c": 0.0,
+        "slave_id": 22.0,
+        "status": "ok"
+      }
+    ],
+    "client": {
+      "client_email": "allan@paradiseinfiji.com",
+      "site_id": 1.0,
+      "client_name": "Paradise Resort",
+      "client_id": 1.0
+    },
+    "timestamp": {
+      "ts_epoch_ms": 1787185776010.0
+    },
+    "meters": [
+      {
+        "p_total_w": 0.0,
+        "kwh_total": 62527.0,
+        "i1": 0.0,
+        "p3_w": 0.0,
+        "description": "gen_meter",
+        "i2": 0.0,
+        "p2_w": 0.0,
+        "i3": 0.0,
+        "p1_w": 0.0,
+        "freq_hz": 0.0,
+        "tariff": {
+          "kwh_t1": 48471.969,
+          "kwh_t2": 14055.134
+        },
+        "v1": 0.0,
+        "v2": 0.0,
+        "v3": 0.0,
+        "slave_id": 12.0
+      },
+      {
+        "p_total_w": 54407.766,
+        "kwh_total": 248106.0,
+        "i1": 80.066,
+        "p3_w": 22300.98,
+        "description": "load_meter",
+        "i2": 64.712,
+        "p2_w": 14136.697,
+        "i3": 99.282,
+        "p1_w": 17947.561,
+        "tariff": {
+          "kwh_t1": 131257.406,
+          "kwh_t2": 116848.258
+        },
+        "v1": 232.879,
+        "v2": 232.903,
+        "v3": 231.159,
+        "slave_id": 13.0
+      },
+      {
+        "p_total_w": 746.7,
+        "kwh_total": 8808.74,
+        "i1": 0.201,
+        "p3_w": 0.0,
+        "description": "aux_loads",
+        "i2": 3.127,
+        "p2_w": 717.689,
+        "i3": 0.0,
+        "p1_w": 0.0,
+        "freq_hz": 51.51,
+        "v1": 233.043,
+        "v2": 232.977,
+        "v3": 231.172,
+        "slave_id": 14.0
+      },
+      {
+        "p_total_w": 14090.6,
+        "kwh_total": 20159.381,
+        "i1": 21.801,
+        "p3_w": 4654.974,
+        "description": "micro_inv",
+        "i2": 21.819,
+        "p2_w": 4712.733,
+        "i3": 21.801,
+        "p1_w": 4705.008,
+        "freq_hz": 51.51,
+        "v1": 233.113,
+        "v2": 233.024,
+        "v3": 231.284,
+        "slave_id": 15.0
+      }
+    ],
+    "gateway": {
+      "firmware": "m300-taveuni-1.0",
+      "gateway_id": "M300-TAVEUNI-001"
+    },
+    "irradiance_meters": [
+      {
+        "slave_id": 30.0,
+        "irradiance_w_per_m2": 0.0
+      }
+    ],
+    "gateway_id": "M300-TAVEUNI-001",
+    "inverters": [
+      {
+        "p_total_w": 13164.0,
+        "pv1_v": 644.1,
+        "pv1_w": 4410.0,
+        "pv2_v": 791.9,
+        "pv2_w": 11290.0,
+        "pv3_v": 758.8,
+        "pv3_w": 6060.0,
+        "pv4_v": 812.5,
+        "pv4_w": 5870.0,
+        "battery_soc2": 47.0,
+        "battery_soc": 47.0,
+        "freq_hz": 51.42,
+        "pv1_i": 6.8,
+        "battery_power_w": -6710.0,
+        "pv2_i": 14.2,
+        "pv3_i": 7.9,
+        "pv4_i": 7.2,
+        "battery_current_a": -12.59,
+        "slave_id": 1.0,
+        "status": "running"
+      },
+      {
+        "p_total_w": 13669.0,
+        "pv1_v": 800.1,
+        "pv1_w": 5700.0,
+        "pv2_v": 752.7,
+        "pv2_w": 6150.0,
+        "pv3_v": 752.5,
+        "pv3_w": 6030.0,
+        "pv4_v": 760.2,
+        "pv4_w": 5940.0,
+        "battery_soc": 65.0,
+        "freq_hz": 51.5,
+        "pv1_i": 7.1,
+        "battery_power_w": -9410.0,
+        "pv2_i": 8.1,
+        "pv3_i": 8.0,
+        "pv4_i": 7.8,
+        "battery_current_a": -17.59,
+        "slave_id": 2.0,
+        "status": "running"
+      },
+      {
+        "p_total_w": 12345.0,
+        "pv1_v": 792.7,
+        "pv1_w": 11120.0,
+        "pv2_v": 753.2,
+        "pv2_w": 5810.0,
+        "pv3_v": 0.0,
+        "pv3_w": 0.0,
+        "pv4_v": 849.9,
+        "pv4_w": 5350.0,
+        "battery_soc": 60.0,
+        "freq_hz": 51.5,
+        "pv1_i": 14.0,
+        "battery_power_w": -9440.0,
+        "pv2_i": 7.7,
+        "pv3_i": 0.0,
+        "pv4_i": 6.2,
+        "battery_current_a": -17.64,
+        "slave_id": 3.0,
+        "status": "running"
+      }
+    ],
+    "ts_epoch_ms": 1787185777489.0
+  },
+  {
+    "ac_units": [
+      {
+        "temperature_c": 0.0,
+        "slave_id": 21.0,
+        "status": "ok"
+      },
+      {
+        "temperature_c": 0.0,
+        "slave_id": 22.0,
+        "status": "ok"
+      }
+    ],
+    "client": {
+      "client_email": "allan@paradiseinfiji.com",
+      "site_id": 1.0,
+      "client_name": "Paradise Resort",
+      "client_id": 1.0
+    },
+    "timestamp": {
+      "ts_epoch_ms": 1787187576793.0
+    },
+    "meters": [
+      {
+        "p_total_w": 0.0,
+        "kwh_total": 62527.0,
+        "i1": 0.0,
+        "p3_w": 0.0,
+        "description": "gen_meter",
+        "i2": 0.0,
+        "p2_w": 0.0,
+        "i3": 0.0,
+        "p1_w": 0.0,
+        "freq_hz": 0.0,
+        "tariff": {
+          "kwh_t1": 48471.969,
+          "kwh_t2": 14055.134
+        },
+        "v1": 0.0,
+        "v2": 0.0,
+        "v3": 0.0,
+        "slave_id": 12.0
+      },
+      {
+        "p_total_w": 53581.555,
+        "kwh_total": 248131.0,
+        "i1": 109.948,
+        "p3_w": 13283.116,
+        "description": "load_meter",
+        "i2": 65.841,
+        "p2_w": 14995.576,
+        "i3": 60.218,
+        "p1_w": 25440.344,
+        "tariff": {
+          "kwh_t1": 131257.406,
+          "kwh_t2": 116873.555
+        },
+        "v1": 233.543,
+        "v2": 233.166,
+        "v3": 232.305,
+        "slave_id": 13.0
+      },
+      {
+        "p_total_w": 2077.1,
+        "kwh_total": 8809.3,
+        "i1": 0.326,
+        "p3_w": 0.0,
+        "description": "aux_loads",
+        "i2": 8.794,
+        "p2_w": 2026.314,
+        "i3": 0.221,
+        "p1_w": 62.499,
+        "freq_hz": 50.0,
+        "v1": 233.605,
+        "v2": 233.705,
+        "v3": 232.155,
+        "slave_id": 14.0
+      },
+      {
+        "p_total_w": 12933.9,
+        "kwh_total": 20166.359,
+        "i1": 18.606,
+        "p3_w": 4298.762,
+        "description": "micro_inv",
+        "i2": 18.627,
+        "p2_w": 4328.081,
+        "i3": 18.616,
+        "p1_w": 4317.021,
+        "freq_hz": 50.44,
+        "v1": 233.521,
+        "v2": 233.791,
+        "v3": 232.185,
+        "slave_id": 15.0
+      }
+    ],
+    "gateway": {
+      "firmware": "m300-taveuni-1.0",
+      "gateway_id": "M300-TAVEUNI-001"
+    },
+    "irradiance_meters": [
+      {
+        "slave_id": 30.0,
+        "irradiance_w_per_m2": 0.0
+      }
+    ],
+    "gateway_id": "M300-TAVEUNI-001",
+    "inverters": [
+      {
+        "p_total_w": 14048.0,
+        "pv1_v": 639.1,
+        "pv1_w": 4090.0,
+        "pv2_v": 796.1,
+        "pv2_w": 10520.0,
+        "pv3_v": 753.9,
+        "pv3_w": 5560.0,
+        "pv4_v": 807.6,
+        "pv4_w": 5490.0,
+        "battery_soc2": 49.0,
+        "battery_soc": 49.0,
+        "freq_hz": 50.12,
+        "pv1_i": 6.4,
+        "battery_power_w": -5210.0,
+        "pv2_i": 13.2,
+        "pv3_i": 7.3,
+        "pv4_i": 6.7,
+        "battery_current_a": -9.77,
+        "slave_id": 1.0,
+        "status": "running"
+      },
+      {
+        "p_total_w": 15436.0,
+        "pv1_v": 807.8,
+        "pv1_w": 5280.0,
+        "pv2_v": 742.5,
+        "pv2_w": 5680.0,
+        "pv3_v": 757.2,
+        "pv3_w": 5530.0,
+        "pv4_v": 755.0,
+        "pv4_w": 5660.0,
+        "battery_soc": 68.0,
+        "freq_hz": 50.0,
+        "pv1_i": 6.5,
+        "battery_power_w": -5830.0,
+        "pv2_i": 7.6,
+        "pv3_i": 7.3,
+        "pv4_i": 7.4,
+        "battery_current_a": -10.92,
+        "slave_id": 2.0,
+        "status": "running"
+      },
+      {
+        "p_total_w": 13599.0,
+        "pv1_v": 804.7,
+        "pv1_w": 10350.0,
+        "pv2_v": 758.4,
+        "pv2_w": 5560.0,
+        "pv3_v": 0.0,
+        "pv3_w": 0.0,
+        "pv4_v": 849.9,
+        "pv4_w": 5080.0,
+        "battery_soc": 63.0,
+        "freq_hz": 50.0,
+        "pv1_i": 12.8,
+        "battery_power_w": -6210.0,
+        "pv2_i": 7.3,
+        "pv3_i": 0.0,
+        "pv4_i": 5.9,
+        "battery_current_a": -11.62,
+        "slave_id": 3.0,
+        "status": "running"
+      }
+    ],
+    "ts_epoch_ms": 1787187577507.0
+  },
+  {
+    "ac_units": [
+      {
+        "temperature_c": 0.0,
+        "slave_id": 21.0,
+        "status": "ok"
+      },
+      {
+        "temperature_c": 0.0,
+        "slave_id": 22.0,
+        "status": "ok"
+      }
+    ],
+    "client": {
+      "client_email": "allan@paradiseinfiji.com",
+      "site_id": 1.0,
+      "client_name": "Paradise Resort",
+      "client_id": 1.0
+    },
+    "timestamp": {
+      "ts_epoch_ms": 1787189376907.0
+    },
+    "meters": [
+      {
+        "p_total_w": 0.0,
+        "kwh_total": 62527.0,
+        "i1": 0.0,
+        "p3_w": 0.0,
+        "description": "gen_meter",
+        "i2": 0.0,
+        "p2_w": 0.0,
+        "i3": 0.0,
+        "p1_w": 0.0,
+        "freq_hz": 0.0,
+        "tariff": {
+          "kwh_t1": 48471.969,
+          "kwh_t2": 14055.134
+        },
+        "v1": 0.0,
+        "v2": 0.0,
+        "v3": 0.0,
+        "slave_id": 12.0
+      },
+      {
+        "p_total_w": 40113.715,
+        "kwh_total": 248158.0,
+        "i1": 72.688,
+        "p3_w": 11266.406,
+        "description": "load_meter",
+        "i2": 51.375,
+        "p2_w": 12126.61,
+        "i3": 50.318,
+        "p1_w": 16836.537,
+        "tariff": {
+          "kwh_t1": 131257.406,
+          "kwh_t2": 116900.242
+        },
+        "v1": 233.548,
+        "v2": 233.488,
+        "v3": 231.792,
+        "slave_id": 13.0
+      },
+      {
+        "p_total_w": 751.0,
+        "kwh_total": 8809.84,
+        "i1": 0.2,
+        "p3_w": 0.0,
+        "description": "aux_loads",
+        "i2": 3.147,
+        "p2_w": 723.132,
+        "i3": 0.0,
+        "p1_w": 0.0,
+        "freq_hz": 51.5,
+        "v1": 233.691,
+        "v2": 233.623,
+        "v3": 231.779,
+        "slave_id": 14.0
+      },
+      {
+        "p_total_w": 13251.4,
+        "kwh_total": 20173.561,
+        "i1": 20.369,
+        "p3_w": 4378.291,
+        "description": "micro_inv",
+        "i2": 20.406,
+        "p2_w": 4405.678,
+        "i3": 20.358,
+        "p1_w": 4388.824,
+        "freq_hz": 51.5,
+        "v1": 233.631,
+        "v2": 233.632,
+        "v3": 231.826,
+        "slave_id": 15.0
+      }
+    ],
+    "gateway": {
+      "firmware": "m300-taveuni-1.0",
+      "gateway_id": "M300-TAVEUNI-001"
+    },
+    "irradiance_meters": [
+      {
+        "slave_id": 30.0,
+        "irradiance_w_per_m2": 0.0
+      }
+    ],
+    "gateway_id": "M300-TAVEUNI-001",
+    "inverters": [
+      {
+        "p_total_w": 9647.0,
+        "pv1_v": 642.7,
+        "pv1_w": 4180.0,
+        "pv2_v": 806.0,
+        "pv2_w": 10770.0,
+        "pv3_v": 753.8,
+        "pv3_w": 5700.0,
+        "pv4_v": 807.5,
+        "pv4_w": 5610.0,
+        "battery_soc2": 52.0,
+        "battery_soc": 52.0,
+        "freq_hz": 51.5,
+        "pv1_i": 6.5,
+        "battery_power_w": -7780.0,
+        "pv2_i": 13.3,
+        "pv3_i": 7.6,
+        "pv4_i": 6.9,
+        "battery_current_a": -14.56,
+        "slave_id": 1.0,
+        "status": "running"
+      },
+      {
+        "p_total_w": 9030.0,
+        "pv1_v": 797.8,
+        "pv1_w": 5360.0,
+        "pv2_v": 752.6,
+        "pv2_w": 5750.0,
+        "pv3_v": 757.2,
+        "pv3_w": 5670.0,
+        "pv4_v": 758.0,
+        "pv4_w": 5690.0,
+        "battery_soc": 72.0,
+        "freq_hz": 51.5,
+        "pv1_i": 6.7,
+        "battery_power_w": -12440.0,
+        "pv2_i": 7.6,
+        "pv3_i": 7.5,
+        "pv4_i": 7.4,
+        "battery_current_a": -23.15,
+        "slave_id": 2.0,
+        "status": "running"
+      },
+      {
+        "p_total_w": 10660.0,
+        "pv1_v": 794.7,
+        "pv1_w": 10630.0,
+        "pv2_v": 753.3,
+        "pv2_w": 5710.0,
+        "pv3_v": 0.0,
+        "pv3_w": 0.0,
+        "pv4_v": 849.9,
+        "pv4_w": 5210.0,
+        "battery_soc": 66.0,
+        "freq_hz": 51.5,
+        "pv1_i": 13.3,
+        "battery_power_w": -11250.0,
+        "pv2_i": 7.6,
+        "pv3_i": 0.0,
+        "pv4_i": 6.1,
+        "battery_current_a": -20.95,
+        "slave_id": 3.0,
+        "status": "running"
+      }
+    ],
+    "ts_epoch_ms": 1787189377498.0
+  },
+  {
+    "ac_units": [
+      {
+        "temperature_c": 0.0,
+        "slave_id": 21.0,
+        "status": "ok"
+      },
+      {
+        "temperature_c": 0.0,
+        "slave_id": 22.0,
+        "status": "ok"
+      }
+    ],
+    "client": {
+      "client_email": "allan@paradiseinfiji.com",
+      "site_id": 1.0,
+      "client_name": "Paradise Resort",
+      "client_id": 1.0
+    },
+    "timestamp": {
+      "ts_epoch_ms": 1787191176838.0
+    },
+    "meters": [
+      {
+        "p_total_w": 0.0,
+        "kwh_total": 62527.0,
+        "i1": 0.0,
+        "p3_w": 0.0,
+        "description": "gen_meter",
+        "i2": 0.0,
+        "p2_w": 0.0,
+        "i3": 0.0,
+        "p1_w": 0.0,
+        "freq_hz": 0.0,
+        "tariff": {
+          "kwh_t1": 48471.969,
+          "kwh_t2": 14055.134
+        },
+        "v1": 0.0,
+        "v2": 0.0,
+        "v3": 0.0,
+        "slave_id": 12.0
+      },
+      {
+        "p_total_w": 55251.477,
+        "kwh_total": 248185.0,
+        "i1": 77.272,
+        "p3_w": 19084.049,
+        "description": "load_meter",
+        "i2": 68.048,
+        "p2_w": 16326.066,
+        "i3": 81.009,
+        "p1_w": 18565.188,
+        "tariff": {
+          "kwh_t1": 131257.406,
+          "kwh_t2": 116927.758
+        },
+        "v1": 232.366,
+        "v2": 232.473,
+        "v3": 230.618,
+        "slave_id": 13.0
+      },
+      {
+        "p_total_w": 746.5,
+        "kwh_total": 8810.42,
+        "i1": 0.202,
+        "p3_w": 0.0,
+        "description": "aux_loads",
+        "i2": 3.125,
+        "p2_w": 716.46,
+        "i3": 0.0,
+        "p1_w": 0.0,
+        "freq_hz": 51.5,
+        "v1": 232.886,
+        "v2": 232.709,
+        "v3": 230.965,
+        "slave_id": 14.0
+      },
+      {
+        "p_total_w": 23760.1,
+        "kwh_total": 20182.84,
+        "i1": 36.977,
+        "p3_w": 7959.54,
+        "description": "micro_inv",
+        "i2": 37.028,
+        "p2_w": 8034.152,
+        "i3": 36.945,
+        "p1_w": 8025.023,
+        "freq_hz": 51.5,
+        "v1": 232.873,
+        "v2": 232.821,
+        "v3": 231.055,
+        "slave_id": 15.0
+      }
+    ],
+    "gateway": {
+      "firmware": "m300-taveuni-1.0",
+      "gateway_id": "M300-TAVEUNI-001"
+    },
+    "irradiance_meters": [
+      {
+        "slave_id": 30.0,
+        "irradiance_w_per_m2": 0.0
+      }
+    ],
+    "gateway_id": "M300-TAVEUNI-001",
+    "inverters": [
+      {
+        "p_total_w": 9865.0,
+        "pv1_v": 639.0,
+        "pv1_w": 8020.0,
+        "pv2_v": 813.1,
+        "pv2_w": 20460.0,
+        "pv3_v": 748.1,
+        "pv3_w": 11440.0,
+        "pv4_v": 787.4,
+        "pv4_w": 10500.0,
+        "battery_soc2": 55.0,
+        "battery_soc": 55.0,
+        "freq_hz": 51.5,
+        "pv1_i": 12.5,
+        "battery_power_w": -20290.0,
+        "pv2_i": 25.1,
+        "pv3_i": 15.1,
+        "pv4_i": 13.2,
+        "battery_current_a": -37.64,
+        "slave_id": 1.0,
+        "status": "running"
+      },
+      {
+        "p_total_w": 8059.0,
+        "pv1_v": 830.9,
+        "pv1_w": 9700.0,
+        "pv2_v": 808.3,
+        "pv2_w": 7940.0,
+        "pv3_v": 820.4,
+        "pv3_w": 8910.0,
+        "pv4_v": 805.9,
+        "pv4_w": 7690.0,
+        "battery_soc": 77.0,
+        "freq_hz": 51.5,
+        "pv1_i": 11.7,
+        "battery_power_w": -27170.0,
+        "pv2_i": 9.9,
+        "pv3_i": 10.7,
+        "pv4_i": 9.5,
+        "battery_current_a": -50.01,
+        "slave_id": 2.0,
+        "status": "running"
+      },
+      {
+        "p_total_w": 8006.0,
+        "pv1_v": 836.8,
+        "pv1_w": 18280.0,
+        "pv2_v": 831.7,
+        "pv2_w": 8670.0,
+        "pv3_v": 0.0,
+        "pv3_w": 0.0,
+        "pv4_v": 862.6,
+        "pv4_w": 8890.0,
+        "battery_soc": 71.0,
+        "freq_hz": 51.5,
+        "pv1_i": 21.7,
+        "battery_power_w": -25330.0,
+        "pv2_i": 9.9,
+        "pv3_i": 0.0,
+        "pv4_i": 10.0,
+        "battery_current_a": -46.67,
+        "slave_id": 3.0,
+        "status": "running"
+      }
+    ],
+    "ts_epoch_ms": 1787191177509.0
+  },
+  {
+    "ac_units": [
+      {
+        "temperature_c": 0.0,
+        "slave_id": 21.0,
+        "status": "ok"
+      },
+      {
+        "temperature_c": 0.0,
+        "slave_id": 22.0,
+        "status": "ok"
+      }
+    ],
+    "client": {
+      "client_email": "allan@paradiseinfiji.com",
+      "site_id": 1.0,
+      "client_name": "Paradise Resort",
+      "client_id": 1.0
+    },
+    "timestamp": {
+      "ts_epoch_ms": 1787192976714.0
+    },
+    "meters": [
+      {
+        "p_total_w": 0.0,
+        "kwh_total": 62527.0,
+        "i1": 0.0,
+        "p3_w": 0.0,
+        "description": "gen_meter",
+        "i2": 0.0,
+        "p2_w": 0.0,
+        "i3": 0.0,
+        "p1_w": 0.0,
+        "freq_hz": 0.0,
+        "tariff": {
+          "kwh_t1": 48471.969,
+          "kwh_t2": 14055.134
+        },
+        "v1": 0.0,
+        "v2": 0.0,
+        "v3": 0.0,
+        "slave_id": 12.0
+      },
+      {
+        "p_total_w": 52428.289,
+        "kwh_total": 248213.0,
+        "i1": 68.924,
+        "p3_w": 20150.178,
+        "description": "load_meter",
+        "i2": 78.702,
+        "p2_w": 16734.385,
+        "i3": 90.647,
+        "p1_w": 15653.241,
+        "tariff": {
+          "kwh_t1": 131257.406,
+          "kwh_t2": 116955.07
+        },
+        "v1": 232.958,
+        "v2": 233.021,
+        "v3": 231.152,
+        "slave_id": 13.0
+      },
+      {
+        "p_total_w": 747.7,
+        "kwh_total": 8810.94,
+        "i1": 0.202,
+        "p3_w": 0.0,
+        "description": "aux_loads",
+        "i2": 3.135,
+        "p2_w": 719.269,
+        "i3": 0.0,
+        "p1_w": 0.0,
+        "freq_hz": 51.5,
+        "v1": 233.102,
+        "v2": 233.162,
+        "v3": 230.853,
+        "slave_id": 14.0
+      },
+      {
+        "p_total_w": 15064.6,
+        "kwh_total": 20190.82,
+        "i1": 23.349,
+        "p3_w": 5010.834,
+        "description": "micro_inv",
+        "i2": 23.397,
+        "p2_w": 5052.441,
+        "i3": 23.356,
+        "p1_w": 5045.946,
+        "freq_hz": 51.5,
+        "v1": 233.182,
+        "v2": 233.102,
+        "v3": 231.335,
+        "slave_id": 15.0
+      }
+    ],
+    "gateway": {
+      "firmware": "m300-taveuni-1.0",
+      "gateway_id": "M300-TAVEUNI-001"
+    },
+    "irradiance_meters": [
+      {
+        "slave_id": 30.0,
+        "irradiance_w_per_m2": 0.0
+      }
+    ],
+    "gateway_id": "M300-TAVEUNI-001",
+    "inverters": [
+      {
+        "p_total_w": 10928.0,
+        "pv1_v": 634.2,
+        "pv1_w": 4780.0,
+        "pv2_v": 794.9,
+        "pv2_w": 12270.0,
+        "pv3_v": 755.4,
+        "pv3_w": 6600.0,
+        "pv4_v": 812.6,
+        "pv4_w": 6310.0,
+        "battery_soc2": 58.0,
+        "battery_soc": 58.0,
+        "freq_hz": 51.5,
+        "pv1_i": 7.5,
+        "battery_power_w": -9150.0,
+        "pv2_i": 15.3,
+        "pv3_i": 8.7,
+        "pv4_i": 7.7,
+        "battery_current_a": -17.07,
+        "slave_id": 1.0,
+        "status": "running"
+      },
+      {
+        "p_total_w": 11537.0,
+        "pv1_v": 798.6,
+        "pv1_w": 5940.0,
+        "pv2_v": 753.2,
+        "pv2_w": 5380.0,
+        "pv3_v": 757.8,
+        "pv3_w": 6260.0,
+        "pv4_v": 771.6,
+        "pv4_w": 5260.0,
+        "battery_soc": 80.0,
+        "freq_hz": 51.5,
+        "pv1_i": 7.4,
+        "battery_power_w": -11450.0,
+        "pv2_i": 7.1,
+        "pv3_i": 8.2,
+        "pv4_i": 6.7,
+        "battery_current_a": -21.22,
+        "slave_id": 2.0,
+        "status": "running"
+      },
+      {
+        "p_total_w": 10755.0,
+        "pv1_v": 792.3,
+        "pv1_w": 12940.0,
+        "pv2_v": 749.8,
+        "pv2_w": 6900.0,
+        "pv3_v": 0.0,
+        "pv3_w": 0.0,
+        "pv4_v": 850.0,
+        "pv4_w": 6160.0,
+        "battery_soc": 75.0,
+        "freq_hz": 51.5,
+        "pv1_i": 16.2,
+        "battery_power_w": -9780.0,
+        "pv2_i": 9.0,
+        "pv3_i": 0.0,
+        "pv4_i": 7.2,
+        "battery_current_a": -18.11,
+        "slave_id": 3.0,
+        "status": "running"
+      }
+    ],
+    "ts_epoch_ms": 1787192977491.0
+  },
+  {
+    "ac_units": [
+      {
+        "temperature_c": 0.0,
+        "slave_id": 21.0,
+        "status": "ok"
+      },
+      {
+        "temperature_c": 0.0,
+        "slave_id": 22.0,
+        "status": "ok"
+      }
+    ],
+    "client": {
+      "client_email": "allan@paradiseinfiji.com",
+      "site_id": 1.0,
+      "client_name": "Paradise Resort",
+      "client_id": 1.0
+    },
+    "timestamp": {
+      "ts_epoch_ms": 1787194796252.0
+    },
+    "meters": [
+      {
+        "p_total_w": 48998.2,
+        "kwh_total": 62541.0,
+        "i1": 84.979,
+        "p3_w": 15912.156,
+        "description": "gen_meter",
+        "i2": 80.195,
+        "p2_w": 15679.588,
+        "i3": 77.425,
+        "p1_w": 17261.781,
+        "freq_hz": 49.91,
+        "tariff": {
+          "kwh_t1": 48471.969,
+          "kwh_t2": 14069.462
+        },
+        "v1": 233.333,
+        "v2": 234.154,
+        "v3": 233.4,
+        "slave_id": 12.0
+      },
+      {
+        "p_total_w": 44594.309,
+        "kwh_total": 248239.0,
+        "i1": 61.291,
+        "p3_w": 13776.218,
+        "description": "load_meter",
+        "i2": 62.075,
+        "p2_w": 13887.938,
+        "i3": 63.999,
+        "p1_w": 16855.377,
+        "tariff": {
+          "kwh_t1": 131257.406,
+          "kwh_t2": 116981.773
+        },
+        "v1": 233.613,
+        "v2": 233.325,
+        "v3": 233.089,
+        "slave_id": 13.0
+      },
+      {
+        "p_total_w": 734.2,
+        "kwh_total": 8811.44,
+        "i1": 0.21,
+        "p3_w": 0.0,
+        "description": "aux_loads",
+        "i2": 3.168,
+        "p2_w": 707.331,
+        "i3": 0.0,
+        "p1_w": 0.0,
+        "freq_hz": 49.91,
+        "v1": 232.079,
+        "v2": 233.365,
+        "v3": 233.106,
+        "slave_id": 14.0
+      },
+      {
+        "p_total_w": 6397.1,
+        "kwh_total": 20196.16,
+        "i1": 9.295,
+        "p3_w": 2136.565,
+        "description": "micro_inv",
+        "i2": 9.275,
+        "p2_w": 2137.794,
+        "i3": 9.303,
+        "p1_w": 2131.299,
+        "freq_hz": 49.89,
+        "v1": 232.982,
+        "v2": 233.918,
+        "v3": 233.248,
+        "slave_id": 15.0
+      }
+    ],
+    "gateway": {
+      "firmware": "m300-taveuni-1.0",
+      "gateway_id": "M300-TAVEUNI-001"
+    },
+    "irradiance_meters": [
+      {
+        "slave_id": 30.0,
+        "irradiance_w_per_m2": 0.0
+      }
+    ],
+    "gateway_id": "M300-TAVEUNI-001",
+    "inverters": [
+      {
+        "p_total_w": -183.0,
+        "pv1_v": 633.6,
+        "pv1_w": 2110.0,
+        "pv2_v": 800.8,
+        "pv2_w": 5360.0,
+        "pv3_v": 740.3,
+        "pv3_w": 2880.0,
+        "pv4_v": 787.5,
+        "pv4_w": 2850.0,
+        "battery_soc2": 61.0,
+        "battery_soc": 61.0,
+        "freq_hz": 49.87,
+        "pv1_i": 3.3,
+        "battery_power_w": -6330.0,
+        "pv2_i": 6.7,
+        "pv3_i": 3.8,
+        "pv4_i": 3.6,
+        "battery_current_a": -11.81,
+        "slave_id": 1.0,
+        "status": "running"
+      },
+      {
+        "p_total_w": -60.0,
+        "pv1_v": 797.5,
+        "pv1_w": 2670.0,
+        "pv2_v": 733.2,
+        "pv2_w": 2570.0,
+        "pv3_v": 752.8,
+        "pv3_w": 2800.0,
+        "pv4_v": 739.8,
+        "pv4_w": 2610.0,
+        "battery_soc": 84.0,
+        "freq_hz": 49.83,
+        "pv1_i": 3.3,
+        "battery_power_w": -10170.0,
+        "pv2_i": 3.5,
+        "pv3_i": 3.7,
+        "pv4_i": 3.5,
+        "battery_current_a": -18.85,
+        "slave_id": 2.0,
+        "status": "running"
+      },
+      {
+        "p_total_w": -80.0,
+        "pv1_v": 797.9,
+        "pv1_w": 5400.0,
+        "pv2_v": 750.2,
+        "pv2_w": 3090.0,
+        "pv3_v": 0.0,
+        "pv3_w": 0.0,
+        "pv4_v": 849.8,
+        "pv4_w": 2650.0,
+        "battery_soc": 79.0,
+        "freq_hz": 49.87,
+        "pv1_i": 6.7,
+        "battery_power_w": -9980.0,
+        "pv2_i": 4.0,
+        "pv3_i": 0.0,
+        "pv4_i": 3.1,
+        "battery_current_a": -18.47,
+        "slave_id": 3.0,
+        "status": "running"
+      }
+    ],
+    "ts_epoch_ms": 1787194797156.0
+  },
+  {
+    "ac_units": [
+      {
+        "temperature_c": 0.0,
+        "slave_id": 21.0,
+        "status": "ok"
+      },
+      {
+        "temperature_c": 0.0,
+        "slave_id": 22.0,
+        "status": "ok"
+      }
+    ],
+    "client": {
+      "client_email": "allan@paradiseinfiji.com",
+      "site_id": 1.0,
+      "client_name": "Paradise Resort",
+      "client_id": 1.0
+    },
+    "timestamp": {
+      "ts_epoch_ms": 1787196593420.0
+    },
+    "meters": [
+      {
+        "p_total_w": 48190.6,
+        "kwh_total": 62563.0,
+        "i1": 92.508,
+        "p3_w": 14790.24,
+        "description": "gen_meter",
+        "i2": 75.861,
+        "p2_w": 14765.953,
+        "i3": 72.863,
+        "p1_w": 18904.766,
+        "freq_hz": 49.9,
+        "tariff": {
+          "kwh_t1": 48471.969,
+          "kwh_t2": 14091.291
+        },
+        "v1": 232.771,
+        "v2": 233.585,
+        "v3": 234.143,
+        "slave_id": 12.0
+      },
+      {
+        "p_total_w": 54392.012,
+        "kwh_total": 248264.0,
+        "i1": 95.698,
+        "p3_w": 16560.105,
+        "description": "load_meter",
+        "i2": 73.934,
+        "p2_w": 16311.789,
+        "i3": 77.44,
+        "p1_w": 21617.41,
+        "tariff": {
+          "kwh_t1": 131257.406,
+          "kwh_t2": 117006.68
+        },
+        "v1": 233.411,
+        "v2": 232.064,
+        "v3": 233.879,
+        "slave_id": 13.0
+      },
+      {
+        "p_total_w": 737.0,
+        "kwh_total": 8811.96,
+        "i1": 0.208,
+        "p3_w": 0.0,
+        "description": "aux_loads",
+        "i2": 3.174,
+        "p2_w": 709.614,
+        "i3": 0.0,
+        "p1_w": 0.0,
+        "freq_hz": 49.9,
+        "v1": 232.136,
+        "v2": 233.297,
+        "v3": 233.818,
+        "slave_id": 14.0
+      },
+      {
+        "p_total_w": 7882.6,
+        "kwh_total": 20199.699,
+        "i1": 11.368,
+        "p3_w": 2626.904,
+        "description": "micro_inv",
+        "i2": 11.353,
+        "p2_w": 2627.782,
+        "i3": 11.369,
+        "p1_w": 2623.744,
+        "freq_hz": 49.9,
+        "v1": 232.937,
+        "v2": 233.346,
+        "v3": 233.431,
+        "slave_id": 15.0
+      }
+    ],
+    "gateway": {
+      "firmware": "m300-taveuni-1.0",
+      "gateway_id": "M300-TAVEUNI-001"
+    },
+    "irradiance_meters": [
+      {
+        "slave_id": 30.0,
+        "irradiance_w_per_m2": 0.0
+      }
+    ],
+    "gateway_id": "M300-TAVEUNI-001",
+    "inverters": [
+      {
+        "p_total_w": -176.0,
+        "pv1_v": 638.6,
+        "pv1_w": 2510.0,
+        "pv2_v": 804.7,
+        "pv2_w": 6480.0,
+        "pv3_v": 765.3,
+        "pv3_w": 3400.0,
+        "pv4_v": 802.5,
+        "pv4_w": 3420.0,
+        "battery_soc2": 63.0,
+        "battery_soc": 63.0,
+        "freq_hz": 49.87,
+        "pv1_i": 3.9,
+        "battery_power_w": -7560.0,
+        "pv2_i": 8.0,
+        "pv3_i": 4.4,
+        "pv4_i": 4.2,
+        "battery_current_a": -14.08,
+        "slave_id": 1.0,
+        "status": "running"
+      },
+      {
+        "p_total_w": -97.0,
+        "pv1_v": 798.6,
+        "pv1_w": 3210.0,
+        "pv2_v": 743.2,
+        "pv2_w": 3300.0,
+        "pv3_v": 757.8,
+        "pv3_w": 3350.0,
+        "pv4_v": 756.9,
+        "pv4_w": 3360.0,
+        "battery_soc": 88.0,
+        "freq_hz": 49.87,
+        "pv1_i": 4.0,
+        "battery_power_w": -12610.0,
+        "pv2_i": 4.4,
+        "pv3_i": 4.4,
+        "pv4_i": 4.4,
+        "battery_current_a": -23.34,
+        "slave_id": 2.0,
+        "status": "running"
+      },
+      {
+        "p_total_w": -82.0,
+        "pv1_v": 808.0,
+        "pv1_w": 6330.0,
+        "pv2_v": 750.2,
+        "pv2_w": 3460.0,
+        "pv3_v": 0.0,
+        "pv3_w": 0.0,
+        "pv4_v": 849.8,
+        "pv4_w": 3160.0,
+        "battery_soc": 82.0,
+        "freq_hz": 49.87,
+        "pv1_i": 7.8,
+        "battery_power_w": -12230.0,
+        "pv2_i": 4.6,
+        "pv3_i": 0.0,
+        "pv4_i": 3.7,
+        "battery_current_a": -22.59,
+        "slave_id": 3.0,
+        "status": "running"
+      }
+    ],
+    "ts_epoch_ms": 1787196594222.0
+  },
+  {
+    "ac_units": [
+      {
+        "temperature_c": 0.0,
+        "slave_id": 21.0,
+        "status": "ok"
+      },
+      {
+        "temperature_c": 0.0,
+        "slave_id": 22.0,
+        "status": "ok"
+      }
+    ],
+    "client": {
+      "client_email": "allan@paradiseinfiji.com",
+      "site_id": 1.0,
+      "client_name": "Paradise Resort",
+      "client_id": 1.0
+    },
+    "timestamp": {
+      "ts_epoch_ms": 1787198393677.0
+    },
+    "meters": [
+      {
+        "p_total_w": 48125.1,
+        "kwh_total": 62587.0,
+        "i1": 81.006,
+        "p3_w": 16363.748,
+        "description": "gen_meter",
+        "i2": 85.5,
+        "p2_w": 17504.799,
+        "i3": 78.848,
+        "p1_w": 16276.609,
+        "freq_hz": 49.91,
+        "tariff": {
+          "kwh_t1": 48471.969,
+          "kwh_t2": 14115.134
+        },
+        "v1": 234.892,
+        "v2": 233.496,
+        "v3": 233.622,
+        "slave_id": 12.0
+      },
+      {
+        "p_total_w": 52722.234,
+        "kwh_total": 248291.0,
+        "i1": 81.072,
+        "p3_w": 15820.454,
+        "description": "load_meter",
+        "i2": 86.8,
+        "p2_w": 19167.949,
+        "i3": 74.298,
+        "p1_w": 18040.146,
+        "tariff": {
+          "kwh_t1": 131257.406,
+          "kwh_t2": 117033.18
+        },
+        "v1": 232.908,
+        "v2": 234.64,
+        "v3": 233.95,
+        "slave_id": 13.0
+      },
+      {
+        "p_total_w": 730.9,
+        "kwh_total": 8812.52,
+        "i1": 0.208,
+        "p3_w": 0.0,
+        "description": "aux_loads",
+        "i2": 3.162,
+        "p2_w": 705.927,
+        "i3": 0.0,
+        "p1_w": 0.0,
+        "freq_hz": 49.85,
+        "v1": 234.635,
+        "v2": 232.981,
+        "v3": 233.739,
+        "slave_id": 14.0
+      },
+      {
+        "p_total_w": 7140.9,
+        "kwh_total": 20203.061,
+        "i1": 10.304,
+        "p3_w": 2374.625,
+        "description": "micro_inv",
+        "i2": 10.299,
+        "p2_w": 2371.465,
+        "i3": 10.309,
+        "p1_w": 2377.609,
+        "freq_hz": 50.03,
+        "v1": 234.268,
+        "v2": 232.953,
+        "v3": 233.218,
+        "slave_id": 15.0
+      }
+    ],
+    "gateway": {
+      "firmware": "m300-taveuni-1.0",
+      "gateway_id": "M300-TAVEUNI-001"
+    },
+    "irradiance_meters": [
+      {
+        "slave_id": 30.0,
+        "irradiance_w_per_m2": 0.0
+      }
+    ],
+    "gateway_id": "M300-TAVEUNI-001",
+    "inverters": [
+      {
+        "p_total_w": -182.0,
+        "pv1_v": 633.5,
+        "pv1_w": 2310.0,
+        "pv2_v": 804.7,
+        "pv2_w": 5870.0,
+        "pv3_v": 735.3,
+        "pv3_w": 3140.0,
+        "pv4_v": 811.6,
+        "pv4_w": 3140.0,
+        "battery_soc2": 65.0,
+        "battery_soc": 65.0,
+        "freq_hz": 49.87,
+        "pv1_i": 3.6,
+        "battery_power_w": -6920.0,
+        "pv2_i": 7.3,
+        "pv3_i": 4.2,
+        "pv4_i": 3.8,
+        "battery_current_a": -12.89,
+        "slave_id": 1.0,
+        "status": "running"
+      },
+      {
+        "p_total_w": -80.0,
+        "pv1_v": 803.6,
+        "pv1_w": 2920.0,
+        "pv2_v": 748.3,
+        "pv2_w": 2820.0,
+        "pv3_v": 732.8,
+        "pv3_w": 3020.0,
+        "pv4_v": 749.9,
+        "pv4_w": 2860.0,
+        "battery_soc": 91.0,
+        "freq_hz": 49.91,
+        "pv1_i": 3.6,
+        "battery_power_w": -10990.0,
+        "pv2_i": 3.7,
+        "pv3_i": 4.1,
+        "pv4_i": 3.8,
+        "battery_current_a": -20.34,
+        "slave_id": 2.0,
+        "status": "running"
+      },
+      {
+        "p_total_w": -57.0,
+        "pv1_v": 802.9,
+        "pv1_w": 5780.0,
+        "pv2_v": 745.2,
+        "pv2_w": 3250.0,
+        "pv3_v": 0.0,
+        "pv3_w": 0.0,
+        "pv4_v": 849.9,
+        "pv4_w": 2870.0,
+        "battery_soc": 86.0,
+        "freq_hz": 49.87,
+        "pv1_i": 7.2,
+        "battery_power_w": -11070.0,
+        "pv2_i": 4.3,
+        "pv3_i": 0.0,
+        "pv4_i": 3.4,
+        "battery_current_a": -20.46,
+        "slave_id": 3.0,
+        "status": "running"
+      }
+    ],
+    "ts_epoch_ms": 1787198394216.0
+  },
+  {
+    "ac_units": [
+      {
+        "temperature_c": 0.0,
+        "slave_id": 21.0,
+        "status": "ok"
+      },
+      {
+        "temperature_c": 0.0,
+        "slave_id": 22.0,
+        "status": "ok"
+      }
+    ],
+    "client": {
+      "client_email": "allan@paradiseinfiji.com",
+      "site_id": 1.0,
+      "client_name": "Paradise Resort",
+      "client_id": 1.0
+    },
+    "timestamp": {
+      "ts_epoch_ms": 1787200193947.0
+    },
+    "meters": [
+      {
+        "p_total_w": 55911.6,
+        "kwh_total": 62612.0,
+        "i1": 101.978,
+        "p3_w": 16909.398,
+        "description": "gen_meter",
+        "i2": 89.759,
+        "p2_w": 18370.303,
+        "i3": 80.912,
+        "p1_w": 20739.691,
+        "freq_hz": 49.9,
+        "tariff": {
+          "kwh_t1": 48471.969,
+          "kwh_t2": 14139.9
+        },
+        "v1": 232.745,
+        "v2": 233.083,
+        "v3": 234.642,
+        "slave_id": 12.0
+      },
+      {
+        "p_total_w": 57412.438,
+        "kwh_total": 248317.0,
+        "i1": 98.217,
+        "p3_w": 16875.838,
+        "description": "load_meter",
+        "i2": 82.335,
+        "p2_w": 18235.178,
+        "i3": 78.246,
+        "p1_w": 22028.084,
+        "tariff": {
+          "kwh_t1": 131257.406,
+          "kwh_t2": 117059.695
+        },
+        "v1": 232.734,
+        "v2": 231.837,
+        "v3": 233.94,
+        "slave_id": 13.0
+      },
+      {
+        "p_total_w": 730.5,
+        "kwh_total": 8812.94,
+        "i1": 0.219,
+        "p3_w": 0.0,
+        "description": "aux_loads",
+        "i2": 3.167,
+        "p2_w": 705.225,
+        "i3": 0.0,
+        "p1_w": 0.0,
+        "freq_hz": 49.88,
+        "v1": 232.556,
+        "v2": 232.167,
+        "v3": 234.916,
+        "slave_id": 14.0
+      },
+      {
+        "p_total_w": 3907.4,
+        "kwh_total": 20205.461,
+        "i1": 5.788,
+        "p3_w": 1306.693,
+        "description": "micro_inv",
+        "i2": 5.78,
+        "p2_w": 1307.922,
+        "i3": 5.824,
+        "p1_w": 1295.457,
+        "freq_hz": 49.9,
+        "v1": 232.203,
+        "v2": 232.791,
+        "v3": 232.649,
+        "slave_id": 15.0
+      }
+    ],
+    "gateway": {
+      "firmware": "m300-taveuni-1.0",
+      "gateway_id": "M300-TAVEUNI-001"
+    },
+    "irradiance_meters": [
+      {
+        "slave_id": 30.0,
+        "irradiance_w_per_m2": 0.0
+      }
+    ],
+    "gateway_id": "M300-TAVEUNI-001",
+    "inverters": [
+      {
+        "p_total_w": -168.0,
+        "pv1_v": 625.4,
+        "pv1_w": 1330.0,
+        "pv2_v": 794.8,
+        "pv2_w": 3350.0,
+        "pv3_v": 740.4,
+        "pv3_w": 1780.0,
+        "pv4_v": 787.5,
+        "pv4_w": 1820.0,
+        "battery_soc2": 67.0,
+        "battery_soc": 67.0,
+        "freq_hz": 49.87,
+        "pv1_i": 2.1,
+        "battery_power_w": -3800.0,
+        "pv2_i": 4.2,
+        "pv3_i": 2.4,
+        "pv4_i": 2.3,
+        "battery_current_a": -7.1,
+        "slave_id": 1.0,
+        "status": "running"
+      },
+      {
+        "p_total_w": -108.0,
+        "pv1_v": 783.5,
+        "pv1_w": 1680.0,
+        "pv2_v": 728.1,
+        "pv2_w": 1650.0,
+        "pv3_v": 742.7,
+        "pv3_w": 1760.0,
+        "pv4_v": 749.8,
+        "pv4_w": 1710.0,
+        "battery_soc": 94.0,
+        "freq_hz": 49.87,
+        "pv1_i": 2.1,
+        "battery_power_w": -6280.0,
+        "pv2_i": 2.2,
+        "pv3_i": 2.3,
+        "pv4_i": 2.2,
+        "battery_current_a": -11.67,
+        "slave_id": 2.0,
+        "status": "running"
+      },
+      {
+        "p_total_w": -77.0,
+        "pv1_v": 791.1,
+        "pv1_w": 3290.0,
+        "pv2_v": 740.2,
+        "pv2_w": 1850.0,
+        "pv3_v": 0.0,
+        "pv3_w": 0.0,
+        "pv4_v": 849.9,
+        "pv4_w": 1600.0,
+        "battery_soc": 88.0,
+        "freq_hz": 49.87,
+        "pv1_i": 4.1,
+        "battery_power_w": -6080.0,
+        "pv2_i": 2.5,
+        "pv3_i": 0.0,
+        "pv4_i": 1.9,
+        "battery_current_a": -11.27,
+        "slave_id": 3.0,
+        "status": "running"
+      }
+    ],
+    "ts_epoch_ms": 1787200194226.0
+  },
+  {
+    "ac_units": [
+      {
+        "temperature_c": 0.0,
+        "slave_id": 21.0,
+        "status": "ok"
+      },
+      {
+        "temperature_c": 0.0,
+        "slave_id": 22.0,
+        "status": "ok"
+      }
+    ],
+    "client": {
+      "client_email": "allan@paradiseinfiji.com",
+      "site_id": 1.0,
+      "client_name": "Paradise Resort",
+      "client_id": 1.0
+    },
+    "timestamp": {
+      "ts_epoch_ms": 1787201993956.0
+    },
+    "meters": [
+      {
+        "p_total_w": 60223.6,
+        "kwh_total": 62639.0,
+        "i1": 95.782,
+        "p3_w": 17919.15,
+        "description": "gen_meter",
+        "i2": 102.686,
+        "p2_w": 22058.699,
+        "i3": 85.888,
+        "p1_w": 20311.502,
+        "freq_hz": 49.89,
+        "tariff": {
+          "kwh_t1": 48495.172,
+          "kwh_t2": 14143.431
+        },
+        "v1": 235.112,
+        "v2": 232.55,
+        "v3": 234.963,
+        "slave_id": 12.0
+      },
+      {
+        "p_total_w": 58152.094,
+        "kwh_total": 248344.0,
+        "i1": 93.64,
+        "p3_w": 16259.387,
+        "description": "load_meter",
+        "i2": 95.197,
+        "p2_w": 21223.813,
+        "i3": 79.443,
+        "p1_w": 21219.396,
+        "tariff": {
+          "kwh_t1": 131281.094,
+          "kwh_t2": 117063.32
+        },
+        "v1": 231.792,
+        "v2": 234.266,
+        "v3": 234.559,
+        "slave_id": 13.0
+      },
+      {
+        "p_total_w": 2000.9,
+        "kwh_total": 8813.4,
+        "i1": 0.309,
+        "p3_w": 0.0,
+        "description": "aux_loads",
+        "i2": 8.757,
+        "p2_w": 1952.403,
+        "i3": 0.219,
+        "p1_w": 53.019,
+        "freq_hz": 49.89,
+        "v1": 234.72,
+        "v2": 232.086,
+        "v3": 234.844,
+        "slave_id": 14.0
+      },
+      {
+        "p_total_w": 2093.0,
+        "kwh_total": 20206.98,
+        "i1": 3.275,
+        "p3_w": 708.911,
+        "description": "micro_inv",
+        "i2": 3.33,
+        "p2_w": 700.66,
+        "i3": 3.311,
+        "p1_w": 684.333,
+        "freq_hz": 49.8,
+        "v1": 234.689,
+        "v2": 232.152,
+        "v3": 234.834,
+        "slave_id": 15.0
+      }
+    ],
+    "gateway": {
+      "firmware": "m300-taveuni-1.0",
+      "gateway_id": "M300-TAVEUNI-001"
+    },
+    "irradiance_meters": [
+      {
+        "slave_id": 30.0,
+        "irradiance_w_per_m2": 0.0
+      }
+    ],
+    "gateway_id": "M300-TAVEUNI-001",
+    "inverters": [
+      {
+        "p_total_w": -204.0,
+        "pv1_v": 626.4,
+        "pv1_w": 780.0,
+        "pv2_v": 779.6,
+        "pv2_w": 1920.0,
+        "pv3_v": 726.2,
+        "pv3_w": 1020.0,
+        "pv4_v": 792.0,
+        "pv4_w": 1110.0,
+        "battery_soc2": 68.0,
+        "battery_soc": 68.0,
+        "freq_hz": 49.91,
+        "pv1_i": 1.2,
+        "battery_power_w": -2130.0,
+        "pv2_i": 2.4,
+        "pv3_i": 1.3,
+        "pv4_i": 1.4,
+        "battery_current_a": -3.98,
+        "slave_id": 1.0,
+        "status": "running"
+      },
+      {
+        "p_total_w": -96.0,
+        "pv1_v": 754.5,
+        "pv1_w": 980.0,
+        "pv2_v": 707.5,
+        "pv2_w": 970.0,
+        "pv3_v": 732.8,
+        "pv3_w": 1010.0,
+        "pv4_v": 719.8,
+        "pv4_w": 1070.0,
+        "battery_soc": 95.0,
+        "freq_hz": 49.91,
+        "pv1_i": 1.3,
+        "battery_power_w": -3590.0,
+        "pv2_i": 1.4,
+        "pv3_i": 1.4,
+        "pv4_i": 1.4,
+        "battery_current_a": -6.68,
+        "slave_id": 2.0,
+        "status": "running"
+      },
+      {
+        "p_total_w": -84.0,
+        "pv1_v": 773.1,
+        "pv1_w": 1890.0,
+        "pv2_v": 737.4,
+        "pv2_w": 1090.0,
+        "pv3_v": 0.0,
+        "pv3_w": 0.0,
+        "pv4_v": 849.9,
+        "pv4_w": 920.0,
+        "battery_soc": 90.0,
+        "freq_hz": 49.91,
+        "pv1_i": 2.4,
+        "battery_power_w": -3250.0,
+        "pv2_i": 1.4,
+        "pv3_i": 0.0,
+        "pv4_i": 1.0,
+        "battery_current_a": -6.04,
+        "slave_id": 3.0,
+        "status": "running"
+      }
+    ],
+    "ts_epoch_ms": 1787201994169.0
+  },
+  {
+    "ac_units": [
+      {
+        "temperature_c": 0.0,
+        "slave_id": 21.0,
+        "status": "ok"
+      },
+      {
+        "temperature_c": 0.0,
+        "slave_id": 22.0,
+        "status": "ok"
+      }
+    ],
+    "client": {
+      "client_email": "allan@paradiseinfiji.com",
+      "site_id": 1.0,
+      "client_name": "Paradise Resort",
+      "client_id": 1.0
+    },
+    "timestamp": {
+      "ts_epoch_ms": 1787203793952.0
+    },
+    "meters": [
+      {
+        "p_total_w": 47307.7,
+        "kwh_total": 62664.0,
+        "i1": 85.752,
+        "p3_w": 15718.596,
+        "description": "gen_meter",
+        "i2": 73.37,
+        "p2_w": 14630.094,
+        "i3": 77.055,
+        "p1_w": 17135.93,
+        "freq_hz": 49.88,
+        "tariff": {
+          "kwh_t1": 48520.594,
+          "kwh_t2": 14143.431
+        },
+        "v1": 233.314,
+        "v2": 233.322,
+        "v3": 233.523,
+        "slave_id": 12.0
+      },
+      {
+        "p_total_w": 47151.516,
+        "kwh_total": 248370.0,
+        "i1": 74.237,
+        "p3_w": 16402.02,
+        "description": "load_meter",
+        "i2": 61.249,
+        "p2_w": 12997.412,
+        "i3": 75.637,
+        "p1_w": 18132.584,
+        "tariff": {
+          "kwh_t1": 131306.516,
+          "kwh_t2": 117063.32
+        },
+        "v1": 233.319,
+        "v2": 232.769,
+        "v3": 232.737,
+        "slave_id": 13.0
+      },
+      {
+        "p_total_w": 736.3,
+        "kwh_total": 8813.82,
+        "i1": 0.215,
+        "p3_w": 0.0,
+        "description": "aux_loads",
+        "i2": 3.177,
+        "p2_w": 709.087,
+        "i3": 0.0,
+        "p1_w": 0.0,
+        "freq_hz": 49.89,
+        "v1": 232.587,
+        "v2": 233.268,
+        "v3": 233.008,
+        "slave_id": 14.0
+      },
+      {
+        "p_total_w": 309.7,
+        "kwh_total": 20207.58,
+        "i1": 1.4,
+        "p3_w": 113.061,
+        "description": "micro_inv",
+        "i2": 1.351,
+        "p2_w": 107.618,
+        "i3": 1.387,
+        "p1_w": 90.238,
+        "freq_hz": 49.89,
+        "v1": 232.69,
+        "v2": 232.986,
+        "v3": 233.098,
+        "slave_id": 15.0
+      }
+    ],
+    "gateway": {
+      "firmware": "m300-taveuni-1.0",
+      "gateway_id": "M300-TAVEUNI-001"
+    },
+    "irradiance_meters": [
+      {
+        "slave_id": 30.0,
+        "irradiance_w_per_m2": 0.0
+      }
+    ],
+    "gateway_id": "M300-TAVEUNI-001",
+    "inverters": [
+      {
+        "p_total_w": -181.0,
+        "pv1_v": 147.7,
+        "pv1_w": 60.0,
+        "pv2_v": 723.6,
+        "pv2_w": 460.0,
+        "pv3_v": 681.0,
+        "pv3_w": 290.0,
+        "pv4_v": 771.6,
+        "pv4_w": 400.0,
+        "battery_soc2": 68.0,
+        "battery_soc": 68.0,
+        "freq_hz": 49.87,
+        "pv1_i": 0.4,
+        "battery_power_w": -370.0,
+        "pv2_i": 0.6,
+        "pv3_i": 0.4,
+        "pv4_i": 0.5,
+        "battery_current_a": -0.7,
+        "slave_id": 1.0,
+        "status": "running"
+      },
+      {
+        "p_total_w": -95.0,
+        "pv1_v": 746.8,
+        "pv1_w": 270.0,
+        "pv2_v": 706.0,
+        "pv2_w": 270.0,
+        "pv3_v": 657.0,
+        "pv3_w": 290.0,
+        "pv4_v": 647.8,
+        "pv4_w": 350.0,
+        "battery_soc": 96.0,
+        "freq_hz": 49.91,
+        "pv1_i": 0.3,
+        "battery_power_w": -750.0,
+        "pv2_i": 0.3,
+        "pv3_i": 0.4,
+        "pv4_i": 0.5,
+        "battery_current_a": -1.41,
+        "slave_id": 2.0,
+        "status": "running"
+      },
+      {
+        "p_total_w": -76.0,
+        "pv1_v": 742.6,
+        "pv1_w": 490.0,
+        "pv2_v": 653.3,
+        "pv2_w": 330.0,
+        "pv3_v": 0.0,
+        "pv3_w": 0.0,
+        "pv4_v": 846.5,
+        "pv4_w": 160.0,
+        "battery_soc": 90.0,
+        "freq_hz": 49.87,
+        "pv1_i": 0.6,
+        "battery_power_w": -480.0,
+        "pv2_i": 0.4,
+        "pv3_i": 0.0,
+        "pv4_i": 0.2,
+        "battery_current_a": -0.91,
+        "slave_id": 3.0,
+        "status": "running"
+      }
+    ],
+    "ts_epoch_ms": 1787203794172.0
+  },
+  {
+    "ac_units": [
+      {
+        "temperature_c": 0.0,
+        "slave_id": 21.0,
+        "status": "ok"
+      },
+      {
+        "temperature_c": 0.0,
+        "slave_id": 22.0,
+        "status": "ok"
+      }
+    ],
+    "client": {
+      "client_email": "allan@paradiseinfiji.com",
+      "site_id": 1.0,
+      "client_name": "Paradise Resort",
+      "client_id": 1.0
+    },
+    "timestamp": {
+      "ts_epoch_ms": 1787205594010.0
+    },
+    "meters": [
+      {
+        "p_total_w": 47305.6,
+        "kwh_total": 62689.0,
+        "i1": 76.699,
+        "p3_w": 15943.655,
+        "description": "gen_meter",
+        "i2": 85.282,
+        "p2_w": 17138.58,
+        "i3": 80.849,
+        "p1_w": 14219.125,
+        "freq_hz": 49.89,
+        "tariff": {
+          "kwh_t1": 48545.781,
+          "kwh_t2": 14143.431
+        },
+        "v1": 235.872,
+        "v2": 233.715,
+        "v3": 233.408,
+        "slave_id": 12.0
+      },
+      {
+        "p_total_w": 46706.992,
+        "kwh_total": 248395.0,
+        "i1": 60.527,
+        "p3_w": 16690.668,
+        "description": "load_meter",
+        "i2": 74.616,
+        "p2_w": 16792.379,
+        "i3": 75.408,
+        "p1_w": 13627.994,
+        "tariff": {
+          "kwh_t1": 131331.266,
+          "kwh_t2": 117063.32
+        },
+        "v1": 233.396,
+        "v2": 235.053,
+        "v3": 232.847,
+        "slave_id": 13.0
+      },
+      {
+        "p_total_w": 738.8,
+        "kwh_total": 8814.26,
+        "i1": 0.226,
+        "p3_w": 0.0,
+        "description": "aux_loads",
+        "i2": 3.186,
+        "p2_w": 711.018,
+        "i3": 0.0,
+        "p1_w": 0.0,
+        "freq_hz": 49.88,
+        "v1": 235.235,
+        "v2": 233.411,
+        "v3": 232.804,
+        "slave_id": 14.0
+      },
+      {
+        "p_total_w": -93.2,
+        "kwh_total": 20207.641,
+        "i1": 2.535,
+        "p3_w": 0.0,
+        "description": "micro_inv",
+        "i2": 2.764,
+        "p2_w": 0.0,
+        "i3": 2.401,
+        "p1_w": -46.348,
+        "freq_hz": 49.89,
+        "v1": 235.396,
+        "v2": 233.236,
+        "v3": 233.055,
+        "slave_id": 15.0
+      }
+    ],
+    "gateway": {
+      "firmware": "m300-taveuni-1.0",
+      "gateway_id": "M300-TAVEUNI-001"
+    },
+    "irradiance_meters": [
+      {
+        "slave_id": 30.0,
+        "irradiance_w_per_m2": 0.0
+      }
+    ],
+    "gateway_id": "M300-TAVEUNI-001",
+    "inverters": [
+      {
+        "p_total_w": -198.0,
+        "pv1_v": 573.0,
+        "pv1_w": 80.0,
+        "pv2_v": 498.4,
+        "pv2_w": 40.0,
+        "pv3_v": 468.4,
+        "pv3_w": 10.0,
+        "pv4_v": 712.7,
+        "pv4_w": 180.0,
+        "battery_soc2": 68.0,
+        "battery_soc": 68.0,
+        "freq_hz": 49.87,
+        "pv1_i": 0.1,
+        "battery_power_w": 30.0,
+        "pv2_i": 0.0,
+        "pv3_i": 0.1,
+        "pv4_i": 0.2,
+        "battery_current_a": 0.07,
+        "slave_id": 1.0,
+        "status": "running"
+      },
+      {
+        "p_total_w": -114.0,
+        "pv1_v": 624.4,
+        "pv1_w": 20.0,
+        "pv2_v": 658.1,
+        "pv2_w": 80.0,
+        "pv3_v": 213.2,
+        "pv3_w": 10.0,
+        "pv4_v": 206.9,
+        "pv4_w": 80.0,
+        "battery_soc": 96.0,
+        "freq_hz": 49.87,
+        "pv1_i": 0.1,
+        "battery_power_w": 20.0,
+        "pv2_i": 0.1,
+        "pv3_i": 0.1,
+        "pv4_i": 0.2,
+        "battery_current_a": 0.05,
+        "slave_id": 2.0,
+        "status": "running"
+      },
+      {
+        "p_total_w": -99.0,
+        "pv1_v": 443.6,
+        "pv1_w": 50.0,
+        "pv2_v": 173.1,
+        "pv2_w": 40.0,
+        "pv3_v": 0.0,
+        "pv3_w": 0.0,
+        "pv4_v": 712.0,
+        "pv4_w": 140.0,
+        "battery_soc": 90.0,
+        "freq_hz": 49.83,
+        "pv1_i": 0.1,
+        "battery_power_w": 50.0,
+        "pv2_i": 0.1,
+        "pv3_i": 0.0,
+        "pv4_i": 0.2,
+        "battery_current_a": 0.11,
+        "slave_id": 3.0,
+        "status": "running"
+      }
+    ],
+    "ts_epoch_ms": 1787205594253.0
+  },
+  {
+    "ac_units": [
+      {
+        "temperature_c": 0.0,
+        "slave_id": 21.0,
+        "status": "ok"
+      },
+      {
+        "temperature_c": 0.0,
+        "slave_id": 22.0,
+        "status": "ok"
+      }
+    ],
+    "client": {
+      "client_email": "allan@paradiseinfiji.com",
+      "site_id": 1.0,
+      "client_name": "Paradise Resort",
+      "client_id": 1.0
+    },
+    "timestamp": {
+      "ts_epoch_ms": 1787207393218.0
+    },
+    "meters": [
+      {
+        "p_total_w": 60418.3,
+        "kwh_total": 62717.0,
+        "i1": 104.673,
+        "p3_w": 18216.633,
+        "description": "gen_meter",
+        "i2": 89.587,
+        "p2_w": 18218.398,
+        "i3": 86.765,
+        "p1_w": 21830.402,
+        "freq_hz": 49.9,
+        "tariff": {
+          "kwh_t1": 48573.516,
+          "kwh_t2": 14143.431
+        },
+        "v1": 232.93,
+        "v2": 233.219,
+        "v3": 234.036,
+        "slave_id": 12.0
+      },
+      {
+        "p_total_w": 59185.539,
+        "kwh_total": 248422.0,
+        "i1": 100.092,
+        "p3_w": 17884.855,
+        "description": "load_meter",
+        "i2": 84.04,
+        "p2_w": 18658.803,
+        "i3": 82.488,
+        "p1_w": 22683.834,
+        "tariff": {
+          "kwh_t1": 131358.25,
+          "kwh_t2": 117063.32
+        },
+        "v1": 232.916,
+        "v2": 232.25,
+        "v3": 233.778,
+        "slave_id": 13.0
+      },
+      {
+        "p_total_w": 916.1,
+        "kwh_total": 8814.84,
+        "i1": 1.43,
+        "p3_w": 0.0,
+        "description": "aux_loads",
+        "i2": 3.294,
+        "p2_w": 724.185,
+        "i3": 0.228,
+        "p1_w": 170.995,
+        "freq_hz": 49.89,
+        "v1": 232.252,
+        "v2": 232.857,
+        "v3": 233.659,
+        "slave_id": 14.0
+      },
+      {
+        "p_total_w": 0.0,
+        "kwh_total": 20207.641,
+        "i1": 0.811,
+        "p3_w": 0.0,
+        "description": "micro_inv",
+        "i2": 0.81,
+        "p2_w": 0.0,
+        "i3": 0.812,
+        "p1_w": 0.0,
+        "freq_hz": 49.9,
+        "v1": 232.248,
+        "v2": 232.859,
+        "v3": 233.695,
+        "slave_id": 15.0
+      }
+    ],
+    "gateway": {
+      "firmware": "m300-taveuni-1.0",
+      "gateway_id": "M300-TAVEUNI-001"
+    },
+    "irradiance_meters": [
+      {
+        "slave_id": 30.0,
+        "irradiance_w_per_m2": 0.0
+      }
+    ],
+    "gateway_id": "M300-TAVEUNI-001",
+    "inverters": [
+      {
+        "p_total_w": -159.0,
+        "pv1_v": 0.0,
+        "pv1_w": 0.0,
+        "pv2_v": 0.0,
+        "pv2_w": 0.0,
+        "pv3_v": 23.9,
+        "pv3_w": 0.0,
+        "pv4_v": 78.0,
+        "pv4_w": 10.0,
+        "battery_soc2": 68.0,
+        "battery_soc": 68.0,
+        "freq_hz": 49.91,
+        "pv1_i": 0.0,
+        "battery_power_w": 60.0,
+        "pv2_i": 0.0,
+        "pv3_i": 0.0,
+        "pv4_i": 0.2,
+        "battery_current_a": 0.13,
+        "slave_id": 1.0,
+        "status": "running"
+      },
+      {
+        "p_total_w": -92.0,
+        "pv1_v": 0.0,
+        "pv1_w": 0.0,
+        "pv2_v": 26.7,
+        "pv2_w": 0.0,
+        "pv3_v": 26.1,
+        "pv3_w": 0.0,
+        "pv4_v": 0.0,
+        "pv4_w": 0.0,
+        "battery_soc": 96.0,
+        "freq_hz": 49.87,
+        "pv1_i": 0.0,
+        "battery_power_w": 110.0,
+        "pv2_i": 0.0,
+        "pv3_i": 0.0,
+        "pv4_i": 0.0,
+        "battery_current_a": 0.22,
+        "slave_id": 2.0,
+        "status": "running"
+      },
+      {
+        "p_total_w": -84.0,
+        "pv1_v": 0.0,
+        "pv1_w": 0.0,
+        "pv2_v": 31.3,
+        "pv2_w": 0.0,
+        "pv3_v": 0.0,
+        "pv3_w": 0.0,
+        "pv4_v": 0.0,
+        "pv4_w": 0.0,
+        "battery_soc": 90.0,
+        "freq_hz": 49.91,
+        "pv1_i": 0.0,
+        "battery_power_w": 160.0,
+        "pv2_i": 0.0,
+        "pv3_i": 0.0,
+        "pv4_i": 0.0,
+        "battery_current_a": 0.3,
+        "slave_id": 3.0,
+        "status": "running"
+      }
+    ],
+    "ts_epoch_ms": 1787207394173.0
+  },
+  {
+    "ac_units": [
+      {
+        "temperature_c": 0.0,
+        "slave_id": 21.0,
+        "status": "ok"
+      },
+      {
+        "temperature_c": 0.0,
+        "slave_id": 22.0,
+        "status": "ok"
+      }
+    ],
+    "client": {
+      "client_email": "allan@paradiseinfiji.com",
+      "site_id": 1.0,
+      "client_name": "Paradise Resort",
+      "client_id": 1.0
+    },
+    "timestamp": {
+      "ts_epoch_ms": 1787209193445.0
+    },
+    "meters": [
+      {
+        "p_total_w": 53811.6,
+        "kwh_total": 62746.0,
+        "i1": 94.42,
+        "p3_w": 17567.063,
+        "description": "gen_meter",
+        "i2": 85.611,
+        "p2_w": 17093.098,
+        "i3": 85.034,
+        "p1_w": 19050.34,
+        "freq_hz": 49.86,
+        "tariff": {
+          "kwh_t1": 48602.766,
+          "kwh_t2": 14143.431
+        },
+        "v1": 233.534,
+        "v2": 233.515,
+        "v3": 233.388,
+        "slave_id": 12.0
+      },
+      {
+        "p_total_w": 52790.539,
+        "kwh_total": 248450.0,
+        "i1": 99.824,
+        "p3_w": 18132.879,
+        "description": "load_meter",
+        "i2": 65.753,
+        "p2_w": 14650.847,
+        "i3": 82.669,
+        "p1_w": 22714.449,
+        "tariff": {
+          "kwh_t1": 131386.891,
+          "kwh_t2": 117063.32
+        },
+        "v1": 232.781,
+        "v2": 231.234,
+        "v3": 233.528,
+        "slave_id": 13.0
+      },
+      {
+        "p_total_w": 2149.6,
+        "kwh_total": 8815.28,
+        "i1": 1.476,
+        "p3_w": 0.0,
+        "description": "aux_loads",
+        "i2": 8.727,
+        "p2_w": 1946.083,
+        "i3": 0.255,
+        "p1_w": 199.261,
+        "freq_hz": 49.88,
+        "v1": 232.51,
+        "v2": 233.189,
+        "v3": 233.417,
+        "slave_id": 14.0
+      },
+      {
+        "p_total_w": 0.0,
+        "kwh_total": 20207.66,
+        "i1": 0.802,
+        "p3_w": 0.0,
+        "description": "micro_inv",
+        "i2": 0.803,
+        "p2_w": 0.0,
+        "i3": 0.803,
+        "p1_w": 0.0,
+        "freq_hz": 49.87,
+        "v1": 231.555,
+        "v2": 233.012,
+        "v3": 233.846,
+        "slave_id": 15.0
+      }
+    ],
+    "gateway": {
+      "firmware": "m300-taveuni-1.0",
+      "gateway_id": "M300-TAVEUNI-001"
+    },
+    "irradiance_meters": [
+      {
+        "slave_id": 30.0,
+        "irradiance_w_per_m2": 0.0
+      }
+    ],
+    "gateway_id": "M300-TAVEUNI-001",
+    "inverters": [
+      {
+        "p_total_w": -168.0,
+        "pv1_v": 0.0,
+        "pv1_w": 0.0,
+        "pv2_v": 0.0,
+        "pv2_w": 0.0,
+        "pv3_v": 21.6,
+        "pv3_w": 0.0,
+        "pv4_v": 77.0,
+        "pv4_w": 10.0,
+        "battery_soc2": 68.0,
+        "battery_soc": 68.0,
+        "freq_hz": 49.91,
+        "pv1_i": 0.0,
+        "battery_power_w": 60.0,
+        "pv2_i": 0.0,
+        "pv3_i": 0.0,
+        "pv4_i": 0.2,
+        "battery_current_a": 0.12,
+        "slave_id": 1.0,
+        "status": "running"
+      },
+      {
+        "p_total_w": -81.0,
+        "pv1_v": 0.0,
+        "pv1_w": 0.0,
+        "pv2_v": 24.0,
+        "pv2_w": 0.0,
+        "pv3_v": 23.0,
+        "pv3_w": 0.0,
+        "pv4_v": 0.0,
+        "pv4_w": 0.0,
+        "battery_soc": 96.0,
+        "freq_hz": 49.87,
+        "pv1_i": 0.0,
+        "battery_power_w": 70.0,
+        "pv2_i": 0.0,
+        "pv3_i": 0.0,
+        "pv4_i": 0.0,
+        "battery_current_a": 0.14,
+        "slave_id": 2.0,
+        "status": "running"
+      },
+      {
+        "p_total_w": -86.0,
+        "pv1_v": 0.0,
+        "pv1_w": 0.0,
+        "pv2_v": 28.5,
+        "pv2_w": 0.0,
+        "pv3_v": 0.0,
+        "pv3_w": 0.0,
+        "pv4_v": 0.0,
+        "pv4_w": 0.0,
+        "battery_soc": 90.0,
+        "freq_hz": 49.91,
+        "pv1_i": 0.0,
+        "battery_power_w": 90.0,
+        "pv2_i": 0.0,
+        "pv3_i": 0.0,
+        "pv4_i": 0.0,
+        "battery_current_a": 0.18,
+        "slave_id": 3.0,
+        "status": "running"
+      }
+    ],
+    "ts_epoch_ms": 1787209194214.0
+  },
+  {
+    "ac_units": [
+      {
+        "temperature_c": 0.0,
+        "slave_id": 21.0,
+        "status": "ok"
+      },
+      {
+        "temperature_c": 0.0,
+        "slave_id": 22.0,
+        "status": "ok"
+      }
+    ],
+    "client": {
+      "client_email": "allan@paradiseinfiji.com",
+      "site_id": 1.0,
+      "client_name": "Paradise Resort",
+      "client_id": 1.0
+    },
+    "timestamp": {
+      "ts_epoch_ms": 1787210993802.0
+    },
+    "meters": [
+      {
+        "p_total_w": 48725.5,
+        "kwh_total": 62772.0,
+        "i1": 90.802,
+        "p3_w": 17706.896,
+        "description": "gen_meter",
+        "i2": 73.731,
+        "p2_w": 13371.286,
+        "i3": 88.619,
+        "p1_w": 17577.072,
+        "freq_hz": 49.87,
+        "tariff": {
+          "kwh_t1": 48628.172,
+          "kwh_t2": 14143.431
+        },
+        "v1": 231.843,
+        "v2": 234.09,
+        "v3": 232.565,
+        "slave_id": 12.0
+      },
+      {
+        "p_total_w": 47541.141,
+        "kwh_total": 248475.0,
+        "i1": 78.554,
+        "p3_w": 18086.217,
+        "description": "load_meter",
+        "i2": 54.527,
+        "p2_w": 11804.55,
+        "i3": 81.632,
+        "p1_w": 17715.287,
+        "tariff": {
+          "kwh_t1": 131411.609,
+          "kwh_t2": 117063.32
+        },
+        "v1": 233.851,
+        "v2": 231.255,
+        "v3": 232.022,
+        "slave_id": 13.0
+      },
+      {
+        "p_total_w": 912.6,
+        "kwh_total": 8815.8,
+        "i1": 1.392,
+        "p3_w": 0.0,
+        "description": "aux_loads",
+        "i2": 3.253,
+        "p2_w": 724.536,
+        "i3": 0.218,
+        "p1_w": 170.469,
+        "freq_hz": 49.9,
+        "v1": 231.848,
+        "v2": 233.741,
+        "v3": 232.579,
+        "slave_id": 14.0
+      },
+      {
+        "p_total_w": 0.0,
+        "kwh_total": 20207.66,
+        "i1": 0.786,
+        "p3_w": 0.0,
+        "description": "micro_inv",
+        "i2": 0.791,
+        "p2_w": 0.0,
+        "i3": 0.762,
+        "p1_w": 0.0,
+        "freq_hz": 49.89,
+        "v1": 232.772,
+        "v2": 233.762,
+        "v3": 231.933,
+        "slave_id": 15.0
+      }
+    ],
+    "gateway": {
+      "firmware": "m300-taveuni-1.0",
+      "gateway_id": "M300-TAVEUNI-001"
+    },
+    "irradiance_meters": [
+      {
+        "slave_id": 30.0,
+        "irradiance_w_per_m2": 0.0
+      }
+    ],
+    "gateway_id": "M300-TAVEUNI-001",
+    "inverters": [
+      {
+        "p_total_w": -161.0,
+        "pv1_v": 0.0,
+        "pv1_w": 0.0,
+        "pv2_v": 0.0,
+        "pv2_w": 0.0,
+        "pv3_v": 17.6,
+        "pv3_w": 0.0,
+        "pv4_v": 74.4,
+        "pv4_w": 10.0,
+        "battery_soc2": 68.0,
+        "battery_soc": 68.0,
+        "freq_hz": 49.95,
+        "pv1_i": 0.0,
+        "battery_power_w": 60.0,
+        "pv2_i": 0.0,
+        "pv3_i": 0.0,
+        "pv4_i": 0.2,
+        "battery_current_a": 0.12,
+        "slave_id": 1.0,
+        "status": "running"
+      },
+      {
+        "p_total_w": -85.0,
+        "pv1_v": 0.0,
+        "pv1_w": 0.0,
+        "pv2_v": 23.2,
+        "pv2_w": 0.0,
+        "pv3_v": 21.9,
+        "pv3_w": 0.0,
+        "pv4_v": 0.0,
+        "pv4_w": 0.0,
+        "battery_soc": 96.0,
+        "freq_hz": 49.87,
+        "pv1_i": 0.0,
+        "battery_power_w": 100.0,
+        "pv2_i": 0.0,
+        "pv3_i": 0.0,
+        "pv4_i": 0.0,
+        "battery_current_a": 0.19,
+        "slave_id": 2.0,
+        "status": "running"
+      },
+      {
+        "p_total_w": -75.0,
+        "pv1_v": 0.0,
+        "pv1_w": 0.0,
+        "pv2_v": 28.7,
+        "pv2_w": 0.0,
+        "pv3_v": 0.0,
+        "pv3_w": 0.0,
+        "pv4_v": 0.0,
+        "pv4_w": 0.0,
+        "battery_soc": 90.0,
+        "freq_hz": 49.87,
+        "pv1_i": 0.0,
+        "battery_power_w": 100.0,
+        "pv2_i": 0.0,
+        "pv3_i": 0.0,
+        "pv4_i": 0.0,
+        "battery_current_a": 0.19,
+        "slave_id": 3.0,
+        "status": "running"
+      }
+    ],
+    "ts_epoch_ms": 1787210994140.0
+  },
+  {
+    "ac_units": [
+      {
+        "temperature_c": 0.0,
+        "slave_id": 21.0,
+        "status": "ok"
+      },
+      {
+        "temperature_c": 0.0,
+        "slave_id": 22.0,
+        "status": "ok"
+      }
+    ],
+    "client": {
+      "client_email": "allan@paradiseinfiji.com",
+      "site_id": 1.0,
+      "client_name": "Paradise Resort",
+      "client_id": 1.0
+    },
+    "timestamp": {
+      "ts_epoch_ms": 1787212793771.0
+    },
+    "meters": [
+      {
+        "p_total_w": 38241.8,
+        "kwh_total": 62795.0,
+        "i1": 69.857,
+        "p3_w": 14567.093,
+        "description": "gen_meter",
+        "i2": 81.334,
+        "p2_w": 14236.2,
+        "i3": 81.644,
+        "p1_w": 9540.993,
+        "freq_hz": 49.9,
+        "tariff": {
+          "kwh_t1": 48651.984,
+          "kwh_t2": 14143.431
+        },
+        "v1": 235.794,
+        "v2": 234.736,
+        "v3": 232.442,
+        "slave_id": 12.0
+      },
+      {
+        "p_total_w": 36808.168,
+        "kwh_total": 248498.0,
+        "i1": 36.766,
+        "p3_w": 14743.284,
+        "description": "load_meter",
+        "i2": 60.355,
+        "p2_w": 13831.122,
+        "i3": 65.778,
+        "p1_w": 8180.181,
+        "tariff": {
+          "kwh_t1": 131434.719,
+          "kwh_t2": 117063.32
+        },
+        "v1": 234.008,
+        "v2": 235.577,
+        "v3": 231.611,
+        "slave_id": 13.0
+      },
+      {
+        "p_total_w": 916.8,
+        "kwh_total": 8816.34,
+        "i1": 1.345,
+        "p3_w": 0.0,
+        "description": "aux_loads",
+        "i2": 3.261,
+        "p2_w": 731.383,
+        "i3": 0.224,
+        "p1_w": 172.4,
+        "freq_hz": 49.92,
+        "v1": 235.965,
+        "v2": 234.388,
+        "v3": 232.057,
+        "slave_id": 14.0
+      },
+      {
+        "p_total_w": 0.0,
+        "kwh_total": 20207.66,
+        "i1": 0.794,
+        "p3_w": 0.0,
+        "description": "micro_inv",
+        "i2": 0.772,
+        "p2_w": 0.0,
+        "i3": 0.754,
+        "p1_w": 0.0,
+        "freq_hz": 49.88,
+        "v1": 234.773,
+        "v2": 233.268,
+        "v3": 233.606,
+        "slave_id": 15.0
+      }
+    ],
+    "gateway": {
+      "firmware": "m300-taveuni-1.0",
+      "gateway_id": "M300-TAVEUNI-001"
+    },
+    "irradiance_meters": [
+      {
+        "slave_id": 30.0,
+        "irradiance_w_per_m2": 0.0
+      }
+    ],
+    "gateway_id": "M300-TAVEUNI-001",
+    "inverters": [
+      {
+        "p_total_w": -166.0,
+        "pv1_v": 0.0,
+        "pv1_w": 0.0,
+        "pv2_v": 0.0,
+        "pv2_w": 0.0,
+        "pv3_v": 18.6,
+        "pv3_w": 0.0,
+        "pv4_v": 75.1,
+        "pv4_w": 10.0,
+        "battery_soc2": 68.0,
+        "battery_soc": 68.0,
+        "freq_hz": 49.83,
+        "pv1_i": 0.0,
+        "battery_power_w": 30.0,
+        "pv2_i": 0.0,
+        "pv3_i": 0.0,
+        "pv4_i": 0.2,
+        "battery_current_a": 0.07,
+        "slave_id": 1.0,
+        "status": "running"
+      },
+      {
+        "p_total_w": -91.0,
+        "pv1_v": 0.0,
+        "pv1_w": 0.0,
+        "pv2_v": 23.5,
+        "pv2_w": 0.0,
+        "pv3_v": 22.2,
+        "pv3_w": 0.0,
+        "pv4_v": 0.0,
+        "pv4_w": 0.0,
+        "battery_soc": 96.0,
+        "freq_hz": 49.87,
+        "pv1_i": 0.0,
+        "battery_power_w": 60.0,
+        "pv2_i": 0.0,
+        "pv3_i": 0.0,
+        "pv4_i": 0.0,
+        "battery_current_a": 0.12,
+        "slave_id": 2.0,
+        "status": "running"
+      },
+      {
+        "p_total_w": -78.0,
+        "pv1_v": 0.0,
+        "pv1_w": 0.0,
+        "pv2_v": 28.1,
+        "pv2_w": 0.0,
+        "pv3_v": 0.0,
+        "pv3_w": 0.0,
+        "pv4_v": 0.0,
+        "pv4_w": 0.0,
+        "battery_soc": 90.0,
+        "freq_hz": 49.87,
+        "pv1_i": 0.0,
+        "battery_power_w": 80.0,
+        "pv2_i": 0.0,
+        "pv3_i": 0.0,
+        "pv4_i": 0.0,
+        "battery_current_a": 0.16,
+        "slave_id": 3.0,
+        "status": "running"
+      }
+    ],
+    "ts_epoch_ms": 1787212794154.0
+  },
+  {
+    "ac_units": [
+      {
+        "temperature_c": 0.0,
+        "slave_id": 21.0,
+        "status": "ok"
+      },
+      {
+        "temperature_c": 0.0,
+        "slave_id": 22.0,
+        "status": "ok"
+      }
+    ],
+    "client": {
+      "client_email": "allan@paradiseinfiji.com",
+      "site_id": 1.0,
+      "client_name": "Paradise Resort",
+      "client_id": 1.0
+    },
+    "timestamp": {
+      "ts_epoch_ms": 1787214593671.0
+    },
+    "meters": [
+      {
+        "p_total_w": 38359.7,
+        "kwh_total": 62817.0,
+        "i1": 69.543,
+        "p3_w": 14272.557,
+        "description": "gen_meter",
+        "i2": 68.944,
+        "p2_w": 12367.126,
+        "i3": 76.372,
+        "p1_w": 11689.002,
+        "freq_hz": 49.87,
+        "tariff": {
+          "kwh_t1": 48673.406,
+          "kwh_t2": 14143.431
+        },
+        "v1": 233.906,
+        "v2": 233.686,
+        "v3": 232.317,
+        "slave_id": 12.0
+      },
+      {
+        "p_total_w": 37217.367,
+        "kwh_total": 248519.0,
+        "i1": 48.326,
+        "p3_w": 14631.27,
+        "description": "load_meter",
+        "i2": 55.717,
+        "p2_w": 11951.154,
+        "i3": 66.62,
+        "p1_w": 10736.064,
+        "tariff": {
+          "kwh_t1": 131455.406,
+          "kwh_t2": 117063.32
+        },
+        "v1": 233.402,
+        "v2": 233.68,
+        "v3": 232.068,
+        "slave_id": 13.0
+      },
+      {
+        "p_total_w": 909.4,
+        "kwh_total": 8816.86,
+        "i1": 1.308,
+        "p3_w": 0.0,
+        "description": "aux_loads",
+        "i2": 3.232,
+        "p2_w": 720.147,
+        "i3": 0.219,
+        "p1_w": 170.469,
+        "freq_hz": 49.87,
+        "v1": 233.627,
+        "v2": 233.387,
+        "v3": 232.021,
+        "slave_id": 14.0
+      },
+      {
+        "p_total_w": 0.0,
+        "kwh_total": 20207.68,
+        "i1": 0.792,
+        "p3_w": 0.0,
+        "description": "micro_inv",
+        "i2": 0.785,
+        "p2_w": 0.0,
+        "i3": 0.751,
+        "p1_w": 0.0,
+        "freq_hz": 49.9,
+        "v1": 233.583,
+        "v2": 233.362,
+        "v3": 232.037,
+        "slave_id": 15.0
+      }
+    ],
+    "gateway": {
+      "firmware": "m300-taveuni-1.0",
+      "gateway_id": "M300-TAVEUNI-001"
+    },
+    "irradiance_meters": [
+      {
+        "slave_id": 30.0,
+        "irradiance_w_per_m2": 0.0
+      }
+    ],
+    "gateway_id": "M300-TAVEUNI-001",
+    "inverters": [
+      {
+        "p_total_w": -163.0,
+        "pv1_v": 0.0,
+        "pv1_w": 0.0,
+        "pv2_v": 0.0,
+        "pv2_w": 0.0,
+        "pv3_v": 18.0,
+        "pv3_w": 0.0,
+        "pv4_v": 74.6,
+        "pv4_w": 10.0,
+        "battery_soc2": 68.0,
+        "battery_soc": 68.0,
+        "freq_hz": 49.87,
+        "pv1_i": 0.0,
+        "battery_power_w": 40.0,
+        "pv2_i": 0.0,
+        "pv3_i": 0.0,
+        "pv4_i": 0.2,
+        "battery_current_a": 0.08,
+        "slave_id": 1.0,
+        "status": "running"
+      },
+      {
+        "p_total_w": -76.0,
+        "pv1_v": 0.0,
+        "pv1_w": 0.0,
+        "pv2_v": 23.0,
+        "pv2_w": 0.0,
+        "pv3_v": 21.7,
+        "pv3_w": 0.0,
+        "pv4_v": 0.0,
+        "pv4_w": 0.0,
+        "battery_soc": 96.0,
+        "freq_hz": 49.83,
+        "pv1_i": 0.0,
+        "battery_power_w": 50.0,
+        "pv2_i": 0.0,
+        "pv3_i": 0.0,
+        "pv4_i": 0.0,
+        "battery_current_a": 0.11,
+        "slave_id": 2.0,
+        "status": "running"
+      },
+      {
+        "p_total_w": -83.0,
+        "pv1_v": 0.0,
+        "pv1_w": 0.0,
+        "pv2_v": 27.8,
+        "pv2_w": 0.0,
+        "pv3_v": 0.0,
+        "pv3_w": 0.0,
+        "pv4_v": 0.0,
+        "pv4_w": 0.0,
+        "battery_soc": 90.0,
+        "freq_hz": 49.91,
+        "pv1_i": 0.0,
+        "battery_power_w": 80.0,
+        "pv2_i": 0.0,
+        "pv3_i": 0.0,
+        "pv4_i": 0.0,
+        "battery_current_a": 0.15,
+        "slave_id": 3.0,
+        "status": "running"
+      }
+    ],
+    "ts_epoch_ms": 1787214594202.0
+  },
+  {
+    "ac_units": [
+      {
+        "temperature_c": 0.0,
+        "slave_id": 21.0,
+        "status": "ok"
+      },
+      {
+        "temperature_c": 0.0,
+        "slave_id": 22.0,
+        "status": "ok"
+      }
+    ],
+    "client": {
+      "client_email": "allan@paradiseinfiji.com",
+      "site_id": 1.0,
+      "client_name": "Paradise Resort",
+      "client_id": 1.0
+    },
+    "timestamp": {
+      "ts_epoch_ms": 1787216393509.0
+    },
+    "meters": [
+      {
+        "p_total_w": 44835.3,
+        "kwh_total": 62840.0,
+        "i1": 87.919,
+        "p3_w": 14089.595,
+        "description": "gen_meter",
+        "i2": 78.273,
+        "p2_w": 13904.425,
+        "i3": 76.061,
+        "p1_w": 16736.738,
+        "freq_hz": 49.88,
+        "tariff": {
+          "kwh_t1": 48696.328,
+          "kwh_t2": 14143.431
+        },
+        "v1": 232.751,
+        "v2": 233.642,
+        "v3": 233.922,
+        "slave_id": 12.0
+      },
+      {
+        "p_total_w": 43521.266,
+        "kwh_total": 248541.0,
+        "i1": 74.414,
+        "p3_w": 13820.966,
+        "description": "load_meter",
+        "i2": 57.026,
+        "p2_w": 12858.607,
+        "i3": 62.749,
+        "p1_w": 16909.547,
+        "tariff": {
+          "kwh_t1": 131477.672,
+          "kwh_t2": 117063.32
+        },
+        "v1": 233.33,
+        "v2": 232.027,
+        "v3": 233.577,
+        "slave_id": 13.0
+      },
+      {
+        "p_total_w": 911.2,
+        "kwh_total": 8817.36,
+        "i1": 1.385,
+        "p3_w": 0.0,
+        "description": "aux_loads",
+        "i2": 3.256,
+        "p2_w": 723.132,
+        "i3": 0.22,
+        "p1_w": 168.538,
+        "freq_hz": 49.89,
+        "v1": 232.303,
+        "v2": 233.435,
+        "v3": 233.612,
+        "slave_id": 14.0
+      },
+      {
+        "p_total_w": 0.0,
+        "kwh_total": 20207.699,
+        "i1": 0.786,
+        "p3_w": 0.0,
+        "description": "micro_inv",
+        "i2": 0.784,
+        "p2_w": 0.0,
+        "i3": 0.778,
+        "p1_w": 0.0,
+        "freq_hz": 49.9,
+        "v1": 232.237,
+        "v2": 233.407,
+        "v3": 233.655,
+        "slave_id": 15.0
+      }
+    ],
+    "gateway": {
+      "firmware": "m300-taveuni-1.0",
+      "gateway_id": "M300-TAVEUNI-001"
+    },
+    "irradiance_meters": [
+      {
+        "slave_id": 30.0,
+        "irradiance_w_per_m2": 0.0
+      }
+    ],
+    "gateway_id": "M300-TAVEUNI-001",
+    "inverters": [
+      {
+        "p_total_w": -164.0,
+        "pv1_v": 0.0,
+        "pv1_w": 0.0,
+        "pv2_v": 0.0,
+        "pv2_w": 0.0,
+        "pv3_v": 18.4,
+        "pv3_w": 0.0,
+        "pv4_v": 74.9,
+        "pv4_w": 10.0,
+        "battery_soc2": 68.0,
+        "battery_soc": 68.0,
+        "freq_hz": 49.91,
+        "pv1_i": 0.0,
+        "battery_power_w": 60.0,
+        "pv2_i": 0.0,
+        "pv3_i": 0.0,
+        "pv4_i": 0.2,
+        "battery_current_a": 0.12,
+        "slave_id": 1.0,
+        "status": "running"
+      },
+      {
+        "p_total_w": -88.0,
+        "pv1_v": 0.0,
+        "pv1_w": 0.0,
+        "pv2_v": 23.5,
+        "pv2_w": 0.0,
+        "pv3_v": 22.6,
+        "pv3_w": 0.0,
+        "pv4_v": 0.0,
+        "pv4_w": 0.0,
+        "battery_soc": 96.0,
+        "freq_hz": 49.87,
+        "pv1_i": 0.0,
+        "battery_power_w": 80.0,
+        "pv2_i": 0.0,
+        "pv3_i": 0.0,
+        "pv4_i": 0.0,
+        "battery_current_a": 0.16,
+        "slave_id": 2.0,
+        "status": "running"
+      },
+      {
+        "p_total_w": -74.0,
+        "pv1_v": 0.0,
+        "pv1_w": 0.0,
+        "pv2_v": 28.1,
+        "pv2_w": 0.0,
+        "pv3_v": 0.0,
+        "pv3_w": 0.0,
+        "pv4_v": 0.0,
+        "pv4_w": 0.0,
+        "battery_soc": 90.0,
+        "freq_hz": 49.91,
+        "pv1_i": 0.0,
+        "battery_power_w": 100.0,
+        "pv2_i": 0.0,
+        "pv3_i": 0.0,
+        "pv4_i": 0.0,
+        "battery_current_a": 0.19,
+        "slave_id": 3.0,
+        "status": "running"
+      }
+    ],
+    "ts_epoch_ms": 1787216394235.0
+  },
+  null,
+  {
+    "ac_units": [
+      {
+        "temperature_c": 0.0,
+        "slave_id": 21.0,
+        "status": "ok"
+      },
+      {
+        "temperature_c": 0.0,
+        "slave_id": 22.0,
+        "status": "ok"
+      }
+    ],
+    "client": {
+      "client_email": "allan@paradiseinfiji.com",
+      "site_id": 1.0,
+      "client_name": "Paradise Resort",
+      "client_id": 1.0
+    },
+    "timestamp": {
+      "ts_epoch_ms": 1787219993289.0
+    },
+    "meters": [
+      {
+        "p_total_w": 0.0,
+        "kwh_total": 62841.0,
+        "i1": 0.0,
+        "p3_w": 0.0,
+        "description": "gen_meter",
+        "i2": 0.0,
+        "p2_w": 0.0,
+        "i3": 0.0,
+        "p1_w": 0.0,
+        "freq_hz": 0.0,
+        "tariff": {
+          "kwh_t1": 48697.625,
+          "kwh_t2": 14143.431
+        },
+        "v1": 0.0,
+        "v2": 0.0,
+        "v3": 0.0,
+        "slave_id": 12.0
+      },
+      {
+        "p_total_w": 30827.953,
+        "kwh_total": 248574.0,
+        "i1": 47.983,
+        "p3_w": 12613.088,
+        "description": "load_meter",
+        "i2": 33.872,
+        "p2_w": 7373.409,
+        "i3": 56.625,
+        "p1_w": 10996.157,
+        "tariff": {
+          "kwh_t1": 131510.953,
+          "kwh_t2": 117063.32
+        },
+        "v1": 232.747,
+        "v2": 232.76,
+        "v3": 229.984,
+        "slave_id": 13.0
+      },
+      {
+        "p_total_w": 884.3,
+        "kwh_total": 8818.4,
+        "i1": 1.2,
+        "p3_w": 0.0,
+        "description": "aux_loads",
+        "i2": 3.18,
+        "p2_w": 717.338,
+        "i3": 0.0,
+        "p1_w": 167.484,
+        "freq_hz": 50.0,
+        "v1": 232.885,
+        "v2": 232.785,
+        "v3": 230.035,
+        "slave_id": 14.0
+      },
+      {
+        "p_total_w": 0.0,
+        "kwh_total": 20207.699,
+        "i1": 0.611,
+        "p3_w": 0.0,
+        "description": "micro_inv",
+        "i2": 0.601,
+        "p2_w": 0.0,
+        "i3": 0.573,
+        "p1_w": 0.0,
+        "freq_hz": 50.0,
+        "v1": 232.764,
+        "v2": 232.804,
+        "v3": 229.981,
+        "slave_id": 15.0
+      }
+    ],
+    "gateway": {
+      "firmware": "m300-taveuni-1.0",
+      "gateway_id": "M300-TAVEUNI-001"
+    },
+    "irradiance_meters": [
+      {
+        "slave_id": 30.0,
+        "irradiance_w_per_m2": 0.0
+      }
+    ],
+    "gateway_id": "M300-TAVEUNI-001",
+    "inverters": [
+      {
+        "p_total_w": 12728.0,
+        "pv1_v": 0.0,
+        "pv1_w": 0.0,
+        "pv2_v": 0.0,
+        "pv2_w": 0.0,
+        "pv3_v": 17.0,
+        "pv3_w": 0.0,
+        "pv4_v": 74.7,
+        "pv4_w": 10.0,
+        "battery_soc2": 63.0,
+        "battery_soc": 63.0,
+        "freq_hz": 50.0,
+        "pv1_i": 0.0,
+        "battery_power_w": 6670.0,
+        "pv2_i": 0.0,
+        "pv3_i": 0.0,
+        "pv4_i": 0.2,
+        "battery_current_a": 12.64,
+        "slave_id": 1.0,
+        "status": "running"
+      },
+      {
+        "p_total_w": 9695.0,
+        "pv1_v": 0.0,
+        "pv1_w": 0.0,
+        "pv2_v": 21.7,
+        "pv2_w": 0.0,
+        "pv3_v": 21.0,
+        "pv3_w": 0.0,
+        "pv4_v": 0.0,
+        "pv4_w": 0.0,
+        "battery_soc": 88.0,
+        "freq_hz": 50.0,
+        "pv1_i": 0.0,
+        "battery_power_w": 10280.0,
+        "pv2_i": 0.0,
+        "pv3_i": 0.0,
+        "pv4_i": 0.0,
+        "battery_current_a": 19.4,
+        "slave_id": 2.0,
+        "status": "running"
+      },
+      {
+        "p_total_w": 9146.0,
+        "pv1_v": 0.0,
+        "pv1_w": 0.0,
+        "pv2_v": 26.3,
+        "pv2_w": 0.0,
+        "pv3_v": 0.0,
+        "pv3_w": 0.0,
+        "pv4_v": 0.0,
+        "pv4_w": 0.0,
+        "battery_soc": 83.0,
+        "freq_hz": 50.0,
+        "pv1_i": 0.0,
+        "battery_power_w": 9390.0,
+        "pv2_i": 0.0,
+        "pv3_i": 0.0,
+        "pv4_i": 0.0,
+        "battery_current_a": 17.71,
+        "slave_id": 3.0,
+        "status": "running"
+      }
+    ],
+    "ts_epoch_ms": 1787219994226.0
+  },
+  {
+    "ac_units": [
+      {
+        "temperature_c": 0.0,
+        "slave_id": 21.0,
+        "status": "ok"
+      },
+      {
+        "temperature_c": 0.0,
+        "slave_id": 22.0,
+        "status": "ok"
+      }
+    ],
+    "client": {
+      "client_email": "allan@paradiseinfiji.com",
+      "site_id": 1.0,
+      "client_name": "Paradise Resort",
+      "client_id": 1.0
+    },
+    "timestamp": {
+      "ts_epoch_ms": 1787221793287.0
+    },
+    "meters": [
+      {
+        "p_total_w": 0.0,
+        "kwh_total": 62841.0,
+        "i1": 0.0,
+        "p3_w": 0.0,
+        "description": "gen_meter",
+        "i2": 0.0,
+        "p2_w": 0.0,
+        "i3": 0.0,
+        "p1_w": 0.0,
+        "freq_hz": 0.0,
+        "tariff": {
+          "kwh_t1": 48697.625,
+          "kwh_t2": 14143.431
+        },
+        "v1": 0.0,
+        "v2": 0.0,
+        "v3": 0.0,
+        "slave_id": 12.0
+      },
+      {
+        "p_total_w": 26596.115,
+        "kwh_total": 248588.0,
+        "i1": 22.468,
+        "p3_w": 14342.769,
+        "description": "load_meter",
+        "i2": 34.048,
+        "p2_w": 7409.766,
+        "i3": 63.755,
+        "p1_w": 4814.14,
+        "tariff": {
+          "kwh_t1": 131524.313,
+          "kwh_t2": 117063.32
+        },
+        "v1": 232.938,
+        "v2": 233.245,
+        "v3": 229.771,
+        "slave_id": 13.0
+      },
+      {
+        "p_total_w": 882.9,
+        "kwh_total": 8818.86,
+        "i1": 1.199,
+        "p3_w": 0.0,
+        "description": "aux_loads",
+        "i2": 3.164,
+        "p2_w": 714.529,
+        "i3": 0.0,
+        "p1_w": 168.362,
+        "freq_hz": 50.0,
+        "v1": 233.349,
+        "v2": 232.945,
+        "v3": 229.787,
+        "slave_id": 14.0
+      },
+      {
+        "p_total_w": 0.0,
+        "kwh_total": 20207.721,
+        "i1": 0.612,
+        "p3_w": 0.0,
+        "description": "micro_inv",
+        "i2": 0.61,
+        "p2_w": 0.0,
+        "i3": 0.565,
+        "p1_w": 0.0,
+        "freq_hz": 50.0,
+        "v1": 233.28,
+        "v2": 232.96,
+        "v3": 229.787,
+        "slave_id": 15.0
+      }
+    ],
+    "gateway": {
+      "firmware": "m300-taveuni-1.0",
+      "gateway_id": "M300-TAVEUNI-001"
+    },
+    "irradiance_meters": [
+      {
+        "slave_id": 30.0,
+        "irradiance_w_per_m2": 0.0
+      }
+    ],
+    "gateway_id": "M300-TAVEUNI-001",
+    "inverters": [
+      {
+        "p_total_w": 11089.0,
+        "pv1_v": 0.0,
+        "pv1_w": 0.0,
+        "pv2_v": 0.0,
+        "pv2_w": 0.0,
+        "pv3_v": 16.8,
+        "pv3_w": 0.0,
+        "pv4_v": 75.1,
+        "pv4_w": 10.0,
+        "battery_soc2": 61.0,
+        "battery_soc": 61.0,
+        "freq_hz": 50.0,
+        "pv1_i": 0.0,
+        "battery_power_w": 5800.0,
+        "pv2_i": 0.0,
+        "pv3_i": 0.0,
+        "pv4_i": 0.2,
+        "battery_current_a": 11.02,
+        "slave_id": 1.0,
+        "status": "running"
+      },
+      {
+        "p_total_w": 8349.0,
+        "pv1_v": 0.0,
+        "pv1_w": 0.0,
+        "pv2_v": 21.6,
+        "pv2_w": 0.0,
+        "pv3_v": 20.9,
+        "pv3_w": 0.0,
+        "pv4_v": 0.0,
+        "pv4_w": 0.0,
+        "battery_soc": 85.0,
+        "freq_hz": 50.0,
+        "pv1_i": 0.0,
+        "battery_power_w": 8740.0,
+        "pv2_i": 0.0,
+        "pv3_i": 0.0,
+        "pv4_i": 0.0,
+        "battery_current_a": 16.5,
+        "slave_id": 2.0,
+        "status": "running"
+      },
+      {
+        "p_total_w": 8048.0,
+        "pv1_v": 0.0,
+        "pv1_w": 0.0,
+        "pv2_v": 25.9,
+        "pv2_w": 0.0,
+        "pv3_v": 0.0,
+        "pv3_w": 0.0,
+        "pv4_v": 0.0,
+        "pv4_w": 0.0,
+        "battery_soc": 81.0,
+        "freq_hz": 50.0,
+        "pv1_i": 0.0,
+        "battery_power_w": 8290.0,
+        "pv2_i": 0.0,
+        "pv3_i": 0.0,
+        "pv4_i": 0.0,
+        "battery_current_a": 15.64,
+        "slave_id": 3.0,
+        "status": "running"
+      }
+    ],
+    "ts_epoch_ms": 1787221794156.0
+  },
+  {
+    "ac_units": [
+      {
+        "temperature_c": 0.0,
+        "slave_id": 21.0,
+        "status": "ok"
+      },
+      {
+        "temperature_c": 0.0,
+        "slave_id": 22.0,
+        "status": "ok"
+      }
+    ],
+    "client": {
+      "client_email": "allan@paradiseinfiji.com",
+      "site_id": 1.0,
+      "client_name": "Paradise Resort",
+      "client_id": 1.0
+    },
+    "timestamp": {
+      "ts_epoch_ms": 1787223593496.0
+    },
+    "meters": [
+      {
+        "p_total_w": 0.0,
+        "kwh_total": 62841.0,
+        "i1": 0.0,
+        "p3_w": 0.0,
+        "description": "gen_meter",
+        "i2": 0.0,
+        "p2_w": 0.0,
+        "i3": 0.0,
+        "p1_w": 0.0,
+        "freq_hz": 0.0,
+        "tariff": {
+          "kwh_t1": 48697.625,
+          "kwh_t2": 14143.431
+        },
+        "v1": 0.0,
+        "v2": 0.0,
+        "v3": 0.0,
+        "slave_id": 12.0
+      },
+      {
+        "p_total_w": 20871.725,
+        "kwh_total": 248600.0,
+        "i1": 18.095,
+        "p3_w": 9715.714,
+        "description": "load_meter",
+        "i2": 30.969,
+        "p2_w": 7030.888,
+        "i3": 42.859,
+        "p1_w": 4140.873,
+        "tariff": {
+          "kwh_t1": 131536.391,
+          "kwh_t2": 117063.32
+        },
+        "v1": 233.154,
+        "v2": 232.989,
+        "v3": 230.573,
+        "slave_id": 13.0
+      },
+      {
+        "p_total_w": 878.3,
+        "kwh_total": 8819.38,
+        "i1": 1.199,
+        "p3_w": 0.0,
+        "description": "aux_loads",
+        "i2": 3.142,
+        "p2_w": 711.369,
+        "i3": 0.2,
+        "p1_w": 167.309,
+        "freq_hz": 50.0,
+        "v1": 233.087,
+        "v2": 233.148,
+        "v3": 230.621,
+        "slave_id": 14.0
+      },
+      {
+        "p_total_w": 0.0,
+        "kwh_total": 20207.74,
+        "i1": 0.613,
+        "p3_w": 0.0,
+        "description": "micro_inv",
+        "i2": 0.606,
+        "p2_w": 0.0,
+        "i3": 0.568,
+        "p1_w": 0.0,
+        "freq_hz": 50.0,
+        "v1": 232.976,
+        "v2": 233.138,
+        "v3": 230.593,
+        "slave_id": 15.0
+      }
+    ],
+    "gateway": {
+      "firmware": "m300-taveuni-1.0",
+      "gateway_id": "M300-TAVEUNI-001"
+    },
+    "irradiance_meters": [
+      {
+        "slave_id": 30.0,
+        "irradiance_w_per_m2": 0.0
+      }
+    ],
+    "gateway_id": "M300-TAVEUNI-001",
+    "inverters": [
+      {
+        "p_total_w": 8801.0,
+        "pv1_v": 0.0,
+        "pv1_w": 0.0,
+        "pv2_v": 0.0,
+        "pv2_w": 0.0,
+        "pv3_v": 16.0,
+        "pv3_w": 0.0,
+        "pv4_v": 73.5,
+        "pv4_w": 10.0,
+        "battery_soc2": 60.0,
+        "battery_soc": 59.0,
+        "freq_hz": 50.0,
+        "pv1_i": 0.0,
+        "battery_power_w": 4390.0,
+        "pv2_i": 0.0,
+        "pv3_i": 0.0,
+        "pv4_i": 0.2,
+        "battery_current_a": 8.34,
+        "slave_id": 1.0,
+        "status": "running"
+      },
+      {
+        "p_total_w": 6704.0,
+        "pv1_v": 0.0,
+        "pv1_w": 0.0,
+        "pv2_v": 20.8,
+        "pv2_w": 0.0,
+        "pv3_v": 20.1,
+        "pv3_w": 0.0,
+        "pv4_v": 0.0,
+        "pv4_w": 0.0,
+        "battery_soc": 83.0,
+        "freq_hz": 50.0,
+        "pv1_i": 0.0,
+        "battery_power_w": 7010.0,
+        "pv2_i": 0.0,
+        "pv3_i": 0.0,
+        "pv4_i": 0.0,
+        "battery_current_a": 13.23,
+        "slave_id": 2.0,
+        "status": "running"
+      },
+      {
+        "p_total_w": 6414.0,
+        "pv1_v": 0.0,
+        "pv1_w": 0.0,
+        "pv2_v": 24.9,
+        "pv2_w": 0.0,
+        "pv3_v": 0.0,
+        "pv3_w": 0.0,
+        "pv4_v": 0.0,
+        "pv4_w": 0.0,
+        "battery_soc": 78.0,
+        "freq_hz": 50.0,
+        "pv1_i": 0.0,
+        "battery_power_w": 6500.0,
+        "pv2_i": 0.0,
+        "pv3_i": 0.0,
+        "pv4_i": 0.0,
+        "battery_current_a": 12.25,
+        "slave_id": 3.0,
+        "status": "running"
+      }
+    ],
+    "ts_epoch_ms": 1787223594194.0
+  },
+  {
+    "ac_units": [
+      {
+        "temperature_c": 0.0,
+        "slave_id": 21.0,
+        "status": "ok"
+      },
+      {
+        "temperature_c": 0.0,
+        "slave_id": 22.0,
+        "status": "ok"
+      }
+    ],
+    "client": {
+      "client_email": "allan@paradiseinfiji.com",
+      "site_id": 1.0,
+      "client_name": "Paradise Resort",
+      "client_id": 1.0
+    },
+    "timestamp": {
+      "ts_epoch_ms": 1787225393428.0
+    },
+    "meters": [
+      {
+        "p_total_w": 0.0,
+        "kwh_total": 62841.0,
+        "i1": 0.0,
+        "p3_w": 0.0,
+        "description": "gen_meter",
+        "i2": 0.0,
+        "p2_w": 0.0,
+        "i3": 0.0,
+        "p1_w": 0.0,
+        "freq_hz": 0.0,
+        "tariff": {
+          "kwh_t1": 48697.625,
+          "kwh_t2": 14143.431
+        },
+        "v1": 0.0,
+        "v2": 0.0,
+        "v3": 0.0,
+        "slave_id": 12.0
+      },
+      {
+        "p_total_w": 20464.289,
+        "kwh_total": 248611.0,
+        "i1": 18.947,
+        "p3_w": 8547.873,
+        "description": "load_meter",
+        "i2": 37.153,
+        "p2_w": 8063.162,
+        "i3": 38.902,
+        "p1_w": 3840.302,
+        "tariff": {
+          "kwh_t1": 131547.438,
+          "kwh_t2": 117063.32
+        },
+        "v1": 232.661,
+        "v2": 233.239,
+        "v3": 230.65,
+        "slave_id": 13.0
+      },
+      {
+        "p_total_w": 894.1,
+        "kwh_total": 8819.84,
+        "i1": 1.186,
+        "p3_w": 0.0,
+        "description": "aux_loads",
+        "i2": 3.137,
+        "p2_w": 709.087,
+        "i3": 0.202,
+        "p1_w": 164.851,
+        "freq_hz": 50.0,
+        "v1": 233.32,
+        "v2": 232.68,
+        "v3": 230.608,
+        "slave_id": 14.0
+      },
+      {
+        "p_total_w": 0.0,
+        "kwh_total": 20207.74,
+        "i1": 0.614,
+        "p3_w": 0.0,
+        "description": "micro_inv",
+        "i2": 0.602,
+        "p2_w": 0.0,
+        "i3": 0.566,
+        "p1_w": 0.0,
+        "freq_hz": 50.0,
+        "v1": 233.219,
+        "v2": 232.665,
+        "v3": 230.597,
+        "slave_id": 15.0
+      }
+    ],
+    "gateway": {
+      "firmware": "m300-taveuni-1.0",
+      "gateway_id": "M300-TAVEUNI-001"
+    },
+    "irradiance_meters": [
+      {
+        "slave_id": 30.0,
+        "irradiance_w_per_m2": 0.0
+      }
+    ],
+    "gateway_id": "M300-TAVEUNI-001",
+    "inverters": [
+      {
+        "p_total_w": 10196.0,
+        "pv1_v": 0.0,
+        "pv1_w": 0.0,
+        "pv2_v": 0.0,
+        "pv2_w": 0.0,
+        "pv3_v": 16.0,
+        "pv3_w": 0.0,
+        "pv4_v": 72.4,
+        "pv4_w": 10.0,
+        "battery_soc2": 58.0,
+        "battery_soc": 58.0,
+        "freq_hz": 50.0,
+        "pv1_i": 0.0,
+        "battery_power_w": 5390.0,
+        "pv2_i": 0.0,
+        "pv3_i": 0.0,
+        "pv4_i": 0.2,
+        "battery_current_a": 10.26,
+        "slave_id": 1.0,
+        "status": "running"
+      },
+      {
+        "p_total_w": 6294.0,
+        "pv1_v": 0.0,
+        "pv1_w": 0.0,
+        "pv2_v": 20.9,
+        "pv2_w": 0.0,
+        "pv3_v": 20.1,
+        "pv3_w": 0.0,
+        "pv4_v": 0.0,
+        "pv4_w": 0.0,
+        "battery_soc": 80.0,
+        "freq_hz": 50.0,
+        "pv1_i": 0.0,
+        "battery_power_w": 7270.0,
+        "pv2_i": 0.0,
+        "pv3_i": 0.0,
+        "pv4_i": 0.0,
+        "battery_current_a": 13.72,
+        "slave_id": 2.0,
+        "status": "running"
+      },
+      {
+        "p_total_w": 7312.0,
+        "pv1_v": 0.0,
+        "pv1_w": 0.0,
+        "pv2_v": 24.9,
+        "pv2_w": 0.0,
+        "pv3_v": 0.0,
+        "pv3_w": 0.0,
+        "pv4_v": 0.0,
+        "pv4_w": 0.0,
+        "battery_soc": 76.0,
+        "freq_hz": 50.0,
+        "pv1_i": 0.0,
+        "battery_power_w": 6410.0,
+        "pv2_i": 0.0,
+        "pv3_i": 0.0,
+        "pv4_i": 0.0,
+        "battery_current_a": 12.11,
+        "slave_id": 3.0,
+        "status": "running"
+      }
+    ],
+    "ts_epoch_ms": 1787225394164.0
+  }
+]

@@ -20,7 +20,10 @@ _engine = create_engine(
     max_overflow=10,
     pool_timeout=30,
     pool_recycle=1800,
-    connect_args={"options": "-ctimezone=UTC"},
+    connect_args={
+        "options": "-ctimezone=UTC",
+        "sslmode": "require",
+    },
 )
 _SessionLocal = sessionmaker(bind=_engine, expire_on_commit=False)
 
@@ -193,6 +196,7 @@ class CeleryDynamoClient:
             A list of reading dicts, one per elapsed boundary, or None if
             the table isn't initialized.
         """
+        MARGIN = timedelta(minutes=1)
         if not self._table:
             logger.warning("DynamoDB table not initialized")
             return None
@@ -214,23 +218,31 @@ class CeleryDynamoClient:
         seen_timestamps = set()
         try:
             for boundary in boundaries:
-                boundary_ts = int(boundary.astimezone(timezone.utc).timestamp() * 1000)
+                boundary_ts_ms = int(boundary.astimezone(timezone.utc).timestamp() * 1000)
+                margin_ms = int(MARGIN.total_seconds() * 1000)
                 response = self._table.query(
-                    KeyConditionExpression=Key("gateway_id").eq(gateway_id) & Key("ts_epoch_ms").lte(boundary_ts),
+                    KeyConditionExpression=Key("gateway_id").eq(gateway_id) & Key("ts_epoch_ms").lte(boundary_ts_ms),
                     ScanIndexForward=False,
                     Limit=1,
                 )
                 items = response.get("Items", [])
-                if len(items):
-                    item = items[0]
-                    ts = item.get("ts_epoch_ms")
-                    if ts in seen_timestamps:
-                        results.append(None)
-                    else:
-                        seen_timestamps.add(ts)
-                        results.append(item)
-                else:
+                if not items:
                     results.append(None)
+                    continue
+
+                item = items[0]
+                ts = item.get("ts_epoch_ms")
+
+                if boundary_ts_ms - int(ts) > margin_ms:
+                    results.append(None)
+                    continue
+
+                if ts in seen_timestamps:
+                    results.append(None)
+                    continue
+
+                seen_timestamps.add(ts)
+                results.append(item)
 
             return results
         except Exception as e:

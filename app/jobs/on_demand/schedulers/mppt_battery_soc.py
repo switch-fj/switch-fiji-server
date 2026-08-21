@@ -24,27 +24,11 @@ from app.modules.string_wiring.model import StringWiring
 from app.modules.string_wiring.schema import (
     ExpectedMPPT_ATable,
 )
-from app.shared.constants import Constants
+from app.shared.constants import ASSUMED_IRRADIANCE, Constants
 from app.utils import some
 from app.utils.json_encoders import json_default
 
 logger = setup_logger(__name__)
-
-ASSUMED_IRRADIANCE: dict[time, int] = {
-    time(9, 0): 700,
-    time(9, 30): 750,
-    time(10, 0): 750,
-    time(10, 30): 800,
-    time(11, 0): 850,
-    time(11, 30): 850,
-    time(12, 0): 900,
-    time(12, 30): 900,
-    time(13, 0): 900,
-    time(13, 30): 850,
-    time(14, 0): 800,
-    time(14, 30): 750,
-    time(15, 0): 700,
-}
 
 
 def update_ba3_soc(

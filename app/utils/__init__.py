@@ -1,7 +1,8 @@
+import json
 from datetime import datetime
 from decimal import Decimal
 from email.utils import parseaddr
-from typing import TYPE_CHECKING, Callable, Union
+from typing import TYPE_CHECKING, Any, Callable, Union
 from uuid import UUID
 
 from email_validator import EmailNotValidError, EmailSyntaxError
@@ -10,6 +11,7 @@ from pydantic import validate_email
 from starlette_context import context
 
 from app.core.config import Config
+from app.utils.json_encoders import json_default
 
 if TYPE_CHECKING:
     from app.modules.clients.model import Client
@@ -87,3 +89,8 @@ def two_decimal_place(val: Union[Decimal, float, int], decimal_places: str = "0.
 
 def some(arr: list, fn: Callable):
     return any(fn(item) for item in arr)
+
+
+def create_tel_json(file_name, data: Any):
+    with open(file_name, "w") as f:
+        json.dump(data, f, default=json_default, indent=2)

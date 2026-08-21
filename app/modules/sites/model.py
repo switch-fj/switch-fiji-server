@@ -93,6 +93,7 @@ class Site(MyAbstractSQLModel, table=True):
     site_mppt_fn_check: list["SiteMPPTFunctionCheck"] = Relationship(back_populates="site")
     battery_soc_config: list["BatterySOCConfigHistory"] = Relationship(back_populates="site")
     battery_state_of_charge: list["BatteryStateofCharge"] = Relationship(back_populates="site")
+    energy_usage: list["SiteEnergyUsage"] = Relationship(back_populates="site")
 
 
 class SiteEnergyUsage(MyAbstractSQLModel, table=True):

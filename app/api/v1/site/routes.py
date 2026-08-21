@@ -458,7 +458,7 @@ async def energy_usage(
     site_service: SiteService = Depends(get_site_service),
     _: dict = Depends(EngineerAccessBearer()),
 ):
-    site_energy_usage = await site_service.site_energy_usage(site_uid=site_uid, date_at=params.date_at)
+    site_energy_usage = await site_service.site_energy_usage(site_uid=site_uid, params=params)
 
     return ServerRespModel(
         data=site_energy_usage,

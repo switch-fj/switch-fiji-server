@@ -385,7 +385,7 @@ class SiteEnergyUsageRepository:
     def __init__(self, session: AsyncSession):
         self.session = session
 
-    async def usage(self, site_uid: UUID, date_at: date):
+    async def get_usage(self, site_uid: UUID, date_at: date):
         result = await self.session.exec(
             select(SiteEnergyUsage).where(
                 SiteEnergyUsage.site_uid == site_uid,

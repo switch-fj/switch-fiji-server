@@ -1,7 +1,8 @@
+import json
 from datetime import date, time
 from uuid import UUID
 
-from sqlalchemy.orm import Session
+from pydantic import TypeAdapter
 from sqlmodel import select
 
 from app.core.logger import setup_logger
@@ -9,42 +10,17 @@ from app.database.celery import celery_dynamo_client, get_celery_db_session
 from app.database.redis import sync_redis_client
 from app.jobs.celery import celery_app
 from app.modules.contracts.model import Contract
+from app.modules.contracts.schema import ContractSystemModeEnum, ContractTypeEnum
 from app.modules.sites.model import Site, SiteEnergyUsage
+from app.modules.sites.wizard.base_energy_usage import PPAEnergyUsageItem
+from app.modules.sites.wizard.ppa_off_grid_energy_usage import (
+    PPAOffGridEnergyUsageWizard,
+)
 from app.shared.constants import Constants
+from app.utils import some
+from app.utils.json_encoders import json_default
 
 logger = setup_logger(__name__)
-
-
-def update_site_energy_usage(
-    telemetry_reading_list: list[dict],
-    telemetry_reading_str: str,
-    session: Session,
-    site_uid: UUID,
-    date_at: date,
-    is_completed: bool,
-):
-    site_energy_usage = session.execute(
-        select(SiteEnergyUsage).where(
-            SiteEnergyUsage.site_uid == site_uid,
-            SiteEnergyUsage.date_at == date_at,
-            SiteEnergyUsage.deleted_at.is_(None),
-        )
-    ).scalar_one_or_none()
-
-    if site_energy_usage is None:
-        site_energy_usage = SiteEnergyUsage(
-            site_uid=site_uid,
-            telemetry_reading_str=telemetry_reading_str,
-            date_at=date_at,
-            interval_in_minutes=30,
-            is_completed=False,
-        )
-
-    site_energy_usage.is_completed = is_completed
-
-    session.flush()
-    session.refresh(site_energy_usage)
-    return
 
 
 def compute_site_energy_usage(site_uid: UUID, date_at: date):
@@ -75,7 +51,7 @@ def compute_site_energy_usage(site_uid: UUID, date_at: date):
                 gateway_id=site.gateway_id,
                 date_at=date_at,
                 _from=time(0, 0),
-                to=time(23, 0),
+                to=time(23, 30),
                 tz=site.tz or contract.timezone,
             )
 
@@ -83,17 +59,44 @@ def compute_site_energy_usage(site_uid: UUID, date_at: date):
                 logger.info(f"Telemetry data for Computing site energy usage {site_uid} at date: {date_at} not found")
                 return
 
-            # telemetry_reading_str = json.dumps(
-            #     telemetry_reading_list, default=json_default
-            # )
-            # is_completed = (
-            #     True
-            #     if not some(telemetry_reading_list, lambda reading: reading is None)
-            #     else False
-            # )
+            telemetry_reading_str = json.dumps(telemetry_reading_list, default=json_default)
+            is_completed = True if not some(telemetry_reading_list, lambda reading: reading is None) else False
 
-            logger.info(telemetry_reading_list)
+            site_energy_usage = session.execute(
+                select(SiteEnergyUsage).where(
+                    SiteEnergyUsage.site_uid == site_uid,
+                    SiteEnergyUsage.date_at == date_at,
+                    SiteEnergyUsage.deleted_at.is_(None),
+                )
+            ).scalar_one_or_none()
 
+            energy_usage_table_str = ""
+
+            if (
+                contract.contract_type == ContractTypeEnum.PPA
+                and contract.system_mode == ContractSystemModeEnum.OFF_GRID
+            ):
+                energy_usage_wizard = PPAOffGridEnergyUsageWizard(telemetry_readings=telemetry_reading_list)
+                ppa_energy_usage_adapter = TypeAdapter(list[PPAEnergyUsageItem])
+                energy_usage_table_str = ppa_energy_usage_adapter.dump_json(
+                    energy_usage_wizard.compute_energy_usage()
+                ).decode()
+
+            if site_energy_usage is None:
+                site_energy_usage = SiteEnergyUsage(
+                    site_uid=site_uid,
+                    date_at=date_at,
+                    interval_in_minutes=30,
+                    is_completed=is_completed,
+                )
+                session.add(site_energy_usage)
+
+            site_energy_usage.telemetry_reading_str = telemetry_reading_str
+            site_energy_usage.energy_usage_table_str = energy_usage_table_str
+            site_energy_usage.is_completed = is_completed
+
+            session.flush()
+            session.refresh(site_energy_usage)
             session.commit()
             return
 

@@ -1,5 +1,5 @@
 import json
-from datetime import date, datetime
+from datetime import datetime
 from uuid import UUID
 from zoneinfo import ZoneInfo
 
@@ -12,6 +12,7 @@ from app.jobs.on_demand.schedulers.site_energy_usage import (
     schedule_site_energy_usage_on_demand,
 )
 from app.modules.clients.repository import ClientRepository, get_client_repo
+from app.modules.mppt_function_check.schema import DateCheckQuery
 from app.modules.sites.repository import (
     SiteEnergyUsageRepository,
     SiteRepository,
@@ -83,13 +84,13 @@ class SiteService:
 
         return [EngineeringDashboardSiteModel.model_validate(site) for site in sites]
 
-    async def site_energy_usage(self, site_uid: UUID, date_at: date):
+    async def site_energy_usage(self, site_uid: UUID, params: DateCheckQuery):
         site = await self.site_repo.get_site_by_uid(site_uid=site_uid)
         if site is None:
             raise NotFound("site not found!")
 
         tz = site.tz or site.contract.timezone
-        date_at = datetime.fromtimestamp(date_at, tz=ZoneInfo(tz)).date()
+        date_at = datetime.fromtimestamp(params.date_at, tz=ZoneInfo(tz)).date()
 
         if is_future_date(date_at, tz):
             raise BadRequest("Only current and past date allowed.")
@@ -101,7 +102,7 @@ class SiteService:
         if cached:
             SiteEnergyUsageModel.model_validate(json.loads(cached))
 
-        site_energy_usage = await self.site_energy_usage_repo.usage(date_at=date_at)
+        site_energy_usage = await self.site_energy_usage_repo.get_usage(site_uid=site_uid, date_at=date_at)
         if site_energy_usage is None:
             site_energy_usage = await self.site_energy_usage_repo.create(site_uid=site_uid, date_at=date_at)
 
@@ -119,5 +120,10 @@ class SiteService:
 def get_site_service(
     site_repo: SiteRepository = Depends(get_site_repo),
     client_repo: ClientRepository = Depends(get_client_repo),
+    site_energy_usage_repo: SiteEnergyUsageRepository = Depends(get_site_energy_usage_repo),
 ):
-    return SiteService(site_repo=site_repo, client_repo=client_repo)
+    return SiteService(
+        site_repo=site_repo,
+        client_repo=client_repo,
+        site_energy_usage_repo=site_energy_usage_repo,
+    )
