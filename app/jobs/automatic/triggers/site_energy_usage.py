@@ -15,14 +15,14 @@ logger = setup_logger(__name__)
 
 
 @celery_app.task(
-    name="trigger_todays_site_mppt_and_ba3_soc_on_auto",
+    name="trigger_daily_site_energy_usage_on_auto",
     bind=True,
     max_retries=3,
     default_retry_delay=5,
 )
-def trigger_todays_site_mppt_and_ba3_soc_on_auto(self):
+def trigger_daily_site_energy_usage_on_auto(self):
     """
-    Runs every 30 min, 09:01-15:31 site-local window trigger times.
+    Runs every 30 min, (00:00AM - 23:30PM daily) site-local window trigger times.
     Refreshes mppt-function-check entries only for sites that already
     have an existing (incomplete) row for today, whose window
     (09:00-15:00 site-local) hasn't closed yet.
@@ -56,7 +56,7 @@ def trigger_todays_site_mppt_and_ba3_soc_on_auto(self):
                     date_at = datetime.now(ZoneInfo(tz)).date()
                     compute_mppt_and_ba3_soc(site_uid=site.uid, date_at=date_at)
                 except Exception as e:
-                    logger.error(f"MPPT fn check failed for site {site.uid}: {e}")
+                    logger.error(f"Energy usage failed for site {site.uid}: {e}")
                     continue
 
     except Exception as exc:

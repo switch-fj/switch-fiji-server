@@ -1,5 +1,6 @@
+import asyncio
 import json
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 from uuid import UUID
 from zoneinfo import ZoneInfo
 
@@ -13,6 +14,7 @@ from app.jobs.on_demand.schedulers.site_energy_usage import (
 )
 from app.modules.clients.repository import ClientRepository, get_client_repo
 from app.modules.mppt_function_check.schema import DateCheckQuery
+from app.modules.settings.schema import SiteFlowGraphStreamResp
 from app.modules.sites.repository import (
     SiteEnergyUsageRepository,
     SiteRepository,
@@ -115,6 +117,43 @@ class SiteService:
             schedule_site_energy_usage_on_demand.delay(site_uid, date_at)
 
         return SiteEnergyUsageModel.model_validate(site_energy_usage)
+
+    async def flow_graph_generator(self, site_uid: UUID):
+        while True:
+            try:
+                now = datetime.now(tz=timezone.utc)
+                flow_graph_site_key = Constants.SITE_FLOW_GRAPH.replace("site_uid", str(site_uid))
+                result = await async_redis_client.client.get(flow_graph_site_key)
+                payload = json.loads(result)
+
+                if payload["graph"]:
+                    age = now - payload["computed_at"]
+                    if age > timedelta(minutes=10):
+                        flow_graph_data = SiteFlowGraphStreamResp(
+                            status="Stale data",
+                            site_uid=site_uid,
+                            graph=payload["graph"],
+                            last_seen=payload["computed_at"],
+                        )
+                        yield f"data: {flow_graph_data.model_dump_json()}\n\n".encode("utf-8")
+                    else:
+                        flow_graph_data = SiteFlowGraphStreamResp(
+                            status="Live data",
+                            site_uid=site_uid,
+                            graph=payload["graph"],
+                        )
+                        yield f"data: {flow_graph_data.model_dump_json()}\n\n".encode("utf-8")
+                else:
+                    flow_graph_data = SiteFlowGraphStreamResp(
+                        status="No data",
+                        site_uid=site_uid,
+                    )
+                    yield f"data: {flow_graph_data.model_dump_json()}\n\n".encode("utf-8")
+
+            except Exception as e:
+                yield f"data: {json.dumps({'status': 'error', 'detail': str(e)})}\n\n".encode("utf-8")
+
+            await asyncio.sleep(60)
 
 
 def get_site_service(

@@ -466,14 +466,14 @@ async def energy_usage(
     )
 
 
-# @site_router.get(
-#     "/site/{site_uid}/flow-graph/stream",
-#     status_code=status.HTTP_200_OK,
-#     summary="Stream live stats for a single site via SSE",
-# )
-# async def site_dashboard(
-#     site_uid: UUID,
-#     params: Annotated[DateCheckQuery, Query()],
-#     _: dict = Depends(EngineerAccessBearer()),
-# ):
-#     pass
+@site_router.get(
+    "/site/{site_uid}/flow-graph/stream",
+    status_code=status.HTTP_200_OK,
+    summary="Stream live flow graph for a single site via SSE",
+)
+async def site_dashboard(
+    site_uid: UUID,
+    site_service: SiteService = Depends(get_site_service),
+):
+    content = site_service.flow_graph_generator(site_uid=site_uid)
+    return StreamingResponse(content=content)

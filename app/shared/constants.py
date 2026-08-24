@@ -12,6 +12,8 @@ class Constants:
     MPPT_BA3_SOC_LOCK = "mppt_ba3_soc:lock:site_uid:date_at"
     SITE_ENERGY_USAGE = "site_energy_usage:site_uid:date_at"
     SITE_ENERGY_USAGE_LOCK = "site_energy_usage:lock:site_uid:date_at"
+    SITE_FLOW_GRAPH = "site_flow_graph:site_uid"
+    SITE_FLOW_GRAPH_LOCK = "site_flow_graph_lock:site_uid"
 
 
 ASSUMED_IRRADIANCE: dict[time, int] = {

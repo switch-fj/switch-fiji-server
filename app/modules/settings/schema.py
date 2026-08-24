@@ -86,3 +86,28 @@ class VATRateHistoryRespModel(DBModel):
     @field_serializer("contract_settings_uid", "created_by_uid")
     def serialize_rate_uuid(self, value: UUID):
         return uuid_serializer(value)
+
+
+class SiteFlowGraphStreamResp(BaseModel):
+    status: str
+    site_uid: UUID
+    graph: dict[str, float] | None = None
+    last_seen: datetime | None = None
+    message: str
+
+    @field_serializer("site_uid")
+    def serialize_uid(self, value: UUID):
+        return uuid_serializer(value)
+
+    @field_serializer("last_seen")
+    def serialize_dt(self, value: datetime):
+        """Serialise datetime fields to ISO-8601 strings.
+
+        Args:
+            value: The datetime value to serialise.
+
+        Returns:
+            ISO-8601 formatted string, or None if value is falsy.
+        """
+        if value:
+            return value.isoformat()
