@@ -98,7 +98,7 @@ class PPAOffGridEnergyUsageWizard(BaseEnergyUsageWizard):
         return PPAEnergyInverters(
             solar=solar,
             battery=battery,
-            battery_flow=battery_flow,
+            battery_flow=battery_flow * -1,
             battery_socs=battery_socs,
         )
 
