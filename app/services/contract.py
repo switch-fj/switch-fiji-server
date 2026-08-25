@@ -23,9 +23,9 @@ from app.shared.schema import IdentityTypeEnum, UserRoleEnum
 class ContractService:
     def __init__(
         self,
-        contract_repo: ContractRepository = Depends(get_contract_repo),
-        client_repo: ClientRepository = Depends(get_client_repo),
-        site_repo: SiteRepository = Depends(get_site_repo),
+        contract_repo: ContractRepository,
+        client_repo: ClientRepository,
+        site_repo: SiteRepository,
     ):
         self.contract_repo = contract_repo
         self.client_repo = client_repo
@@ -208,5 +208,6 @@ class ContractService:
 def get_contract_service(
     contract_repo: ContractRepository = Depends(get_contract_repo),
     client_repo: ClientRepository = Depends(get_client_repo),
+    site_repo: SiteRepository = Depends(get_site_repo),
 ):
-    return ContractService(contract_repo=contract_repo, client_repo=client_repo)
+    return ContractService(contract_repo=contract_repo, client_repo=client_repo, site_repo=site_repo)
