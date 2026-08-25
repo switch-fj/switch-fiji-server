@@ -82,9 +82,7 @@ def update_ba3_soc(
     battery_soc.battery_soc_table_str = battery_soc_table.to_json()
     battery_soc.is_completed = is_completed
 
-    session.flush()
-    session.refresh(battery_soc)
-    return
+    return battery_soc
 
 
 def update_mppt_fn(
@@ -94,7 +92,6 @@ def update_mppt_fn(
     site_uid: UUID,
     date_at: date,
     expected_mppt_a_table: ExpectedMPPT_ATable,
-    string_wiring: StringWiring,
     is_completed: bool,
 ):
     expected_mppt_current_list = expected_mppt_a_table.to_list()
@@ -119,9 +116,7 @@ def update_mppt_fn(
     site_mppt_fn_check.mppt_fn_check_table_str = site_mppt_fn_check_table.to_json()
     site_mppt_fn_check.is_completed = is_completed
 
-    session.flush()
-    session.refresh(string_wiring)
-    return
+    return site_mppt_fn_check
 
 
 def compute_mppt_and_ba3_soc(site_uid: UUID, date_at: date):
@@ -178,7 +173,7 @@ def compute_mppt_and_ba3_soc(site_uid: UUID, date_at: date):
             telemetry_reading_str = json.dumps(telemetry_reading_list, default=json_default)
             is_completed = True if not some(telemetry_reading_list, lambda reading: reading is None) else False
 
-            update_mppt_fn(
+            site_mppt_fn_check = update_mppt_fn(
                 session=session,
                 site_uid=site_uid,
                 date_at=date_at,
@@ -188,7 +183,12 @@ def compute_mppt_and_ba3_soc(site_uid: UUID, date_at: date):
                 is_completed=is_completed,
                 string_wiring=string_wiring,
             )
-            update_ba3_soc(
+
+            if site_mppt_fn_check:
+                session.flush()
+                session.refresh(site_mppt_fn_check)
+
+            ba3_soc = update_ba3_soc(
                 session=session,
                 site_uid=site_uid,
                 date_at=date_at,
@@ -196,6 +196,10 @@ def compute_mppt_and_ba3_soc(site_uid: UUID, date_at: date):
                 telemetry_reading_str=telemetry_reading_str,
                 is_completed=is_completed,
             )
+
+            if ba3_soc:
+                session.flush()
+                session.refresh(ba3_soc)
 
             session.commit()
             return
