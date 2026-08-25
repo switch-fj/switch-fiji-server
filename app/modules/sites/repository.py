@@ -1,5 +1,5 @@
 import json
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 from uuid import UUID
 
 from fastapi import Depends
@@ -18,7 +18,7 @@ from app.modules.invoices.model import (
     Invoice,
     InvoiceSnapshot,
 )
-from app.modules.sites.model import Site
+from app.modules.sites.model import Site, SiteEnergyUsage
 from app.modules.sites.schema import (
     CreateSiteModel,
     SiteDailyStatsRespModel,
@@ -379,3 +379,44 @@ def get_site_repo(session: AsyncSession = Depends(get_session)):
         A SiteRepository bound to the provided session.
     """
     return SiteRepository(session=session)
+
+
+class SiteEnergyUsageRepository:
+    def __init__(self, session: AsyncSession):
+        self.session = session
+
+    async def get_usage(self, site_uid: UUID, date_at: date):
+        result = await self.session.exec(
+            select(SiteEnergyUsage).where(
+                SiteEnergyUsage.site_uid == site_uid,
+                SiteEnergyUsage.deleted_at.is_(None),
+                SiteEnergyUsage.date_at == date_at,
+            )
+        )
+        site_energy_usage = result.one_or_none()
+
+        return site_energy_usage
+
+    async def create(self, site_uid: UUID, date_at: date):
+        site_energy_usage = SiteEnergyUsage(
+            site_uid=site_uid,
+            date_at=date_at,
+            interval_in_minutes=30,
+            is_completed=False,
+        )
+        self.session.add(site_energy_usage)
+        await self.session.commit()
+
+        return site_energy_usage
+
+
+def get_site_energy_usage_repo(session: AsyncSession = Depends(get_session)):
+    """FastAPI dependency that provides a SiteEnergyUsageRepository instance.
+
+    Args:
+        session: Injected async database session from get_session.
+
+    Returns:
+        A SiteEnergyUsageRepository bound to the provided session.
+    """
+    return SiteEnergyUsageRepository(session=session)

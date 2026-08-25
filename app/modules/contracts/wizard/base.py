@@ -16,6 +16,10 @@ from app.modules.settings.model import ContractSettings
 class BaseContractWizard(ABC):
     @classmethod
     @abstractmethod
+    def _extract_meters(cls, telemetry_data: dict): ...
+
+    @classmethod
+    @abstractmethod
     def factory(
         cls,
         telemetry_start_reading: dict,
