@@ -50,9 +50,9 @@ class EngineeringDashboardDeviceModel(DBModel):
 
 class EngineeringDashboardSiteModel(DBModel):
     client_uid: UUID
-    site_name: Optional[str]
-    gateway_id: str
-    firmware: Optional[str]
+    site_name: str | None = None
+    gateway_id: str | None = None
+    firmware: str | None = None
     first_seen_at: Optional[datetime]
 
     devices: List[EngineeringDashboardDeviceModel]
