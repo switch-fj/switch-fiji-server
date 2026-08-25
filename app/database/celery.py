@@ -1,5 +1,5 @@
 from contextlib import contextmanager
-from datetime import date, datetime, time, timedelta, timezone
+from datetime import date, datetime, time, timedelta
 from typing import Optional
 from zoneinfo import ZoneInfo
 
@@ -218,7 +218,7 @@ class CeleryDynamoClient:
         seen_timestamps = set()
         try:
             for boundary in boundaries:
-                boundary_ts_ms = int(boundary.astimezone(timezone.utc).timestamp() * 1000)
+                boundary_ts_ms = int(boundary.timestamp() * 1000)
                 margin_ms = int(MARGIN.total_seconds() * 1000)
                 response = self._table.query(
                     KeyConditionExpression=Key("gateway_id").eq(gateway_id) & Key("ts_epoch_ms").lte(boundary_ts_ms),
@@ -245,6 +245,42 @@ class CeleryDynamoClient:
                 results.append(item)
 
             return results
+        except Exception as e:
+            logger.error(f"❌ Failed to query DynamoDB for gateway {gateway_id}: {e}")
+            raise
+
+    def get_site_by_date(
+        self,
+        gateway_id: str,
+        date_at: datetime,
+    ):
+        """Fetch nearest-prior DynamoDB readings for a gateway at.
+
+        Queries readings between _from and to for date_at, in interval_minutes
+        steps. Boundaries stop at the current site-local time, so a still-in-progress
+        day returns fewer than the time count items instead of guessing future readings.
+
+        Args:
+            gateway_id: The gateway identifier used as the DynamoDB partition key.
+            date_at: Specific date.
+
+        Returns:
+            A single telemetry reading, or None if
+            the table isn't initialized.
+        """
+        if not self._table:
+            logger.warning("DynamoDB table not initialized")
+            return None
+
+        try:
+            boundary_ts_ms = int(date_at.timestamp() * 1000)
+            response = self._table.query(
+                KeyConditionExpression=Key("gateway_id").eq(gateway_id) & Key("ts_epoch_ms").lte(boundary_ts_ms),
+                ScanIndexForward=False,
+                Limit=1,
+            )
+            items = response.get("Items", None)
+            return items
         except Exception as e:
             logger.error(f"❌ Failed to query DynamoDB for gateway {gateway_id}: {e}")
             raise

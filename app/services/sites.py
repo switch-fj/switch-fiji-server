@@ -127,13 +127,14 @@ class SiteService:
                 payload = json.loads(result)
 
                 if payload["graph"]:
-                    age = now - payload["computed_at"]
+                    last_seen = datetime.strptime(payload["computed_at"], "%Y-%m-%dT%H:%M:%S.%f%z")
+                    age = now - last_seen
                     if age > timedelta(minutes=10):
                         flow_graph_data = SiteFlowGraphStreamResp(
                             status="Stale data",
                             site_uid=site_uid,
                             graph=payload["graph"],
-                            last_seen=payload["computed_at"],
+                            last_seen=last_seen,
                         )
                         yield f"data: {flow_graph_data.model_dump_json()}\n\n".encode("utf-8")
                     else:

@@ -7,7 +7,7 @@ from sqlmodel import select
 from app.core.logger import setup_logger
 from app.database.celery import get_celery_db_session
 from app.jobs.celery import celery_app
-from app.jobs.on_demand.schedulers.mppt_battery_soc import compute_mppt_and_ba3_soc
+from app.jobs.on_demand.schedulers.site_energy_usage import compute_site_energy_usage
 from app.modules.mppt_function_check.model import SiteMPPTFunctionCheck
 from app.modules.sites.model import Site
 
@@ -54,7 +54,7 @@ def trigger_daily_site_energy_usage_on_auto(self):
                 try:
                     tz = site.tz
                     date_at = datetime.now(ZoneInfo(tz)).date()
-                    compute_mppt_and_ba3_soc(site_uid=site.uid, date_at=date_at)
+                    compute_site_energy_usage(site_uid=site.uid, date_at=date_at)
                 except Exception as e:
                     logger.error(f"Energy usage failed for site {site.uid}: {e}")
                     continue

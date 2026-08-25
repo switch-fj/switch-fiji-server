@@ -91,9 +91,8 @@ class VATRateHistoryRespModel(DBModel):
 class SiteFlowGraphStreamResp(BaseModel):
     status: str
     site_uid: UUID
-    graph: dict[str, float] | None = None
+    graph: dict | None = None
     last_seen: datetime | None = None
-    message: str
 
     @field_serializer("site_uid")
     def serialize_uid(self, value: UUID):
