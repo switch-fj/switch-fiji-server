@@ -37,6 +37,14 @@ celery_app.conf.beat_schedule = {
         "task": "trigger_todays_site_mppt_and_ba3_soc_on_auto",
         "schedule": crontab(minute="1,31", hour="9-15"),
     },
+    "trigger_todays_site_energy_every_30min_between_12_and_23_on_auto": {
+        "task": "trigger_daily_site_energy_usage_on_auto",
+        "schedule": crontab(minute="1,31", hour="0-23"),
+    },
+    "trigger_site_flow_graph_energy_every_5min_on_auto": {
+        "task": "trigger_site_flow_graph_computation_on_auto",
+        "schedule": crontab(minute="*/5"),
+    },
 }
 
 
@@ -59,6 +67,13 @@ from app.jobs.automatic.triggers import snapshot as snapshot_triggers  # noqa
 from app.jobs.automatic.triggers import (  # noqa
     mppt_battery_soc as mppt_fn_check_triggers,
 )  # noqa
+from app.jobs.automatic.triggers import (  # noqa
+    site_energy_usage as site_energy_usage_triggers,
+)  # noqa
+
+from app.jobs.automatic.triggers import (  # noqa
+    site_flow_graph as site_flow_graph_triggers,
+)  # noqa
 
 from app.jobs.on_demand.triggers import invoice as invoice_on_demand_triggers  # noqa
 from app.jobs.on_demand.schedulers import (  # noqa
@@ -78,4 +93,7 @@ from app.jobs.on_demand.schedulers import (  # noqa
 )  # noqa
 from app.jobs.on_demand.schedulers import (  # noqa
     mppt_battery_soc as mppt_fn_check_on_demand_schedulers,
+)  # noqa
+from app.jobs.on_demand.schedulers import (  # noqa
+    site_energy_usage as site_energy_usage_on_demand_schedulers,
 )  # noqa

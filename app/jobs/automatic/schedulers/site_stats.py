@@ -62,20 +62,19 @@ def compute_site_stat_on_auto(self, site_uid: str, gateway_id: str):
                 .first()
             )
 
-        if not contract or not contract.details:
-            sync_redis_client._client.setex(
-                Constants.SITE_STATS_STREAM.replace("uid", site_uid),
-                600,
-                json.dumps(
-                    {
-                        "message": "site has no contract.",
-                        "site_uid": site_uid,
-                    }
-                ),
-            )
-            return
+            if not contract or not contract.details:
+                sync_redis_client._client.setex(
+                    Constants.SITE_STATS_STREAM.replace("uid", site_uid),
+                    600,
+                    json.dumps(
+                        {
+                            "message": "site has no contract.",
+                            "site_uid": site_uid,
+                        }
+                    ),
+                )
+                return
 
-        with get_celery_db_session() as session:
             last_invoice = session.execute(
                 select(Invoice)
                 .where(Invoice.contract_uid == contract.uid)
