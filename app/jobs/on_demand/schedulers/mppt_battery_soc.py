@@ -69,6 +69,7 @@ def update_ba3_soc(
             interval_in_minutes=30,
             is_completed=False,
         )
+        session.add(battery_soc)
 
     config_input = ConfigBatterySOCInputModel.from_json(battery_soc_config.config_input_str)
 
