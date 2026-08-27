@@ -476,4 +476,12 @@ async def site_dashboard(
     site_service: SiteService = Depends(get_site_service),
 ):
     content = site_service.flow_graph_generator(site_uid=site_uid)
-    return StreamingResponse(content=content)
+    return StreamingResponse(
+        content=content,
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no",
+        },
+    )
