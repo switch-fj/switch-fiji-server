@@ -124,6 +124,16 @@ class SiteService:
                 now = datetime.now(tz=timezone.utc)
                 flow_graph_site_key = Constants.SITE_FLOW_GRAPH.replace("site_uid", str(site_uid))
                 result = await async_redis_client.client.get(flow_graph_site_key)
+
+                if result is None:
+                    flow_graph_data = SiteFlowGraphStreamResp(
+                        status="No data",
+                        site_uid=site_uid,
+                    )
+                    yield f"data: {flow_graph_data.model_dump_json()}\n\n".encode("utf-8")
+                    await asyncio.sleep(60)
+                    continue
+
                 payload = json.loads(result)
 
                 if payload["graph"]:
