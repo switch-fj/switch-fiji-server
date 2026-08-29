@@ -1,15 +1,15 @@
 from fastapi import APIRouter, Body, Depends, status
 from fastapi.responses import JSONResponse
 
-from app.core.security import AccessTokenBearer
+from app.core.security import client_access_bearer
+from app.modules.sites.schema import SiteRespModel
 from app.services.client import ClientService, get_client_service
+from app.services.sites import SiteService, get_site_service
 from app.shared.schema import (
     EmailModel,
     IdentityLoginModel,
-    IdentityTypeEnum,
     ServerRespModel,
     TokenModel,
-    UserRoleEnum,
     VerifyLoginModel,
 )
 
@@ -93,12 +93,7 @@ async def send_verify_acct(
     response_model=ServerRespModel[bool],
 )
 async def profile(
-    token_payload: TokenModel = Depends(
-        AccessTokenBearer(
-            required_identity=[IdentityTypeEnum.CLIENT.value],
-            required_role=[UserRoleEnum.ADMIN.value],
-        )
-    ),
+    token_payload: TokenModel = Depends(client_access_bearer),
     client_service: ClientService = Depends(get_client_service),
 ):
     user_resp = await client_service.get_current_client(token_payload=token_payload)
@@ -124,3 +119,19 @@ async def verify_acct(
         data=True,
         message=resp,
     )
+
+
+@client_router.get(
+    "/sites",
+    status_code=status.HTTP_200_OK,
+    response_model=ServerRespModel[list[SiteRespModel]],
+)
+async def get_sites(
+    site_service: SiteService = Depends(get_site_service),
+    token_payload: dict = Depends(client_access_bearer),
+):
+    token_user: dict = token_payload.get("user")
+    client_uid = token_user.get("uid")
+    sites = await site_service.get_sites_by_client_uid(client_uid=client_uid)
+
+    return ServerRespModel[list[SiteRespModel]](data=sites, message="client's sites retrieved")

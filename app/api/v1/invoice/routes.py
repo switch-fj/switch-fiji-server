@@ -7,7 +7,7 @@ from fastapi.responses import RedirectResponse
 
 from app.core.config import Config
 from app.core.logger import setup_logger
-from app.core.security import AccessTokenBearer
+from app.core.security import access_bearer
 from app.modules.billing.engine import BillingEngine
 from app.modules.invoices.schema import (
     InvoiceDetailedRespModel,
@@ -39,7 +39,7 @@ logger = setup_logger(__name__)
 async def get_live_invoice_by_contract_uid(
     contract_uid: UUID,
     invoice_service: InvoiceService = Depends(get_invoice_service),
-    token_payload: dict = Depends(AccessTokenBearer()),
+    token_payload: dict = Depends(access_bearer),
     limit: Optional[int] = Query(
         default=Config.DEFAULT_PAGE_LIMIT,
         ge=Config.DEFAULT_PAGE_MIN_LIMIT,
@@ -70,7 +70,7 @@ async def get_live_invoice_by_contract_uid(
 async def get_invoice_details_by_uid(
     invoice_uid: UUID,
     invoice_service: InvoiceService = Depends(get_invoice_service),
-    token_payload: dict = Depends(AccessTokenBearer()),
+    token_payload: dict = Depends(access_bearer),
 ):
     resp = await invoice_service.get_invoice_details_by_uid(invoice_uid=invoice_uid, token_payload=token_payload)
 
@@ -100,7 +100,7 @@ async def get_invoice_history_by_contract_uid(
     contract_uid: UUID,
     contract_service: ContractService = Depends(get_contract_service),
     invoice_service: InvoiceService = Depends(get_invoice_service),
-    token_payload: dict = Depends(AccessTokenBearer()),
+    token_payload: dict = Depends(access_bearer),
     limit: Optional[int] = Query(
         default=Config.DEFAULT_PAGE_LIMIT,
         ge=Config.DEFAULT_PAGE_MIN_LIMIT,
@@ -127,7 +127,7 @@ async def download_invoice_pdf(
     invoice_uid: UUID,
     invoice_service: InvoiceService = Depends(get_invoice_service),
     settings_service: SettingsService = Depends(get_settings_service),
-    token_payload: dict = Depends(AccessTokenBearer()),
+    token_payload: dict = Depends(access_bearer),
 ):
     resp = await invoice_service.get_invoice_details_by_uid(invoice_uid=invoice_uid, token_payload=token_payload)
     invoice, contract, line_items, meter_data = resp

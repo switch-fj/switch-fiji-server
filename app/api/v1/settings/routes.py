@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, status
 
-from app.core.security import AdminAccessBearer
+from app.core.security import admin_only_access
 from app.modules.settings.schema import (
     ContractSettingsModel,
     EFLRateHistoryRespModel,
@@ -22,7 +22,7 @@ settings_router = APIRouter(prefix="/settings", tags=["settings"])
 )
 async def get_contracts_general_settings(
     contract_settings_service: SettingsService = Depends(get_settings_service),
-    _: dict = Depends(AdminAccessBearer()),
+    _: dict = Depends(admin_only_access),
 ):
     contract_settings = await contract_settings_service.get_contract_general_settings()
 
@@ -40,7 +40,7 @@ async def get_contracts_general_settings(
 async def update_contracts_generat_settings(
     data: UpdateContractSettingsModel,
     contract_settings_service: SettingsService = Depends(get_settings_service),
-    token_payload: dict = Depends(AdminAccessBearer()),
+    token_payload: dict = Depends(admin_only_access),
 ):
     resp = await contract_settings_service.update_contract_general_settings(data=data, token_payload=token_payload)
 
@@ -54,7 +54,7 @@ async def update_contracts_generat_settings(
 )
 async def get_efl_rate_history(
     contract_settings_service: SettingsService = Depends(get_settings_service),
-    _: dict = Depends(AdminAccessBearer()),
+    _: dict = Depends(admin_only_access),
 ):
     resp = await contract_settings_service.get_efl_rate_history()
 
@@ -68,7 +68,7 @@ async def get_efl_rate_history(
 )
 async def get_vat_rate_history(
     contract_settings_service: SettingsService = Depends(get_settings_service),
-    _: dict = Depends(AdminAccessBearer()),
+    _: dict = Depends(admin_only_access),
 ):
     resp = await contract_settings_service.get_vat_rate_history()
 

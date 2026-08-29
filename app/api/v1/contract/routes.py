@@ -3,14 +3,14 @@ from uuid import UUID
 from fastapi import APIRouter, Body, Depends, status
 
 from app.core.logger import setup_logger
-from app.core.security import AccessTokenBearer, AdminAccessBearer
+from app.core.security import admin_only_access
 from app.modules.contracts.schema import (
     ContractDetailedRespModel,
     CreateContractDetailsModel,
     CreateContractModel,
 )
 from app.services.contract import ContractService, get_contract_service
-from app.shared.schema import IdentityTypeEnum, ServerRespModel, UserRoleEnum
+from app.shared.schema import ServerRespModel
 
 logger = setup_logger(__name__)
 contract_router = APIRouter(prefix="/contract", tags=["contract"])
@@ -23,12 +23,7 @@ contract_router = APIRouter(prefix="/contract", tags=["contract"])
 )
 async def create_contract(
     data: CreateContractModel,
-    token_payload: dict = Depends(
-        AccessTokenBearer(
-            required_identity=[IdentityTypeEnum.USER.value],
-            required_role=[UserRoleEnum.ADMIN.value],
-        )
-    ),
+    token_payload: dict = Depends(admin_only_access),
     client_service: ContractService = Depends(get_contract_service),
 ):
     contract_uid = await client_service.create_contract(token_payload=token_payload, data=data)
@@ -47,12 +42,7 @@ async def create_contract(
 async def get_contract(
     contract_uid: UUID,
     contract_service: ContractService = Depends(get_contract_service),
-    token_payload: dict = Depends(
-        AccessTokenBearer(
-            required_identity=[IdentityTypeEnum.USER.value],
-            required_role=[UserRoleEnum.ADMIN.value],
-        )
-    ),
+    token_payload: dict = Depends(admin_only_access),
 ):
     contract_details_resp = await contract_service.get_contract_by_uid(
         contract_uid=contract_uid, token_payload=token_payload
@@ -70,12 +60,7 @@ async def new_contract_details(
     contract_uid: UUID,
     data: CreateContractDetailsModel = Body(...),
     contract_service: ContractService = Depends(get_contract_service),
-    _: dict = Depends(
-        AccessTokenBearer(
-            required_identity=[IdentityTypeEnum.USER.value],
-            required_role=[UserRoleEnum.ADMIN.value],
-        )
-    ),
+    _: dict = Depends(admin_only_access),
 ):
     contract_details_uid = await contract_service.create_contract_details(contract_uid=contract_uid, data=data)
 
@@ -94,7 +79,7 @@ async def edit_contract_details(
     contract_details_uid: UUID,
     data: CreateContractDetailsModel = Body(...),
     client_service: ContractService = Depends(get_contract_service),
-    _: dict = Depends(AdminAccessBearer()),
+    _: dict = Depends(admin_only_access),
 ):
     resp = await client_service.update_contract_details(contract_details_uid=contract_details_uid, data=data)
 
