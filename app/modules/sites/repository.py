@@ -1,10 +1,10 @@
 import json
-from datetime import date, datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 from uuid import UUID
 
 from fastapi import Depends
 from sqlalchemy.orm import selectinload
-from sqlmodel import desc, func, select
+from sqlmodel import desc, func, or_, select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.core.logger import setup_logger
@@ -367,6 +367,78 @@ class SiteRepository:
         sites = result.all()
 
         return sites
+
+    async def get_healthy_sites(self) -> list[Site]:
+        cutoff = datetime.now(timezone.utc) - timedelta(minutes=30)
+        result = await self.session.exec(
+            select(Site)
+            .join(Device, Device.site_uid == Site.uid)
+            .where(Site.deleted_at.is_(None))
+            .group_by(Site.uid)
+            .having(func.min(Device.last_seen_at) >= cutoff)
+        )
+
+        sites = result.all()
+        return sites
+
+    async def get_faulty_sites(self) -> list[Site]:
+        cutoff = datetime.now(timezone.utc) - timedelta(minutes=30)
+        result = await self.session.exec(
+            select(Site)
+            .join(Device, Device.site_uid == Site.uid)
+            .where(Site.deleted_at.is_(None))
+            .group_by(Site.uid)
+            .having(func.min(Device.last_seen_at) < cutoff)
+        )
+
+        sites = result.all()
+        return sites
+
+    async def site_health_counts(self) -> dict[str, int]:
+        cutoff = datetime.now(timezone.utc) - timedelta(minutes=30)
+
+        site_min_last_seen = (
+            select(
+                Device.site_uid,
+                func.min(Device.last_seen_at).label("min_last_seen"),
+                func.bool_or(Device.last_seen_at.is_(None)).label("has_never_reported"),
+            )
+            .group_by(Device.site_uid)
+            .subquery()
+        )
+
+        result = await self.session.exec(
+            select(
+                func.count().label("total"),
+                func.count().filter(site_min_last_seen.c.site_uid.is_(None)).label("unprovisioned"),
+                func.count()
+                .filter(
+                    site_min_last_seen.c.min_last_seen >= cutoff,
+                    site_min_last_seen.c.has_never_reported.is_(False),
+                )
+                .label("healthy"),
+                func.count()
+                .filter(
+                    site_min_last_seen.c.site_uid.is_not(None),
+                    or_(
+                        site_min_last_seen.c.min_last_seen < cutoff,
+                        site_min_last_seen.c.has_never_reported.is_(True),
+                    ),
+                )
+                .label("faulty"),
+            )
+            .select_from(Site)
+            .outerjoin(site_min_last_seen, site_min_last_seen.c.site_uid == Site.uid)
+            .where(Site.deleted_at.is_(None))
+        )
+
+        summary = result.one()
+        return {
+            "healthy": summary.healthy,
+            "faulty": summary.faulty,
+            "unprovisioned": summary.unprovisioned,
+            "total": summary.total,
+        }
 
 
 def get_site_repo(session: AsyncSession = Depends(get_session)):

@@ -84,6 +84,19 @@ async def get_clients(
 
 
 @admin_router.get(
+    "/sites/health-summary",
+    status_code=status.HTTP_200_OK,
+    response_model=ServerRespModel[dict[str, int]],
+)
+async def get_sites_stats(
+    site_service: SiteService = Depends(get_site_service),
+    # _: dict = Depends(admin_only_access),
+):
+    result = await site_service.sites_health_summary()
+    return ServerRespModel[dict[str, int]](data=result, message="Sites health summary retrieved")
+
+
+@admin_router.get(
     "/sites/{client_uid}",
     status_code=status.HTTP_200_OK,
     response_model=ServerRespModel[list[SiteRespModel]],
