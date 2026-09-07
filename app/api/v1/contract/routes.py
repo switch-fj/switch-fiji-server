@@ -3,7 +3,7 @@ from uuid import UUID
 from fastapi import APIRouter, Body, Depends, status
 
 from app.core.logger import setup_logger
-from app.core.security import admin_only_access
+from app.core.security import access_bearer, admin_only_access
 from app.modules.contracts.schema import (
     ContractDetailedRespModel,
     CreateContractDetailsModel,
@@ -42,7 +42,7 @@ async def create_contract(
 async def get_contract(
     contract_uid: UUID,
     contract_service: ContractService = Depends(get_contract_service),
-    token_payload: dict = Depends(admin_only_access),
+    token_payload: dict = Depends(access_bearer),
 ):
     contract_details_resp = await contract_service.get_contract_by_uid(
         contract_uid=contract_uid, token_payload=token_payload

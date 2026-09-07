@@ -27,7 +27,6 @@ from app.shared.schema import (
 )
 
 invoice_router = APIRouter(prefix="/invoice", tags=["invoice"])
-
 logger = setup_logger(__name__)
 
 
