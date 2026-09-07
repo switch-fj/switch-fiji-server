@@ -163,45 +163,14 @@ class AccessTokenBearer(TokenBearer):
                     raise InsufficientPermissions()
 
 
-class AdminAccessBearer(AccessTokenBearer):
-    """Convenience bearer dependency that restricts access to admin users only."""
-
-    def __init__(
-        self,
-        auto_error: bool = True,
-        is_not_protected: bool = False,
-    ):
-        """Initialise with hard-coded admin identity and role requirements.
-
-        Args:
-            auto_error: If True, FastAPI automatically returns 403 when credentials are absent.
-            is_not_protected: If True, allows requests without an Authorization header.
-        """
-        super().__init__(
-            auto_error=auto_error,
-            required_identity=[IdentityTypeEnum.USER.value],
-            required_role=[UserRoleEnum.ADMIN.value],
-            is_not_protected=is_not_protected,
-        )
-
-
-class EngineerAccessBearer(AccessTokenBearer):
-    """Convenience bearer dependency that restricts access to engineer users only."""
-
-    def __init__(
-        self,
-        auto_error: bool = True,
-        is_not_protected: bool = False,
-    ):
-        """Initialise with hard-coded engineer identity and role requirements.
-
-        Args:
-            auto_error: If True, FastAPI automatically returns 403 when credentials are absent.
-            is_not_protected: If True, allows requests without an Authorization header.
-        """
-        super().__init__(
-            auto_error=auto_error,
-            required_identity=[IdentityTypeEnum.USER.value],
-            required_role=[UserRoleEnum.ENGINEER.value],
-            is_not_protected=is_not_protected,
-        )
+access_bearer = AccessTokenBearer()
+internal_only_access = AccessTokenBearer(required_identity=[IdentityTypeEnum.USER.value])
+admin_only_access = AccessTokenBearer(
+    required_identity=[IdentityTypeEnum.USER.value],
+    required_role=[UserRoleEnum.ADMIN.value],
+)
+engineer_only_access = AccessTokenBearer(
+    required_identity=[IdentityTypeEnum.USER.value],
+    required_role=[UserRoleEnum.ENGINEER.value],
+)
+client_access_bearer = AccessTokenBearer(required_identity=[IdentityTypeEnum.CLIENT.value])

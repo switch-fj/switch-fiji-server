@@ -7,7 +7,7 @@ from fastapi.responses import StreamingResponse
 
 from app.core.config import Config
 from app.core.logger import setup_logger
-from app.core.security import AccessTokenBearer
+from app.core.security import access_bearer
 from app.modules.job_run.schema import (
     JobComputeContractInvoice,
     JobComputeContractInvoiceResp,
@@ -32,7 +32,7 @@ async def get_all_jobs(
     limit: int = Query(default=Config.DEFAULT_PAGE_LIMIT),
     next_cursor: Optional[str] = Query(default=None),
     prev_cursor: Optional[str] = Query(default=None),
-    token_payload: dict = Depends(AccessTokenBearer()),
+    token_payload: dict = Depends(access_bearer),
     jobrun_service: JobRunService = Depends(get_jobrun_service),
 ):
 
@@ -56,7 +56,7 @@ async def get_all_jobs(
 )
 async def trigger_compute_invoice_for_period(
     data: JobComputeContractInvoice,
-    token_payload: dict = Depends(AccessTokenBearer()),
+    token_payload: dict = Depends(access_bearer),
     jobrun_service: JobRunService = Depends(get_jobrun_service),
 ):
     result = await jobrun_service.trigger_compute_contract_invoice(data=data, token_payload=token_payload)
@@ -74,7 +74,7 @@ async def trigger_compute_invoice_for_period(
 )
 async def get_job_status(
     task_id: str,
-    token_payload: dict = Depends(AccessTokenBearer()),
+    token_payload: dict = Depends(access_bearer),
     jobrun_service: JobRunService = Depends(get_jobrun_service),
 ):
 
@@ -94,7 +94,7 @@ async def get_job_status(
 async def stream_job_status(
     task_id: str,
     request: Request,
-    token_payload: dict = Depends(AccessTokenBearer()),
+    token_payload: dict = Depends(access_bearer),
     jobrun_service: JobRunService = Depends(get_jobrun_service),
 ):
 

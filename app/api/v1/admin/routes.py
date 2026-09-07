@@ -8,7 +8,7 @@ from fastapi import APIRouter, Depends, Query, status
 from fastapi.responses import StreamingResponse
 
 from app.core.config import Config
-from app.core.security import AccessTokenBearer, AdminAccessBearer
+from app.core.security import AccessTokenBearer, admin_only_access
 from app.database.redis import async_redis_client
 from app.modules.clients.schema import ClientRespModel, CreateClientModel
 from app.modules.contracts.schema import EnergyPortfolioRespModel
@@ -37,7 +37,7 @@ admin_router = APIRouter(prefix="/admin", tags=["admin"])
 async def add_client(
     data: CreateClientModel,
     client_service: ClientService = Depends(get_client_service),
-    token_payload: dict = Depends(AdminAccessBearer()),
+    token_payload: dict = Depends(admin_only_access),
 ):
     client = await client_service.register_client(data=data, token_payload=token_payload)
 
@@ -52,7 +52,7 @@ async def add_client(
 async def add_site(
     data: CreateSiteModel,
     site_service: SiteService = Depends(get_site_service),
-    _: dict = Depends(AdminAccessBearer()),
+    _: dict = Depends(admin_only_access),
 ):
     site = await site_service.create_site(data=data)
 
@@ -91,7 +91,7 @@ async def get_clients(
 async def get_client_sites_by_uid(
     client_uid: UUID,
     site_service: SiteService = Depends(get_site_service),
-    _: dict = Depends(AdminAccessBearer()),
+    _: dict = Depends(admin_only_access),
 ):
     sites = await site_service.get_sites_by_client_uid(client_uid=client_uid)
 
@@ -141,7 +141,7 @@ async def get_portfolio_stats(
     month: int | None = Query(default=None),
     year: int | None = Query(default=None),
     contract_service: ContractService = Depends(get_contract_service),
-    _: dict = Depends(AdminAccessBearer()),
+    _: dict = Depends(admin_only_access),
 ):
     now = datetime.now(tz=timezone.utc)
 
@@ -180,7 +180,7 @@ async def users(
     next_cursor: Optional[str] = Query(default=None),
     prev_cursor: Optional[str] = Query(default=None),
     user_service: UserService = Depends(get_user_service),
-    _: dict = Depends(AdminAccessBearer()),
+    _: dict = Depends(admin_only_access),
 ):
     result = await user_service.get_users(q=q, limit=limit, next_cursor=next_cursor, prev_cursor=prev_cursor)
 
