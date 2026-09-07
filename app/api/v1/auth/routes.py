@@ -4,7 +4,7 @@ from fastapi import APIRouter, Body, Cookie, Depends, status
 from fastapi.responses import JSONResponse
 
 from app.core.auth import Authentication
-from app.core.security import AccessTokenBearer
+from app.core.security import admin_only_access, internal_only_access
 from app.modules.users.schema import CreateUserModel
 from app.services.user import UserService, get_user_service
 from app.shared.schema import (
@@ -12,12 +12,10 @@ from app.shared.schema import (
     ChangePwdModel,
     EmailModel,
     IdentityLoginModel,
-    IdentityTypeEnum,
     ServerRespModel,
     SetPwdModel,
     TokenModel,
     UserResponseModel,
-    UserRoleEnum,
     VerifyLoginModel,
 )
 
@@ -66,12 +64,7 @@ async def login(
 async def register(
     data: CreateUserModel = Body(...),
     user_service: UserService = Depends(get_user_service),
-    token_payload: dict = Depends(
-        AccessTokenBearer(
-            required_identity=[IdentityTypeEnum.USER.value],
-            required_role=[UserRoleEnum.ADMIN.value],
-        )
-    ),
+    token_payload: dict = Depends(admin_only_access),
 ):
     await user_service.register(token_payload=token_payload, data=data)
     return ServerRespModel[bool](
@@ -153,7 +146,7 @@ async def reset_pwd(
 async def change_pwd(
     payload: ChangePwdModel,
     user_service: UserService = Depends(get_user_service),
-    token_payload: TokenModel = Depends(AccessTokenBearer(required_identity=[IdentityTypeEnum.USER.value])),
+    token_payload: TokenModel = Depends(internal_only_access),
 ):
     resp = await user_service.change_pwd(token_payload=token_payload, payload=payload)
 
@@ -186,7 +179,7 @@ async def send_verify_acct(
     response_model=ServerRespModel[UserResponseModel],
 )
 async def profile(
-    token_payload: TokenModel = Depends(AccessTokenBearer(required_identity=[IdentityTypeEnum.USER.value])),
+    token_payload: TokenModel = Depends(internal_only_access),
     user_service: UserService = Depends(get_user_service),
 ):
     user_resp = await user_service.get_current_user(token_payload=token_payload)

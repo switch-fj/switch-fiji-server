@@ -236,9 +236,6 @@ class ClientService:
 
         return clients
 
-    async def engineers_get_client_details(self, client_uid: UUID):
-        pass
-
 
 def get_client_service(client_repo: ClientRepository = Depends(get_client_repo)):
     return ClientService(client_repo=client_repo)

@@ -7,7 +7,7 @@ from fastapi import APIRouter, Depends, Query, status
 from fastapi.responses import StreamingResponse
 
 from app.core.logger import setup_logger
-from app.core.security import AdminAccessBearer, EngineerAccessBearer
+from app.core.security import admin_only_access, engineer_only_access
 from app.database.redis import async_redis_client
 from app.modules.batteries_soc.schema import (
     BatterySOCConfigModel,
@@ -56,7 +56,7 @@ logger = setup_logger(__name__)
 async def add_site(
     data: CreateSiteModel,
     site_service: SiteService = Depends(get_site_service),
-    _: dict = Depends(AdminAccessBearer()),
+    _: dict = Depends(admin_only_access),
 ):
     site = await site_service.create_site(data=data)
 
@@ -71,7 +71,7 @@ async def add_site(
 async def get_client_sites_by_uid(
     client_uid: UUID,
     site_service: SiteService = Depends(get_site_service),
-    _: dict = Depends(AdminAccessBearer()),
+    _: dict = Depends(admin_only_access),
 ):
     sites = await site_service.get_sites_by_client_uid(client_uid=client_uid)
 
@@ -120,7 +120,7 @@ async def stream_site_stats(
 async def site_stats(
     site_uid: UUID,
     site_service: SiteService = Depends(get_site_service),
-    _: dict = Depends(AdminAccessBearer()),
+    _: dict = Depends(admin_only_access),
 ):
     stats = await async_redis_client.get_site_stats(site_uid=str(site_uid))
     if stats:
@@ -156,7 +156,7 @@ async def create_site_panels(
     site_uid: UUID,
     payload: CreatePanelRefModel,
     site_config_service: SiteConfigService = Depends(get_site_configs_service),
-    token_payload: dict = Depends(EngineerAccessBearer()),
+    token_payload: dict = Depends(engineer_only_access),
 ):
     token_user = token_payload.get("user")
     token_user_uid = token_user.get("uid")
@@ -175,7 +175,7 @@ async def edit_site_panels(
     site_uid: UUID,
     payload: UpdatePanelRefModel,
     site_config_service: SiteConfigService = Depends(get_site_configs_service),
-    token_payload: dict = Depends(EngineerAccessBearer()),
+    token_payload: dict = Depends(engineer_only_access),
 ):
     token_user = token_payload.get("user")
     token_user_uid = token_user.get("uid")
@@ -211,7 +211,7 @@ async def create_site_pvs(
     site_uid: UUID,
     payload: SitePVSItemModel,
     site_config_service: SiteConfigService = Depends(get_site_configs_service),
-    token_payload: dict = Depends(EngineerAccessBearer()),
+    token_payload: dict = Depends(engineer_only_access),
 ):
     token_user = token_payload.get("user")
     token_user_uid = token_user.get("uid")
@@ -230,7 +230,7 @@ async def edit_site_pvs(
     site_uid: UUID,
     payload: UpdatePVSItemModel,
     site_config_service: SiteConfigService = Depends(get_site_configs_service),
-    token_payload: dict = Depends(EngineerAccessBearer()),
+    token_payload: dict = Depends(engineer_only_access),
 ):
     token_user = token_payload.get("user")
     token_user_uid = token_user.get("uid")
@@ -249,7 +249,7 @@ async def create_year_one_degradation(
     site_uid: UUID,
     payload: Year1DegradationInputModel,
     site_config_service: SiteConfigService = Depends(get_site_configs_service),
-    token_payload: dict = Depends(EngineerAccessBearer()),
+    token_payload: dict = Depends(engineer_only_access),
 ):
     token_user = token_payload.get("user")
     token_user_uid = token_user.get("uid")
@@ -273,7 +273,7 @@ async def update_year_one_degradation(
     site_uid: UUID,
     payload: Year1DegradationInputModel,
     site_config_service: SiteConfigService = Depends(get_site_configs_service),
-    token_payload: dict = Depends(EngineerAccessBearer()),
+    token_payload: dict = Depends(engineer_only_access),
 ):
     token_user = token_payload.get("user")
     token_user_uid = token_user.get("uid")
@@ -296,7 +296,7 @@ async def update_year_one_degradation(
 async def get_site_degradation(
     site_uid: UUID,
     site_config_service: SiteConfigService = Depends(get_site_configs_service),
-    _: dict = Depends(EngineerAccessBearer()),
+    _: dict = Depends(engineer_only_access),
 ):
     result = await site_config_service.get_degradation_by_site(site_uid=site_uid)
 
@@ -315,7 +315,7 @@ async def configure_string_wiring(
     site_uid: UUID,
     payload: StringsWiringInputModel,
     site_config_service: SiteConfigService = Depends(get_site_configs_service),
-    token_payload: dict = Depends(EngineerAccessBearer()),
+    token_payload: dict = Depends(engineer_only_access),
 ):
     logger.info(f"site_uid: {site_uid}")
     token_user = token_payload.get("user")
@@ -337,7 +337,7 @@ async def update_string_writing(
     site_uid: UUID,
     payload: StringsWiringInputModel,
     site_config_service: SiteConfigService = Depends(get_site_configs_service),
-    token_payload: dict = Depends(EngineerAccessBearer()),
+    token_payload: dict = Depends(engineer_only_access),
 ):
     token_user = token_payload.get("user")
     token_user_uid = token_user.get("uid")
@@ -362,7 +362,7 @@ async def update_string_writing(
 async def get_site_wiring(
     site_uid: UUID,
     site_config_service: SiteConfigService = Depends(get_site_configs_service),
-    _: dict = Depends(EngineerAccessBearer()),
+    _: dict = Depends(engineer_only_access),
 ):
     result = await site_config_service.get_str_wiring(site_uid=site_uid)
 
@@ -381,7 +381,7 @@ async def get_site_mppt_fn_check(
     site_uid: UUID,
     params: Annotated[DateCheckQuery, Query()],
     site_config_service: SiteConfigService = Depends(get_site_configs_service),
-    token_payload: dict = Depends(EngineerAccessBearer()),
+    token_payload: dict = Depends(engineer_only_access),
 ):
     result = await site_config_service.mppt_fn_check(token_payload=token_payload, site_uid=site_uid, params=params)
 
@@ -399,7 +399,7 @@ async def get_site_mppt_fn_check(
 async def get_battery_config(
     site_uid: UUID,
     site_config_service: SiteConfigService = Depends(get_site_configs_service),
-    _: dict = Depends(EngineerAccessBearer()),
+    _: dict = Depends(engineer_only_access),
 ):
     result = await site_config_service.get_site_battery_soc_config(site_uid=site_uid)
 
@@ -418,7 +418,7 @@ async def create_config(
     site_uid: UUID,
     payload: ConfigBatterySOCInputModel,
     site_config_service: SiteConfigService = Depends(get_site_configs_service),
-    token_payload: dict = Depends(EngineerAccessBearer()),
+    token_payload: dict = Depends(engineer_only_access),
 ):
     await site_config_service.config_battery_soc_input(site_uid=site_uid, token_payload=token_payload, payload=payload)
 
@@ -437,7 +437,7 @@ async def get_battery_soc(
     site_uid: UUID,
     params: Annotated[DateCheckQuery, Query()],
     site_config_service: SiteConfigService = Depends(get_site_configs_service),
-    _: dict = Depends(EngineerAccessBearer()),
+    _: dict = Depends(engineer_only_access),
 ):
     ba3_soc = await site_config_service.battery_soc(site_uid=site_uid, params=params)
 
@@ -456,7 +456,7 @@ async def energy_usage(
     site_uid: UUID,
     params: Annotated[DateCheckQuery, Query()],
     site_service: SiteService = Depends(get_site_service),
-    _: dict = Depends(EngineerAccessBearer()),
+    _: dict = Depends(engineer_only_access),
 ):
     site_energy_usage = await site_service.site_energy_usage(site_uid=site_uid, params=params)
 

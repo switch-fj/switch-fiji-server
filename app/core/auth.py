@@ -95,7 +95,6 @@ class Authentication:
     @staticmethod
     async def create_token(
         user_data: TokenIdentityModel,
-        response: Optional[Response] = None,
         expiry: timedelta = None,
         refresh: bool = False,
     ):
@@ -105,7 +104,6 @@ class Authentication:
 
         Args:
             user_data: Identity data to embed in the token payload.
-            response: Optional FastAPI response object (kept for signature compatibility).
             expiry: Custom expiry duration. Defaults to class-level constants.
             refresh: If True, creates a refresh token with a reduced payload and persists the JTI in Redis.
 

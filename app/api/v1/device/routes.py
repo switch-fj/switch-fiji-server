@@ -4,7 +4,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, status
 
 from app.api.v1.device.schema import DeviceModel
-from app.core.security import AccessTokenBearer
+from app.core.security import access_bearer
 from app.services.devices import DeviceService, get_device_service
 from app.shared.schema import ServerRespModel
 
@@ -19,7 +19,7 @@ device_router = APIRouter(prefix="/device", tags=["device"])
 async def get_devices_by_site(
     site_uid: UUID,
     device_service: DeviceService = Depends(get_device_service),
-    _: dict = Depends(AccessTokenBearer()),
+    _: dict = Depends(access_bearer),
 ):
     devices = await device_service.get_devices_by_site(site_uid=site_uid)
 
