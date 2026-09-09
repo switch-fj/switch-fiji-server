@@ -10,7 +10,11 @@ from app.modules.devices.model import Device
 from app.modules.invoices.repository import InvoiceRepository
 from app.modules.settings.repository import SettingsRepository
 from app.modules.sites.model import Site
-from app.modules.sites.schema import SitePortfolioMetrics
+from app.modules.sites.schema import (
+    SiteHealth,
+    SitePortfolioMetrics,
+    SiteSummaryMetrics,
+)
 from app.utils.date import clamp_day_to_month
 from app.utils.wizard import (
     extract_production_kwh,
@@ -130,4 +134,20 @@ class PortfolioMetricsService:
             coverage_actual_pct=coverage_actual,
             coverage_target_pct=coverage_target,
             total_bill_from_inception=billed,
+        )
+
+    @staticmethod
+    def site_summary_metrics(site_health: SiteHealth, site_metrics: list[SitePortfolioMetrics]):
+        production_mtd_kwh = sum(m.production_mtd_kwh or 0 for m in site_metrics)
+        last_month_production_kwh = sum(m.last_month_production_kwh or 0 for m in site_metrics)
+        total_bill_from_inception = sum(
+            (m.total_bill_from_inception or Decimal(0) for m in site_metrics),
+            Decimal(0),
+        )
+
+        return SiteSummaryMetrics(
+            production_mtd_kwh=production_mtd_kwh,
+            last_month_production_kwh=last_month_production_kwh,
+            total_bill_from_inception=total_bill_from_inception,
+            site_health=site_health,
         )

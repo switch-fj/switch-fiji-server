@@ -1,3 +1,4 @@
+import json
 from datetime import datetime, timezone
 from typing import Optional
 from uuid import UUID
@@ -30,9 +31,12 @@ from app.modules.devices.device_repository import DeviceRepository, get_device_r
 from app.modules.invoices.repository import InvoiceRepository, get_invoice_repo
 from app.modules.settings.repository import SettingsRepository, get_settings_repo
 from app.modules.sites.repository import SiteRepository, get_site_repo
+from app.modules.sites.schema import SiteRespWithMetrics, SiteSummaryMetrics
 from app.services.portfolio_metrics import PortfolioMetricsService
+from app.shared.constants import Constants
 from app.shared.schema import (
     AuthType,
+    CursorPaginationModel,
     EmailModel,
     IdentityLoginModel,
     PaginatedRespModel,
@@ -297,6 +301,26 @@ class ClientService:
 
         return result
 
+    async def get_sites(
+        self,
+        q: Optional[str],
+        limit: int = Config.DEFAULT_PAGE_LIMIT,
+        next_cursor: Optional[str] = None,
+        prev_cursor: Optional[str] = None,
+    ):
+        if next_cursor and prev_cursor:
+            raise BadRequest("Provide either next_cursor or prev_cursor, not both")
+
+        result = await self.site_repo.get_sites(
+            q=q,
+            limit=limit,
+            next_cursor=next_cursor,
+            prev_cursor=prev_cursor,
+            portfolio_metrics=self.portfolio_metrics,
+        )
+
+        return result
+
     async def get_client_sites(self, client_uid: UUID):
         resp = await self.site_repo.get_sites_by_client_uid_v2(
             client_uid=client_uid, portfolio_metrics=self.portfolio_metrics
@@ -306,6 +330,64 @@ class ClientService:
             raise NotFound("Client not found!")
 
         return resp
+
+    async def get_client_sites_summary(self, client_uid: UUID) -> SiteSummaryMetrics:
+        cache_key = Constants.CLIENT_SITE_SUMMARY.replace(":client_uid", str(client_uid))
+        cached = await async_redis_client.client.get(cache_key)
+
+        if cached:
+            return SiteSummaryMetrics.model_validate(json.loads(cached))
+
+        resp = await self.site_repo.get_sites_by_client_uid_v2(
+            client_uid=client_uid, portfolio_metrics=self.portfolio_metrics
+        )
+
+        if resp is None:
+            raise NotFound("Client not found!")
+
+        site_health = await self.site_repo.site_health_by_client_uid(client_uid=client_uid)
+
+        summary = self.portfolio_metrics.site_summary_metrics(
+            site_health=site_health,
+            site_metrics=[s.metrics for s in resp],
+        )
+
+        await async_redis_client.client.set(
+            cache_key,
+            summary.model_dump_json(),
+            ex=3600,
+        )
+
+        return summary
+
+    async def get_sites_summary(self) -> SiteSummaryMetrics:
+        cache_key = Constants.SITES_SUMMARY
+        cached = await async_redis_client.client.get(cache_key)
+
+        if cached:
+            return SiteSummaryMetrics.model_validate(json.loads(cached))
+
+        resp: PaginatedRespModel[SiteRespWithMetrics, CursorPaginationModel] = await self.site_repo.get_sites(
+            _is_all_sites=True, portfolio_metrics=self.portfolio_metrics
+        )
+
+        if resp is None:
+            raise NotFound("Client not found!")
+
+        site_health = await self.site_repo.site_health_counts()
+
+        summary = self.portfolio_metrics.site_summary_metrics(
+            site_health=site_health,
+            site_metrics=[s.metrics for s in resp.items],
+        )
+
+        await async_redis_client.client.set(
+            cache_key,
+            summary.model_dump_json(),
+            ex=3600,
+        )
+
+        return summary
 
     async def engineers_get_clients(
         self,

@@ -142,6 +142,18 @@ class SitePortfolioMetrics(BaseModel):
     total_bill_from_inception: Optional[Decimal] = None
     billing_frequency: Optional[str] = None
 
+    @field_serializer(
+        "production_mtd_kwh",
+        "last_month_production_kwh",
+        "coverage_actual_pct",
+        "coverage_target_pct",
+        "coverage_numerator_kwh",
+        "coverage_denominator_kwh",
+    )
+    def serialize_metrics_float(self, value: float):
+        if value:
+            return float(f"{value:.2f}")
+
     @field_serializer("total_bill_from_inception")
     def serialize_metrics_decimals(self, value: Decimal):
         if value:
@@ -162,3 +174,22 @@ class SiteRespWithMetrics(BaseModel):
     devices: list[DeviceModel]
     contract: Optional[ContractRespModel]
     metrics: SitePortfolioMetrics
+
+
+class SiteHealth(BaseModel):
+    healthy: int
+    faulty: int
+    unprovisioned: int
+    total: int
+
+
+class SiteSummaryMetrics(BaseModel):
+    production_mtd_kwh: Optional[float] = None
+    last_month_production_kwh: Optional[float] = None
+    total_bill_from_inception: Optional[Decimal] = None
+    site_health: SiteHealth
+
+    @field_serializer("production_mtd_kwh", "last_month_production_kwh")
+    def serialize_metrics_decimals(self, value: float):
+        if value:
+            return float(f"{value:.2f}")

@@ -15,7 +15,11 @@ from app.modules.clients.schema import (
     CreateClientModel,
 )
 from app.modules.contracts.schema import EnergyPortfolioRespModel
-from app.modules.sites.schema import CreateSiteModel, SiteRespWithMetrics
+from app.modules.sites.schema import (
+    CreateSiteModel,
+    SiteRespWithMetrics,
+    SiteSummaryMetrics,
+)
 from app.modules.users.schema import UsersRespModel
 from app.services.client import ClientService, get_client_service
 from app.services.contract import ContractService, get_contract_service
@@ -82,16 +86,50 @@ async def get_clients(
 
 
 @admin_router.get(
-    "/sites/health-summary",
+    "/sites/summary",
     status_code=status.HTTP_200_OK,
-    response_model=ServerRespModel[dict[str, int]],
+    response_model=ServerRespModel[SiteSummaryMetrics],
 )
-async def get_sites_stats(
-    site_service: SiteService = Depends(get_site_service),
+async def all_sites_summary(
+    client_service: ClientService = Depends(get_client_service),
     _: dict = Depends(admin_only_access),
 ):
-    result = await site_service.sites_health_summary()
-    return ServerRespModel[dict[str, int]](data=result, message="Sites health summary retrieved")
+    result = await client_service.get_sites_summary()
+    return ServerRespModel[SiteSummaryMetrics](data=result, message="All sites summary retrieved")
+
+
+@admin_router.get(
+    "/sites",
+    status_code=status.HTTP_200_OK,
+    response_model=ServerRespModel[PaginatedRespModel[SiteRespWithMetrics, CursorPaginationModel]],
+)
+async def get_all_sites(
+    q: Optional[str] = Query(default=None),
+    limit: int = Query(default=Config.DEFAULT_PAGE_LIMIT),
+    next_cursor: Optional[str] = Query(default=None),
+    prev_cursor: Optional[str] = Query(default=None),
+    client_service: ClientService = Depends(get_client_service),
+    _: dict = Depends(access_bearer),
+):
+    sites = await client_service.get_sites(q=q, limit=limit, next_cursor=next_cursor, prev_cursor=prev_cursor)
+
+    return ServerRespModel[PaginatedRespModel[SiteRespWithMetrics, CursorPaginationModel]](
+        data=sites, message="Sites retrieved"
+    )
+
+
+@admin_router.get(
+    "/sites/{client_uid}/summary",
+    status_code=status.HTTP_200_OK,
+    response_model=ServerRespModel[SiteSummaryMetrics],
+)
+async def all_sites_stats(
+    client_uid: UUID,
+    client_service: ClientService = Depends(get_client_service),
+    _: dict = Depends(admin_only_access),
+):
+    result = await client_service.get_client_sites_summary(client_uid=client_uid)
+    return ServerRespModel[SiteSummaryMetrics](data=result, message="Client sites summary retrieved")
 
 
 @admin_router.get(

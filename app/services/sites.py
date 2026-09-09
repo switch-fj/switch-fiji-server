@@ -166,11 +166,6 @@ class SiteService:
 
             await asyncio.sleep(60)
 
-    async def sites_health_summary(self):
-        result = await self.site_repo.site_health_counts()
-
-        return result
-
 
 def get_site_service(
     site_repo: SiteRepository = Depends(get_site_repo),
