@@ -24,7 +24,7 @@ class DeviceRepository:
         return devices
 
 
-def get_invoice_repo(session: AsyncSession = Depends(get_session)):
+def get_device_repo(session: AsyncSession = Depends(get_session)):
     """FastAPI dependency that provides an DeviceRepository instance.
 
     Args:

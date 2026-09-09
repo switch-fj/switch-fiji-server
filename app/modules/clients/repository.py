@@ -17,6 +17,7 @@ from app.modules.clients.schema import (
     CreateClientModel,
     UpdateClientModel,
 )
+from app.modules.contracts.model import Contract
 from app.modules.devices.model import Device
 from app.modules.sites.model import Site
 from app.shared.schema import (
@@ -165,6 +166,48 @@ class ClientRepository:
                     limit=limit,
                     next_cursor=next_cursor_out,
                     prev_cursor=prev_cursor_out,
+                ),
+            }
+        )
+
+    async def get_clients_v2(
+        self,
+        q: Optional[str] = None,
+        limit: int = Config.DEFAULT_PAGE_LIMIT,
+        next_cursor: Optional[str] = None,
+        prev_cursor: Optional[str] = None,
+    ):
+        statement = (
+            select(Client)
+            .options(
+                selectinload(Client.sites).selectinload(Site.contract).selectinload(Contract.details),
+                selectinload(Client.sites).selectinload(Site.devices),
+            )
+            .order_by(Client.created_at.desc())
+        )
+
+        if next_cursor:
+            statement = statement.where(Client.id < Pagination.decrypt_cursor(next_cursor))
+        if prev_cursor:
+            statement = statement.where(Client.id > Pagination.decrypt_cursor(prev_cursor))
+        if q:
+            search = f"%{q}%"
+            statement = statement.where(Client.client_name.ilike(search) | Client.client_email.ilike(search))
+
+        statement = statement.limit(limit + 1)
+        result = await self.session.exec(statement)
+        clients = result.all()
+
+        has_more = len(clients) > limit
+        items = clients[:limit]
+
+        return PaginatedRespModel.model_validate(
+            {
+                "items": items,
+                "pagination": CursorPaginationModel(
+                    limit=limit,
+                    next_cursor=(Pagination.encrypt_cursor(items[-1].id) if has_more and items else None),
+                    prev_cursor=(Pagination.encrypt_cursor(items[0].id) if items else None),
                 ),
             }
         )

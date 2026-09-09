@@ -7,12 +7,14 @@ from sqlalchemy.orm import selectinload
 from sqlmodel import desc, func, or_, select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
+from app.api.v1.device.schema import DeviceModel
 from app.core.logger import setup_logger
 from app.database.postgres import get_session
 from app.database.redis import async_redis_client
 from app.modules.billing.engine import BillingEngine
 from app.modules.clients.model import Client
 from app.modules.contracts.model import Contract
+from app.modules.contracts.schema import ContractRespModel
 from app.modules.devices.model import Device
 from app.modules.invoices.model import (
     Invoice,
@@ -22,10 +24,14 @@ from app.modules.sites.model import Site, SiteEnergyUsage
 from app.modules.sites.schema import (
     CreateSiteModel,
     SiteDailyStatsRespModel,
+    SiteData,
     SiteDetailedRespModel,
+    SitePortfolioMetrics,
     SiteRespModel,
+    SiteRespWithMetrics,
     UpdateSiteModel,
 )
+from app.services.portfolio_metrics import PortfolioMetricsService
 
 logger = setup_logger(__name__)
 
@@ -128,6 +134,70 @@ class SiteRepository:
         )
 
         return sites
+
+    async def get_sites_by_client_uid_v2(self, client_uid: UUID, portfolio_metrics: PortfolioMetricsService):
+        """Retrieve all active sites for a client, with metrics, cached for 1hr.
+
+        Args:
+            client_uid: The UUID of the client whose sites to retrieve.
+            portfolio_metrics: Service used to compute per-site portfolio metrics.
+
+        Returns:
+            A list of SiteRespWithMetrics instances, or None if the client does not exist.
+        """
+        cache_key = f"client_sites_with_metrics:{client_uid}"
+        cached = await async_redis_client.client.get(cache_key)
+        if cached:
+            return [SiteRespWithMetrics.model_validate(item) for item in json.loads(cached)]
+
+        statement = (
+            select(Site)
+            .options(
+                selectinload(Site.contract).selectinload(Contract.details),
+                selectinload(Site.devices),
+            )
+            .where(Site.client_uid == client_uid, Site.deleted_at.is_(None))
+            .order_by(Site.created_at.desc())
+        )
+
+        result = await self.session.exec(statement)
+        sites = result.all()
+
+        if not sites:
+            client_exists = await self.session.get(Client, client_uid)
+            if not client_exists:
+                return None
+            return []
+
+        now = datetime.now(timezone.utc)
+        site_resp_models: list[SiteRespWithMetrics] = []
+
+        for site in sites:
+            devices = site.devices
+            contract = site.contract
+            metrics = SitePortfolioMetrics()
+
+            if contract is not None and contract.details is not None:
+                metrics = await portfolio_metrics.compute_site_metrics(
+                    site=site, contract=contract, devices=devices, now=now
+                )
+
+            site_resp_models.append(
+                SiteRespWithMetrics(
+                    site=SiteData.model_validate(site),
+                    devices=[DeviceModel.model_validate(device) for device in devices],
+                    contract=(ContractRespModel.model_validate(contract) if contract else None),
+                    metrics=metrics,
+                )
+            )
+
+        await async_redis_client.client.set(
+            cache_key,
+            json.dumps([s.model_dump(mode="json") for s in site_resp_models]),
+            ex=3600,
+        )
+
+        return site_resp_models
 
     async def get_site_by_uid(self, site_uid: UUID):
         """Fetch a site by its primary UUID.

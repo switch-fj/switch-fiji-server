@@ -1,3 +1,4 @@
+from datetime import datetime, timezone
 from typing import Optional
 from uuid import UUID
 
@@ -18,12 +19,23 @@ from app.jobs.on_demand.schedulers.auth import (
     send_email_verification_task,
     send_verify_login_task,
 )
+from app.modules.clients.model import Client
 from app.modules.clients.repository import ClientRepository, get_client_repo
-from app.modules.clients.schema import CreateClientModel, UpdateClientModel
+from app.modules.clients.schema import (
+    ClientPortfolioRespModel,
+    CreateClientModel,
+    UpdateClientModel,
+)
+from app.modules.devices.device_repository import DeviceRepository, get_device_repo
+from app.modules.invoices.repository import InvoiceRepository, get_invoice_repo
+from app.modules.settings.repository import SettingsRepository, get_settings_repo
+from app.modules.sites.repository import SiteRepository, get_site_repo
+from app.services.portfolio_metrics import PortfolioMetricsService
 from app.shared.schema import (
     AuthType,
     EmailModel,
     IdentityLoginModel,
+    PaginatedRespModel,
     TokenModel,
     UserResponseModel,
     VerifyLoginModel,
@@ -34,8 +46,20 @@ logger = setup_logger(__name__)
 
 
 class ClientService:
-    def __init__(self, client_repo: ClientRepository = Depends(get_client_repo)):
+    def __init__(
+        self,
+        client_repo: ClientRepository,
+        site_repo: SiteRepository,
+        invoice_repo: InvoiceRepository,
+        settings_repo: SettingsRepository,
+        device_repo: DeviceRepository,
+    ):
         self.client_repo = client_repo
+        self.site_repo = site_repo
+        self.invoice_repo = invoice_repo
+        self.settings_repo = settings_repo
+        self.device_repo = device_repo
+        self.portfolio_metrics = PortfolioMetricsService(invoice_repo=invoice_repo, settings_repo=settings_repo)
 
     async def _initiate_verify_login_task(self, email: str):
         text = await Authentication.generate_passcode(email=email)
@@ -209,6 +233,56 @@ class ClientService:
 
         return "Verification email sent. Check your inbox"
 
+    async def get_clients_v2(
+        self,
+        q: Optional[str],
+        limit: int = Config.DEFAULT_PAGE_LIMIT,
+        next_cursor: Optional[str] = None,
+        prev_cursor: Optional[str] = None,
+    ):
+        if next_cursor and prev_cursor:
+            raise BadRequest("Provide either next_cursor or prev_cursor, not both")
+
+        result = await self.client_repo.get_clients(q=q, limit=limit, next_cursor=next_cursor, prev_cursor=prev_cursor)
+
+        now = datetime.now(timezone.utc)
+
+        clients: list[Client] = result.items
+        portfolio_items = []
+        for client in clients:
+            site_metrics = []
+            contracts = []
+
+            for site in client.sites:
+                logger.info(site.contract)
+                contract = site.contract
+                if contract is None or contract.details is None:
+                    continue
+                contracts.append(contract)
+                computed_site_metrics = await self.portfolio_metrics.compute_site_metrics(
+                    site=site, contract=contract, devices=site.devices, now=now
+                )
+                site_metrics.append(computed_site_metrics)
+
+            client_metrics = await self.portfolio_metrics.aggregate_client_metrics(
+                site_metrics=site_metrics, contracts=contracts
+            )
+            portfolio_items.append(
+                ClientPortfolioRespModel(
+                    client=client,
+                    sites_count=len(client.sites),
+                    devices_count=sum(len(s.devices) for s in client.sites),
+                    metrics=client_metrics,
+                )
+            )
+
+        return PaginatedRespModel.model_validate(
+            {
+                "items": portfolio_items,
+                "pagination": result.pagination,
+            }
+        )
+
     async def get_clients(
         self,
         q: Optional[str],
@@ -222,6 +296,16 @@ class ClientService:
         result = await self.client_repo.get_clients(q=q, limit=limit, next_cursor=next_cursor, prev_cursor=prev_cursor)
 
         return result
+
+    async def get_client_sites(self, client_uid: UUID):
+        resp = await self.site_repo.get_sites_by_client_uid_v2(
+            client_uid=client_uid, portfolio_metrics=self.portfolio_metrics
+        )
+
+        if resp is None:
+            raise NotFound("Client not found!")
+
+        return resp
 
     async def engineers_get_clients(
         self,
@@ -237,5 +321,17 @@ class ClientService:
         return clients
 
 
-def get_client_service(client_repo: ClientRepository = Depends(get_client_repo)):
-    return ClientService(client_repo=client_repo)
+def get_client_service(
+    client_repo: ClientRepository = Depends(get_client_repo),
+    site_repo: SiteRepository = Depends(get_site_repo),
+    invoice_repo: InvoiceRepository = Depends(get_invoice_repo),
+    settings_repo: SettingsRepository = Depends(get_settings_repo),
+    device_repo: DeviceRepository = Depends(get_device_repo),
+):
+    return ClientService(
+        client_repo=client_repo,
+        site_repo=site_repo,
+        invoice_repo=invoice_repo,
+        settings_repo=settings_repo,
+        device_repo=device_repo,
+    )

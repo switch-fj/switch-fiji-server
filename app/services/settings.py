@@ -9,7 +9,7 @@ from app.modules.settings.schema import (
 
 
 class SettingsService:
-    def __init__(self, settings_repo: SettingsRepository = Depends(get_settings_repo)):
+    def __init__(self, settings_repo: SettingsRepository):
         self.settings_repo = settings_repo
 
     async def get_contract_general_settings(self):

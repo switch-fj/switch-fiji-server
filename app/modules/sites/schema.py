@@ -1,9 +1,11 @@
 from datetime import date, datetime
+from decimal import Decimal
 from typing import Optional, Union
 from uuid import UUID
 
 from pydantic import BaseModel, Field, field_serializer, field_validator
 
+from app.api.v1.device.schema import DeviceModel
 from app.modules.clients.schema import ClientRespModel
 from app.modules.contracts.schema import ContractDetailsRespModel, ContractRespModel
 from app.shared.schema import DBModel
@@ -128,3 +130,35 @@ class SiteEnergyUsageModel(DBModel):
             A string representation of the UUID.
         """
         return uuid_serializer(value)
+
+
+class SitePortfolioMetrics(BaseModel):
+    production_mtd_kwh: Optional[float] = None
+    last_month_production_kwh: Optional[float] = None
+    coverage_actual_pct: Optional[float] = None
+    coverage_target_pct: Optional[float] = None
+    coverage_numerator_kwh: Optional[float] = None
+    coverage_denominator_kwh: Optional[float] = None
+    total_bill_from_inception: Optional[Decimal] = None
+    billing_frequency: Optional[str] = None
+
+    @field_serializer("total_bill_from_inception")
+    def serialize_metrics_decimals(self, value: Decimal):
+        if value:
+            return f"{value:.2f}"
+
+
+class SiteData(DBModel):
+    client_uid: UUID
+    site_id: Optional[str]
+    site_name: Optional[str]
+    gateway_id: Optional[str]
+    firmware: Optional[str]
+    first_seen_at: Optional[datetime]
+
+
+class SiteRespWithMetrics(BaseModel):
+    site: SiteData
+    devices: list[DeviceModel]
+    contract: Optional[ContractRespModel]
+    metrics: SitePortfolioMetrics
