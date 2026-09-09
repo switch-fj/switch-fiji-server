@@ -1,6 +1,7 @@
+from decimal import Decimal
 from typing import Optional
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_serializer, field_validator
 
 from app.shared.schema import DBModel
 from app.utils import email_validator
@@ -51,7 +52,23 @@ class ClientRespWithoutSitesCountModel(DBModel):
     client_email: str
 
 
-class ClientDetailedRespModel(ClientRespModel):
-    """Extended client response model reserved for detailed client views."""
+class ClientPortfolioMetrics(BaseModel):
+    production_mtd_kwh: float
+    last_month_production_kwh: float
+    coverage_actual_pct: Optional[float]
+    coverage_target_pct: Optional[float]
+    total_bill_from_inception: Decimal
 
-    pass
+    @field_serializer("total_bill_from_inception")
+    def serialize_metrics_decimals(self, value: Decimal):
+        if value:
+            return f"{value:.2f}"
+
+
+class ClientPortfolioRespModel(BaseModel):
+    client: ClientRespWithoutSitesCountModel
+    sites_count: Optional[int]
+    devices_count: Optional[int]
+    metrics: ClientPortfolioMetrics
+
+    model_config = ConfigDict(from_attributes=True)

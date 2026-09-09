@@ -14,6 +14,9 @@ class Constants:
     SITE_ENERGY_USAGE_LOCK = "site_energy_usage:lock:site_uid:date_at"
     SITE_FLOW_GRAPH = "site_flow_graph:site_uid"
     SITE_FLOW_GRAPH_LOCK = "site_flow_graph_lock:site_uid"
+    CLIENT_SITE_METRICS = "client_sites_with_metrics:client_uid"
+    CLIENT_SITE_SUMMARY = "client_site_summary:client_uid"
+    SITES_SUMMARY = "sites_summary"
 
 
 ASSUMED_IRRADIANCE: dict[time, int] = {

@@ -1,4 +1,5 @@
 from datetime import datetime, timezone
+from decimal import Decimal
 from typing import Optional
 from uuid import UUID
 
@@ -368,6 +369,30 @@ class InvoiceRepository:
         result = await self.session.exec(statement)
         invoice = result.unique().first()
         return invoice
+
+    async def get_nearest_snapshot(self, contract_uid: UUID, target: datetime):
+        result = await self.session.exec(
+            select(InvoiceSnapshot)
+            .where(
+                InvoiceSnapshot.contract_uid == contract_uid,
+                InvoiceSnapshot.snapshotted_at <= target,
+            )
+            .order_by(InvoiceSnapshot.snapshotted_at.desc())
+            .limit(1)
+        )
+        invoice_snapshot = result.one_or_none()
+
+        return invoice_snapshot
+
+    async def get_billed_lifetime(self, contract_uid: UUID, up_to: datetime) -> Optional[Decimal]:
+        result = await self.session.exec(
+            select(func.sum(Invoice.subtotal + Invoice.subtotal * (Invoice.vat_rate / 100))).where(
+                Invoice.contract_uid == contract_uid,
+                Invoice.period_end_at <= up_to,
+            )
+        )
+        total = result.one_or_none()
+        return total.quantize(Decimal("0.01")) if total is not None else None
 
     async def update_pdf_s3_key(self, invoice_uid: UUID, key: str) -> None:
         """Update the pdf_s3_key field for an invoice after PDF upload.
