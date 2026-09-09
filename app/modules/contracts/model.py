@@ -120,6 +120,7 @@ class ContractDetails(MyAbstractSQLModel, table=True):
         sa_type=DateTime(timezone=True),
         sa_column_kwargs={"nullable": True},
     )
+    target_coverage_pct: Optional[float] = Field(nullable=True, description="contract coverage percentage.")
 
     # EFL rate (global, entered once — variable tariffs are pegged to this)
     efl_standard_rate_kwh: Optional[Decimal] = Field(nullable=False)

@@ -8,11 +8,18 @@ from fastapi import APIRouter, Depends, Query, status
 from fastapi.responses import StreamingResponse
 
 from app.core.config import Config
-from app.core.security import AccessTokenBearer, admin_only_access
+from app.core.security import access_bearer, admin_only_access
 from app.database.redis import async_redis_client
-from app.modules.clients.schema import ClientRespModel, CreateClientModel
+from app.modules.clients.schema import (
+    ClientRespModel,
+    CreateClientModel,
+)
 from app.modules.contracts.schema import EnergyPortfolioRespModel
-from app.modules.sites.schema import CreateSiteModel, SiteRespModel
+from app.modules.sites.schema import (
+    CreateSiteModel,
+    SiteRespWithMetrics,
+    SiteSummaryMetrics,
+)
 from app.modules.users.schema import UsersRespModel
 from app.services.client import ClientService, get_client_service
 from app.services.contract import ContractService, get_contract_service
@@ -21,7 +28,6 @@ from app.services.user import UserService, get_user_service
 from app.shared.constants import Constants
 from app.shared.schema import (
     CursorPaginationModel,
-    IdentityTypeEnum,
     PaginatedRespModel,
     ServerRespModel,
 )
@@ -70,11 +76,7 @@ async def get_clients(
     next_cursor: Optional[str] = Query(default=None),
     prev_cursor: Optional[str] = Query(default=None),
     client_service: ClientService = Depends(get_client_service),
-    _: dict = Depends(
-        AccessTokenBearer(
-            required_identity=[IdentityTypeEnum.USER.value],
-        )
-    ),
+    _: dict = Depends(access_bearer),
 ):
     result = await client_service.get_clients(q=q, limit=limit, next_cursor=next_cursor, prev_cursor=prev_cursor)
 
@@ -84,31 +86,65 @@ async def get_clients(
 
 
 @admin_router.get(
-    "/sites/health-summary",
+    "/sites/summary",
     status_code=status.HTTP_200_OK,
-    response_model=ServerRespModel[dict[str, int]],
+    response_model=ServerRespModel[SiteSummaryMetrics],
 )
-async def get_sites_stats(
-    site_service: SiteService = Depends(get_site_service),
-    # _: dict = Depends(admin_only_access),
+async def all_sites_summary(
+    client_service: ClientService = Depends(get_client_service),
+    _: dict = Depends(admin_only_access),
 ):
-    result = await site_service.sites_health_summary()
-    return ServerRespModel[dict[str, int]](data=result, message="Sites health summary retrieved")
+    result = await client_service.get_sites_summary()
+    return ServerRespModel[SiteSummaryMetrics](data=result, message="All sites summary retrieved")
+
+
+@admin_router.get(
+    "/sites",
+    status_code=status.HTTP_200_OK,
+    response_model=ServerRespModel[PaginatedRespModel[SiteRespWithMetrics, CursorPaginationModel]],
+)
+async def get_all_sites(
+    q: Optional[str] = Query(default=None),
+    limit: int = Query(default=Config.DEFAULT_PAGE_LIMIT),
+    next_cursor: Optional[str] = Query(default=None),
+    prev_cursor: Optional[str] = Query(default=None),
+    client_service: ClientService = Depends(get_client_service),
+    _: dict = Depends(access_bearer),
+):
+    sites = await client_service.get_sites(q=q, limit=limit, next_cursor=next_cursor, prev_cursor=prev_cursor)
+
+    return ServerRespModel[PaginatedRespModel[SiteRespWithMetrics, CursorPaginationModel]](
+        data=sites, message="Sites retrieved"
+    )
+
+
+@admin_router.get(
+    "/sites/{client_uid}/summary",
+    status_code=status.HTTP_200_OK,
+    response_model=ServerRespModel[SiteSummaryMetrics],
+)
+async def all_sites_stats(
+    client_uid: UUID,
+    client_service: ClientService = Depends(get_client_service),
+    _: dict = Depends(admin_only_access),
+):
+    result = await client_service.get_client_sites_summary(client_uid=client_uid)
+    return ServerRespModel[SiteSummaryMetrics](data=result, message="Client sites summary retrieved")
 
 
 @admin_router.get(
     "/sites/{client_uid}",
     status_code=status.HTTP_200_OK,
-    response_model=ServerRespModel[list[SiteRespModel]],
+    response_model=ServerRespModel[list[SiteRespWithMetrics]],
 )
 async def get_client_sites_by_uid(
     client_uid: UUID,
-    site_service: SiteService = Depends(get_site_service),
-    _: dict = Depends(admin_only_access),
+    client_service: ClientService = Depends(get_client_service),
+    _: dict = Depends(access_bearer),
 ):
-    sites = await site_service.get_sites_by_client_uid(client_uid=client_uid)
+    sites = await client_service.get_client_sites(client_uid=client_uid)
 
-    return ServerRespModel[list[SiteRespModel]](data=sites, message="client's sites retrieved")
+    return ServerRespModel[list[SiteRespWithMetrics]](data=sites, message="client's sites retrieved")
 
 
 @admin_router.get(

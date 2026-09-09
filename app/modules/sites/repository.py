@@ -1,5 +1,6 @@
 import json
 from datetime import date, datetime, timedelta, timezone
+from typing import Optional
 from uuid import UUID
 
 from fastapi import Depends
@@ -7,12 +8,15 @@ from sqlalchemy.orm import selectinload
 from sqlmodel import desc, func, or_, select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
+from app.api.v1.device.schema import DeviceModel
+from app.core.config import Config
 from app.core.logger import setup_logger
 from app.database.postgres import get_session
 from app.database.redis import async_redis_client
 from app.modules.billing.engine import BillingEngine
 from app.modules.clients.model import Client
 from app.modules.contracts.model import Contract
+from app.modules.contracts.schema import ContractRespModel
 from app.modules.devices.model import Device
 from app.modules.invoices.model import (
     Invoice,
@@ -22,10 +26,18 @@ from app.modules.sites.model import Site, SiteEnergyUsage
 from app.modules.sites.schema import (
     CreateSiteModel,
     SiteDailyStatsRespModel,
+    SiteData,
     SiteDetailedRespModel,
+    SiteHealth,
+    SitePortfolioMetrics,
     SiteRespModel,
+    SiteRespWithMetrics,
     UpdateSiteModel,
 )
+from app.services.portfolio_metrics import PortfolioMetricsService
+from app.shared.constants import Constants
+from app.shared.schema import CursorPaginationModel, PaginatedRespModel
+from app.utils.pagination import Pagination
 
 logger = setup_logger(__name__)
 
@@ -128,6 +140,161 @@ class SiteRepository:
         )
 
         return sites
+
+    async def get_sites_by_client_uid_v2(self, client_uid: UUID, portfolio_metrics: PortfolioMetricsService):
+        """Retrieve all active sites for a client, with metrics, cached for 1hr.
+
+        Args:
+            client_uid: The UUID of the client whose sites to retrieve.
+            portfolio_metrics: Service used to compute per-site portfolio metrics.
+
+        Returns:
+            A list of SiteRespWithMetrics instances, or None if the client does not exist.
+        """
+        cache_key = Constants.CLIENT_SITE_METRICS.replace(":client_uid", str(client_uid))
+        cached = await async_redis_client.client.get(cache_key)
+        if cached:
+            return [SiteRespWithMetrics.model_validate(item) for item in json.loads(cached)]
+
+        statement = (
+            select(Site)
+            .options(
+                selectinload(Site.contract).selectinload(Contract.details),
+                selectinload(Site.devices),
+            )
+            .where(Site.client_uid == client_uid, Site.deleted_at.is_(None))
+            .order_by(Site.created_at.desc())
+        )
+
+        result = await self.session.exec(statement)
+        sites = result.all()
+
+        if not sites:
+            client_exists = await self.session.get(Client, client_uid)
+            if not client_exists:
+                return None
+            return []
+
+        now = datetime.now(timezone.utc)
+        site_resp_models: list[SiteRespWithMetrics] = []
+
+        for site in sites:
+            devices = site.devices
+            contract = site.contract
+            metrics = SitePortfolioMetrics()
+
+            if contract is not None and contract.details is not None:
+                metrics = await portfolio_metrics.compute_site_metrics(
+                    site=site, contract=contract, devices=devices, now=now
+                )
+
+            site_resp_models.append(
+                SiteRespWithMetrics(
+                    site=SiteData.model_validate(site),
+                    devices=[DeviceModel.model_validate(device) for device in devices],
+                    contract=(ContractRespModel.model_validate(contract) if contract else None),
+                    metrics=metrics,
+                )
+            )
+
+        await async_redis_client.client.set(
+            cache_key,
+            json.dumps([s.model_dump(mode="json") for s in site_resp_models]),
+            ex=3600,
+        )
+
+        return site_resp_models
+
+    async def get_sites(
+        self,
+        portfolio_metrics: PortfolioMetricsService,
+        q: Optional[str] = None,
+        limit: int = Config.DEFAULT_PAGE_LIMIT,
+        next_cursor: Optional[str] = None,
+        prev_cursor: Optional[str] = None,
+        _is_all_sites: bool = False,
+    ):
+        """Retrieve a cursor-paginated list of all sites across every client, with metrics.
+
+        Args:
+            portfolio_metrics: Service used to compute per-site portfolio metrics.
+            q: Optional search string matched against site name and site_id.
+            limit: Maximum number of records to return per page.
+            next_cursor: Encrypted cursor pointing to the next page.
+            prev_cursor: Encrypted cursor pointing to the previous page.
+
+        Returns:
+            A PaginatedRespModel containing SiteRespWithMetrics items and pagination metadata.
+        """
+        statement = (
+            select(Site)
+            .options(
+                selectinload(Site.contract).selectinload(Contract.details),
+                selectinload(Site.devices),
+            )
+            .where(Site.deleted_at.is_(None))
+            .order_by(Site.created_at.desc())
+        )
+
+        if next_cursor:
+            statement = statement.where(Site.id < Pagination.decrypt_cursor(next_cursor))
+
+        if prev_cursor:
+            statement = statement.where(Site.id > Pagination.decrypt_cursor(prev_cursor))
+
+        if q:
+            search = f"%{q}%"
+            statement = statement.where(Site.site_name.ilike(search) | Site.site_id.ilike(search))
+
+        statement = statement.limit(limit + 1)
+
+        result = await self.session.exec(statement)
+        sites = result.all()
+
+        has_more = len(sites) > limit
+        items = sites if _is_all_sites else sites[:limit]
+
+        now = datetime.now(timezone.utc)
+        site_resp_models: list[SiteRespWithMetrics] = []
+
+        for site in items:
+            devices = site.devices
+            contract = site.contract
+            metrics = SitePortfolioMetrics()
+
+            if contract is not None and contract.details is not None:
+                metrics = await portfolio_metrics.compute_site_metrics(
+                    site=site, contract=contract, devices=devices, now=now
+                )
+
+            site_resp_models.append(
+                SiteRespWithMetrics(
+                    site=SiteData.model_validate(site),
+                    devices=[DeviceModel.model_validate(device) for device in devices],
+                    contract=(ContractRespModel.model_validate(contract) if contract else None),
+                    metrics=metrics,
+                )
+            )
+
+        next_cursor_out = None
+        prev_cursor_out = None
+
+        if items:
+            prev_cursor_out = Pagination.encrypt_cursor(items[0].id)
+
+        if has_more:
+            next_cursor_out = Pagination.encrypt_cursor(items[-1].id)
+
+        return PaginatedRespModel.model_validate(
+            {
+                "items": site_resp_models,
+                "pagination": CursorPaginationModel(
+                    limit=limit,
+                    next_cursor=next_cursor_out,
+                    prev_cursor=prev_cursor_out,
+                ),
+            }
+        )
 
     async def get_site_by_uid(self, site_uid: UUID):
         """Fetch a site by its primary UUID.
@@ -394,7 +561,7 @@ class SiteRepository:
         sites = result.all()
         return sites
 
-    async def site_health_counts(self) -> dict[str, int]:
+    async def site_health_counts(self):
         cutoff = datetime.now(timezone.utc) - timedelta(minutes=30)
 
         site_min_last_seen = (
@@ -433,12 +600,62 @@ class SiteRepository:
         )
 
         summary = result.one()
-        return {
-            "healthy": summary.healthy,
-            "faulty": summary.faulty,
-            "unprovisioned": summary.unprovisioned,
-            "total": summary.total,
-        }
+        return SiteHealth.model_validate(
+            {
+                "healthy": summary.healthy,
+                "faulty": summary.faulty,
+                "unprovisioned": summary.unprovisioned,
+                "total": summary.total,
+            }
+        )
+
+    async def site_health_by_client_uid(self, client_uid: UUID):
+        cutoff = datetime.now(timezone.utc) - timedelta(minutes=30)
+
+        site_min_last_seen = (
+            select(
+                Device.site_uid,
+                func.min(Device.last_seen_at).label("min_last_seen"),
+                func.bool_or(Device.last_seen_at.is_(None)).label("has_never_reported"),
+            )
+            .group_by(Device.site_uid)
+            .subquery()
+        )
+
+        result = await self.session.exec(
+            select(
+                func.count().label("total"),
+                func.count().filter(site_min_last_seen.c.site_uid.is_(None)).label("unprovisioned"),
+                func.count()
+                .filter(
+                    site_min_last_seen.c.min_last_seen >= cutoff,
+                    site_min_last_seen.c.has_never_reported.is_(False),
+                )
+                .label("healthy"),
+                func.count()
+                .filter(
+                    site_min_last_seen.c.site_uid.is_not(None),
+                    or_(
+                        site_min_last_seen.c.min_last_seen < cutoff,
+                        site_min_last_seen.c.has_never_reported.is_(True),
+                    ),
+                )
+                .label("faulty"),
+            )
+            .select_from(Site)
+            .outerjoin(site_min_last_seen, site_min_last_seen.c.site_uid == Site.uid)
+            .where(Site.client_uid == client_uid, Site.deleted_at.is_(None))
+        )
+
+        summary = result.one()
+        return SiteHealth.model_validate(
+            {
+                "healthy": summary.healthy,
+                "faulty": summary.faulty,
+                "unprovisioned": summary.unprovisioned,
+                "total": summary.total,
+            }
+        )
 
 
 def get_site_repo(session: AsyncSession = Depends(get_session)):
