@@ -17,6 +17,24 @@ from app.modules.string_wiring.model import StringWiring
 logger = setup_logger(__name__)
 
 
+def degradation_calculation(month_value: float, year1_deg: float, year2plus_deg: float, year: int):
+    """
+    Apply a degradation percentage to a monthly value.
+
+    Args:
+        month_value: The original monthly value (e.g. kWh).
+        year1_deg: The degradation for first year (e.g. 1 for 1%)
+        year2plus_deg: The degradation after 1st year (e.g. 0.4 for 0.4%)
+        year: The actual year (1 - N).
+
+    Returns:
+        The new value after applying the degradation, rounded to 2 decimal places.
+    """
+    degraded_value = month_value * (1 - (year1_deg / 100)) * (1 - (year2plus_deg / 100)) ** (year - 2)
+
+    return degraded_value
+
+
 def apply_degradation(value: float, degradation_pct: float) -> float:
     """
     Apply a degradation percentage to a monthly value.
@@ -78,18 +96,20 @@ def compute_site_yearly_degradation_on_demand(
             months = PvDegradationSchedule.build_month_sequence(commissioning_date, num_years=NUM_YEARS)
 
             all_years: list[YearlyDegradation] = [year_1]
-            previous_year_values = year_1_values
 
-            # Year 2 decays from year 1 using year1_degradation.
-            # Years 3..12 each decay from the year before using year2plus_degradation.
             for year_idx in range(1, NUM_YEARS):
-                rate = year1_degradation if year_idx == 1 else year2plus_degradation
-                current_year_values = [apply_degradation(v, rate) for v in previous_year_values]
+                current_year_values = [
+                    degradation_calculation(
+                        month_value=month_value,
+                        year=year_idx + 1,
+                        year1_deg=year1_degradation,
+                        year2plus_deg=year2plus_degradation,
+                    )
+                    for month_value in year_1_values
+                ]
 
                 year_months = months[year_idx * 12 : (year_idx + 1) * 12]
                 all_years.append(YearlyDegradation(root=dict(zip(year_months, current_year_values))))
-
-                previous_year_values = current_year_values
 
             full_schedule = PvDegradationSchedule(root=all_years)
             pv_degradation.degradation = full_schedule.to_json()

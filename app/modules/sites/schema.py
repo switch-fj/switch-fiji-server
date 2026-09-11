@@ -132,6 +132,11 @@ class SiteEnergyUsageModel(DBModel):
         return uuid_serializer(value)
 
 
+class SiteTrendMetrics(BaseModel):
+    trend_3mo_pct: Optional[float] = None
+    trend_6mo_pct: Optional[float] = None
+
+
 class SitePortfolioMetrics(BaseModel):
     production_mtd_kwh: Optional[float] = None
     last_month_production_kwh: Optional[float] = None
