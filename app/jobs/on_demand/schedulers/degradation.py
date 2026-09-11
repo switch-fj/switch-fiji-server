@@ -32,7 +32,7 @@ def degradation_calculation(month_value: float, year1_deg: float, year2plus_deg:
     """
     degraded_value = month_value * (1 - (year1_deg / 100)) * (1 - (year2plus_deg / 100)) ** (year - 2)
 
-    return degraded_value
+    return round(degraded_value, 2)
 
 
 def apply_degradation(value: float, degradation_pct: float) -> float:

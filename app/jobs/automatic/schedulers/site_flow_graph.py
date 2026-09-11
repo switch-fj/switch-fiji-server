@@ -81,8 +81,6 @@ def compute_site_flow_graph_on_auto(self, site_uid: str, gateway_id: str):
                 gateway_id=gateway_id,
             )
 
-            logger.info(f"redis key: {redis_key}")
-
             if telemetry_reading_list is None:
                 sync_redis_client._client.setex(
                     redis_key,
@@ -107,7 +105,6 @@ def compute_site_flow_graph_on_auto(self, site_uid: str, gateway_id: str):
                 energy_usage = energy_usage_wizard.compute_energy_usage()
                 graph = energy_usage[0].data.model_dump() if energy_usage else None
 
-            logger.info(f"graph: {graph}")
             sync_redis_client._client.setex(
                 redis_key,
                 600,
