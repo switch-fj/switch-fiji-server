@@ -29,8 +29,8 @@ def trigger_compute_string_wiring_on_demand(self, requesting_user_uid: str, site
     with get_celery_db_session() as session:
         meta = json.dumps(
             {
-                "string_wiring_uid": string_wiring_uid,
-                "site_uid": site_uid,
+                "string_wiring_uid": str(string_wiring_uid),
+                "site_uid": str(site_uid),
             },
             sort_keys=True,
         )
@@ -64,31 +64,31 @@ def trigger_compute_string_wiring_on_demand(self, requesting_user_uid: str, site
         session.add(job_run)
         session.commit()
 
-    try:
-        with get_celery_db_session() as session:
-            pv_summary = get_pv_summary(session, site_uid)
+        try:
+            with get_celery_db_session() as session:
+                pv_summary = get_pv_summary(session, site_uid)
 
-        if not pv_summary:
-            logger.warning(f"Pv summary is invalid or doesn't exist: {site_uid}")
+                if not pv_summary:
+                    logger.warning(f"Pv summary is invalid or doesn't exist: {site_uid}")
+                    update_job_run(
+                        reference_uid=string_wiring_uid,
+                        task_id=self.request.id,
+                        status=JobRunStatus.INVALID,
+                        error="pv summary not found or not active",
+                    )
+                    return
+
+                compute_string_wiring_on_demand(
+                    site_uid=site_uid,
+                    string_wiring_uid=string_wiring_uid,
+                    job_run_task_id=self.request.id,
+                )
+
+        except Exception as exc:
             update_job_run(
                 reference_uid=string_wiring_uid,
                 task_id=self.request.id,
-                status=JobRunStatus.INVALID,
-                error="pv summary not found or not active",
+                status=JobRunStatus.FAILED,
+                error=str(exc),
             )
-            return
-
-        compute_string_wiring_on_demand(
-            site_uid=site_uid,
-            string_wiring_uid=string_wiring_uid,
-            job_run_task_id=self.request.id,
-        )
-
-    except Exception as exc:
-        update_job_run(
-            reference_uid=string_wiring_uid,
-            task_id=self.request.id,
-            status=JobRunStatus.FAILED,
-            error=str(exc),
-        )
-        raise self.retry(exc=exc)
+            raise self.retry(exc=exc)
