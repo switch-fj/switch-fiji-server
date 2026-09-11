@@ -78,16 +78,16 @@ def trigger_compute_site_yearly_degradation_on_demand(
             .where(Contract.site_uid == UUID(site_uid), Contract.deleted_at.is_(None))
         ).scalar_one_or_none()
 
-        # if not contract:
-        #     error_msg = f"Contract doesn't exist for site_uid {site_uid} "
-        #     logger.info(error_msg)
-        #     update_job_run(
-        #         reference_uid=degradation_uid,
-        #         task_id=self.request.id,
-        #         status=JobRunStatus.INVALID,
-        #         error=error_msg,
-        #     )
-        #     raise error_msg
+        if not contract:
+            error_msg = f"Contract doesn't exist for site_uid {site_uid} "
+            logger.info(error_msg)
+            update_job_run(
+                reference_uid=degradation_uid,
+                task_id=self.request.id,
+                status=JobRunStatus.INVALID,
+                error=error_msg,
+            )
+            return
 
         with get_celery_db_session() as session:
             pv_summary = get_pv_summary(session, site_uid)
