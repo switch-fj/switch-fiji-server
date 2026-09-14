@@ -220,6 +220,12 @@ class CreateContractDetailsModel(BaseModel):
     end_at: datetime = Field(..., title="expected contract end date")
     actual_commissioned_at: Optional[datetime] = Field(default=None, title="Actual contract commission date")
     actual_end_at: Optional[datetime] = Field(default=None, title="Actual Contract end date")
+    target_coverage_pct: Optional[float] = Field(
+        default=float(0.5),
+        title="Contract coverage Percentage",
+        le=float(1.0),
+        ge=float(0.0),
+    )
 
     # system mode (On-grid) specific
     system_size_kwp: Optional[float] = Field(default=None, title="System size kwp")
