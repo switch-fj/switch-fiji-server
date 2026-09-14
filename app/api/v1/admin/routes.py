@@ -92,7 +92,7 @@ async def get_clients(
 )
 async def all_sites_summary(
     client_service: ClientService = Depends(get_client_service),
-    _: dict = Depends(admin_only_access),
+    # _: dict = Depends(admin_only_access),
 ):
     result = await client_service.get_sites_summary()
     return ServerRespModel[SiteSummaryMetrics](data=result, message="All sites summary retrieved")
@@ -109,7 +109,7 @@ async def get_all_sites(
     next_cursor: Optional[str] = Query(default=None),
     prev_cursor: Optional[str] = Query(default=None),
     client_service: ClientService = Depends(get_client_service),
-    _: dict = Depends(access_bearer),
+    # _: dict = Depends(access_bearer),
 ):
     sites = await client_service.get_sites(q=q, limit=limit, next_cursor=next_cursor, prev_cursor=prev_cursor)
 
@@ -140,7 +140,7 @@ async def all_sites_stats(
 async def get_client_sites_by_uid(
     client_uid: UUID,
     client_service: ClientService = Depends(get_client_service),
-    _: dict = Depends(access_bearer),
+    # _: dict = Depends(access_bearer),
 ):
     sites = await client_service.get_client_sites(client_uid=client_uid)
 

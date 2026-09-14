@@ -144,6 +144,7 @@ class SitePortfolioMetrics(BaseModel):
     coverage_target_pct: Optional[float] = None
     coverage_numerator_kwh: Optional[float] = None
     coverage_denominator_kwh: Optional[float] = None
+    trend_vs_plan: Optional[SiteTrendMetrics] = None
     total_bill_from_inception: Optional[Decimal] = None
     billing_frequency: Optional[str] = None
 
