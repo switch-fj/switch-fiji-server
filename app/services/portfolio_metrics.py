@@ -1,7 +1,10 @@
 import json
 from datetime import datetime, timedelta
 from decimal import Decimal
+from typing import Optional
 from zoneinfo import ZoneInfo
+
+from matplotlib.dates import relativedelta
 
 from app.core.logger import setup_logger
 from app.modules.clients.schema import ClientPortfolioMetrics
@@ -14,11 +17,13 @@ from app.modules.sites.schema import (
     SiteHealth,
     SitePortfolioMetrics,
     SiteSummaryMetrics,
+    SiteTrendMetrics,
 )
 from app.utils.date import clamp_day_to_month
 from app.utils.wizard import (
     extract_production_kwh,
     extract_total_consumption_kwh,
+    get_expected_production_kwh,
     get_wizard_class_for_contract,
 )
 
@@ -30,7 +35,13 @@ class PortfolioMetricsService:
         self.invoice_repo = invoice_repo
         self.settings_repo = settings_repo
 
-    async def compute_site_metrics(self, site: Site, contract: Contract, devices: list[Device], now: datetime):
+    async def compute_site_metrics(
+        self,
+        site: Site,
+        contract: Contract,
+        devices: list[Device],
+        now: datetime,
+    ):
         tz = ZoneInfo(site.tz or contract.timezone)
         local_now = now.astimezone(tz)
 
@@ -77,6 +88,11 @@ class PortfolioMetricsService:
             if compare_wizard:
                 metrics.last_month_production_kwh = extract_production_kwh(compare_wizard.energy_mix)
 
+            if site.pv_degradation and site.pv_summary:
+                metrics.trend_vs_plan = await self.compute_trend_metrics(
+                    site=site, contract=contract, devices=devices, now=now
+                )
+
             metrics.total_bill_from_inception = await self.invoice_repo.get_billed_lifetime(
                 contract_uid=contract.uid, up_to=now
             )
@@ -85,6 +101,43 @@ class PortfolioMetricsService:
             logger.warning(f"Portfolio metrics failed for site {site.uid}: {exc}")
 
         return metrics
+
+    async def compute_trend_metrics(
+        self,
+        site: Site,
+        contract: Contract,
+        devices: list[Device],
+        now: datetime,
+    ) -> SiteTrendMetrics:
+        tz = ZoneInfo(site.tz or contract.timezone)
+        local_now = now.astimezone(tz)
+        current_month_start = local_now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+
+        ratios = []
+        for i in range(1, 7):
+            month_start = current_month_start - relativedelta(months=i)
+            month_end = month_start + relativedelta(months=1) - timedelta(seconds=1)
+
+            expected = get_expected_production_kwh(
+                site.pv_degradation, month_start.date(), site.pv_summary.commissioned_at
+            )
+            wizard = await self.build_wizard_for_period(contract, devices, month_start, month_end)
+            if expected is None or wizard is None:
+                ratios.append(None)
+                continue
+
+            actual = extract_production_kwh(wizard.energy_mix)
+            ratios.append((actual - expected) / expected if actual is not None else None)
+
+        def avg(subset: list[Optional[float]]) -> Optional[float]:
+            if any(r is None for r in subset):
+                return None
+            return round(sum(subset) / len(subset), 2)
+
+        return SiteTrendMetrics(
+            trend_3mo_pct=avg(ratios[:3]),
+            trend_6mo_pct=avg(ratios[:6]),
+        )
 
     async def build_wizard_for_period(
         self,
@@ -103,7 +156,7 @@ class PortfolioMetricsService:
         if start_snapshot is None or end_snapshot is None:
             return None
 
-        contract_settings = self.settings_repo.get_contract_settings()
+        contract_settings = await self.settings_repo.get_contract_settings()
 
         return wizard_cls.factory(
             telemetry_start_reading=json.loads(start_snapshot.period_end_telemetry_data),

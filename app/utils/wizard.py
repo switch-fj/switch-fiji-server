@@ -1,3 +1,8 @@
+import json
+from datetime import date, datetime
+
+from matplotlib.dates import relativedelta
+
 from app.modules.contracts.model import Contract
 from app.modules.contracts.schema import ContractSystemModeEnum, ContractTypeEnum
 from app.modules.contracts.wizard.base import BaseContractWizard
@@ -13,6 +18,7 @@ from app.modules.contracts.wizard.schema import (
     OnGridWithBatteryEnergyMix,
     PPAOffGridEnergyMix,
 )
+from app.modules.pv_degradation.model import PvDegradation
 
 
 def get_wizard_class_for_contract(
@@ -54,3 +60,14 @@ def extract_total_consumption_kwh(energy_mix):
     if isinstance(energy_mix, OnGridNoBatteryEnergyMix):
         return energy_mix.solar + energy_mix.grid
     return None
+
+
+def get_expected_production_kwh(pv_degradation: PvDegradation, target_month: date, commissioned_at: datetime):
+    years_elapsed = relativedelta(target_month, commissioned_at.date()).years
+    degradation_years = json.loads(pv_degradation.degradation)
+
+    if years_elapsed >= len(degradation_years):
+        return None
+
+    month_key = target_month.strftime("%b")
+    return degradation_years[years_elapsed].get(month_key)

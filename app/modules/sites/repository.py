@@ -161,6 +161,8 @@ class SiteRepository:
             .options(
                 selectinload(Site.contract).selectinload(Contract.details),
                 selectinload(Site.devices),
+                selectinload(Site.pv_summary),
+                selectinload(Site.pv_degradation),
             )
             .where(Site.client_uid == client_uid, Site.deleted_at.is_(None))
             .order_by(Site.created_at.desc())
@@ -230,6 +232,8 @@ class SiteRepository:
             select(Site)
             .options(
                 selectinload(Site.contract).selectinload(Contract.details),
+                selectinload(Site.pv_summary),
+                selectinload(Site.pv_degradation),
                 selectinload(Site.devices),
             )
             .where(Site.deleted_at.is_(None))
